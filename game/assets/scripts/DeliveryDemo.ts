@@ -60,19 +60,19 @@ export class DeliveryDemo extends Component {
       });
     })));
     if (!this.isValid) return;
-    this.world = new World(this.node, this.surfaceMaterial, this.signMaterial);
+    this.world = new World(this.node, this.surfaceMaterial, this.signMaterial, this.order.data);
     const scene = this.node.scene;
-    scene.globals.ambient.skyColor = new Vec4(.55, .52, .6, 1);
-    scene.globals.ambient.skyIllum = 18000;
-    scene.globals.ambient.groundAlbedo = new Vec4(.22, .17, .15, 1);
+    scene.globals.ambient.skyColor = new Vec4(.48, .61, .72, 1);
+    scene.globals.ambient.skyIllum = 20000;
+    scene.globals.ambient.groundAlbedo = new Vec4(.23, .26, .24, 1);
     scene.globals.skybox.enabled = false;
     this.camera = new Node('Driver and walking camera');
     this.node.addChild(this.camera);
     const camera = this.camera.addComponent(Camera);
     camera.fov = 70;
     camera.near = .05;
-    camera.far = 160;
-    camera.clearColor = new Color(185, 153, 152, 255);
+    camera.far = 560;
+    camera.clearColor = new Color(188, 209, 222, 255);
     this.music = new MusicPlayer();
     profiler.hideStats();
     this.createHUD();
@@ -111,7 +111,7 @@ export class DeliveryDemo extends Component {
 
   update(dt: number): void {
     if (!this.world) return;
-    this.elapsed += dt;
+    if (this.order.stage !== 'idle' && this.order.stage !== 'delivered') this.elapsed += dt;
     this.frames.push(dt);
     if (this.frames.length > 600) this.frames.shift();
     const step = Math.min(dt, .05);
@@ -129,6 +129,15 @@ export class DeliveryDemo extends Component {
     this.world.npc.active = this.order.queueRemaining > 0;
     this.world.car.setPosition(this.vehicle.x, 0, this.vehicle.z);
     this.world.car.setRotationFromEuler(0, this.vehicle.yaw * DEG, 0);
+    this.world.update(dt, {
+      speed: this.vehicle.speed,
+      steering: this.inCar ? turn : 0,
+      distance: this.vehicle.distance,
+      x: this.vehicle.x,
+      z: this.vehicle.z,
+      yaw: this.vehicle.yaw,
+      destination: ['stowed', 'delivering', 'delivered'].includes(this.order.stage),
+    });
     this.updateView(Math.min(1, dt * 10));
     this.updateBag();
     this.music.update(this.inCar, Math.hypot(this.walker.x - this.vehicle.x, this.walker.z - this.vehicle.z));
@@ -140,8 +149,8 @@ export class DeliveryDemo extends Component {
     const target = new Vec3();
     const yaw = this.inCar ? this.vehicle.yaw : this.walker.yaw;
     if (this.inCar) {
-      target.set(this.vehicle.x - .43 * Math.cos(yaw), 1.66,
-        this.vehicle.z + .43 * Math.sin(yaw) + .08);
+      target.set(this.vehicle.x - .43 * Math.cos(yaw) + .3 * Math.sin(yaw), 1.68,
+        this.vehicle.z + .43 * Math.sin(yaw) + .3 * Math.cos(yaw));
     } else target.set(this.walker.x, 1.7, this.walker.z);
     Vec3.lerp(this.viewPosition, this.viewPosition, target, blend);
     const rotation = Quat.fromEuler(new Quat(), -4, yaw * DEG, 0);
@@ -231,26 +240,69 @@ export class DeliveryDemo extends Component {
     this.hud.id = 'delivery-hud';
     this.hud.innerHTML = `
       <style>
-      #delivery-hud{position:fixed;inset:0;pointer-events:none;color:#f7eed8;font:14px 'DM-Sans',sans-serif;z-index:100;line-height:1.5}
-      #delivery-hud *{box-sizing:border-box}#delivery-hud button,#delivery-hud input{pointer-events:auto;font:inherit}
-      #delivery-hud button{background:#e7bb73;color:#183b3d;border:0;border-radius:7px;padding:10px 14px;cursor:pointer;font-weight:700}
-      #delivery-hud button:hover{background:#ffe1a9}#delivery-hud button:disabled{opacity:.45;cursor:default}
-      #delivery-hud .top{position:absolute;top:22px;left:28px}#delivery-hud .wordmark{font:29px 'InstrumentSerif',serif;letter-spacing:.5px;text-shadow:0 2px 12px #182832}
-      #delivery-hud .sub{font-size:11px;letter-spacing:3px;color:#e6d7ba}#delivery-hud .route{margin-top:13px;background:#1b3536ed;border-left:3px solid #e7bb73;padding:10px 16px;max-width:380px}
-      #delivery-hud .phone{position:absolute;right:24px;top:22px;width:270px;background:#152b30ed;border:2px solid #6b7a78;border-radius:23px;padding:21px;box-shadow:0 12px 40px #14233155;pointer-events:auto}
-      #delivery-hud .phone-header{display:flex;justify-content:space-between;font-size:11px;color:#a9c6bc;letter-spacing:1px}.phone h2{font:24px 'InstrumentSerif',serif;margin:19px 0 4px}.phone .muted{color:#a8bdb8;font-size:12px}
-      #delivery-hud .order-detail{border-top:1px solid #54706a;margin-top:15px;padding-top:12px;font-size:12px}
-      #delivery-hud .code{font-size:28px;letter-spacing:7px;color:#e7bb73;margin:5px 0}#delivery-hud .status{margin:12px 0;color:#cbded2;font-size:12px;min-height:38px}
-      #delivery-hud #action{width:100%}#delivery-hud #code-panel{display:none;margin:10px 0}#handoff-code{background:#ebdfc7;color:#183b3d;width:100%;border:0;border-radius:5px;padding:9px;margin-bottom:7px;letter-spacing:6px}
-      #delivery-hud .controls{position:absolute;left:28px;bottom:124px;font-size:12px;background:#193238ce;padding:12px 16px;border-radius:8px;color:#c6d4cc}
-      #delivery-hud kbd{color:#ffe0a3;font:12px monospace}#delivery-hud .speed{position:absolute;left:28px;bottom:25px;display:flex;align-items:baseline;gap:9px;text-shadow:0 2px 10px #152b30}
-      #delivery-hud #mph{font:64px 'InstrumentSerif',serif}#delivery-hud #mode{font-size:12px;letter-spacing:2px}
-      #delivery-hud .music{position:absolute;bottom:24px;left:210px;right:320px;border:1px solid #61796b;background:#183a3be8;border-radius:13px;padding:13px 18px;pointer-events:auto}
-      #delivery-hud .music-title{display:flex;justify-content:space-between;font-size:11px;color:#e6c68c;letter-spacing:1px}#delivery-hud #track{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;margin:5px 0 9px}
-      #delivery-hud .music button{padding:5px 9px;font-size:11px;margin-right:4px}#delivery-hud input[type=range]{width:78px;accent-color:#e7bb73;vertical-align:middle}
-      #delivery-hud .notice{position:absolute;bottom:130px;left:50%;transform:translateX(-50%);max-width:470px;background:#1a3438e6;padding:10px 17px;border-radius:8px;text-align:center;font-size:12px}
-      #delivery-hud #result{display:none;margin-top:12px;padding:12px 0;border-top:1px solid #54706a}#delivery-hud #pay{font:32px 'InstrumentSerif',serif;color:#e7bb73}
-      @media(max-width:950px){#delivery-hud .phone{width:230px;padding:16px;right:12px}.music{right:255px!important;left:140px!important}.controls{max-width:240px}.wordmark{font-size:23px!important}}
+      #delivery-hud {
+        position: fixed; inset: 0; pointer-events: none; z-index: 100;
+        color: #ede9dc; font: 13px 'DM-Sans', sans-serif; line-height: 1.5;
+      }
+      #delivery-hud * { box-sizing: border-box; }
+      #delivery-hud button, #delivery-hud input { pointer-events: auto; font: inherit; }
+      #delivery-hud button {
+        background: #d9bd83; color: #172c32; border: 0; border-radius: 6px;
+        padding: 9px 12px; cursor: pointer; font-weight: 600;
+      }
+      #delivery-hud button:hover { background: #edcf98; }
+      #delivery-hud button:disabled { opacity: .45; cursor: default; }
+      #delivery-hud .top { position: absolute; top: 22px; left: 25px; text-shadow: 0 1px 5px #1d3449; }
+      #delivery-hud .wordmark { font: 22px 'InstrumentSerif', serif; letter-spacing: 1px; }
+      #delivery-hud .sub { font-size: 10px; letter-spacing: 2px; color: #e2e8de; }
+      #delivery-hud .route {
+        margin-top: 12px; background: #182e34d9; border-left: 3px solid #d9bd83;
+        padding: 10px 14px; max-width: 340px; border-radius: 0 7px 7px 0; font-size: 12px;
+      }
+      #delivery-hud .phone {
+        position: absolute; right: 23px; top: 86px; width: 252px; padding: 18px;
+        background: #14272dee; border: 1px solid #81938a; border-radius: 18px;
+        box-shadow: 0 8px 25px #10233260; pointer-events: auto;
+      }
+      #delivery-hud .phone-header { display: flex; justify-content: space-between; font-size: 10px; color: #9db4ae; letter-spacing: 1px; }
+      #delivery-hud .phone h2 { font: 26px 'InstrumentSerif', serif; margin: 12px 0 4px; }
+      #delivery-hud .muted { color: #a9bbb2; font-size: 11px; }
+      #delivery-hud .order-detail { border-top: 1px solid #425d5c; margin: 12px 0 9px; padding-top: 11px; font-size: 11px; }
+      #delivery-hud .code { font-size: 24px; letter-spacing: 6px; color: #dfc68f; margin: 3px 0 9px; }
+      #delivery-hud .status { margin: 10px 0; color: #cbd8cf; font-size: 11px; min-height: 32px; }
+      #delivery-hud #action { width: 100%; }
+      #delivery-hud #code-panel { display: none; margin: 10px 0; }
+      #handoff-code { background: #e5e2cf; color: #203c3f; width: 100%; border: 0; border-radius: 5px; padding: 8px; margin-bottom: 7px; letter-spacing: 6px; }
+      #delivery-hud #code-panel button { font-size: 11px; padding: 8px 10px; }
+      #delivery-hud .controls {
+        position: absolute; left: 25px; bottom: 143px; font-size: 10px;
+        color: #e4e5dc; line-height: 1.7; text-shadow: 0 1px 4px #142c36;
+      }
+      #delivery-hud kbd { color: #e7c68f; font: 10px monospace; }
+      #delivery-hud .speed {
+        position: absolute; right: 26px; top: 22px; display: flex; align-items: center;
+        gap: 8px; background: #152b32c9; border-radius: 8px; padding: 6px 13px;
+      }
+      #delivery-hud #mph { font-size: 30px; font-weight: 500; line-height: 1.1; }
+      #delivery-hud .speed > span:last-child { font-size: 10px; }
+      #delivery-hud #mode { font-size: 9px; letter-spacing: 1px; color: #b7c9bd; }
+      #delivery-hud .music {
+        position: absolute; bottom: 23px; left: 25px; width: 410px;
+        border: 1px solid #6b8179; background: #162e34e8; border-radius: 10px;
+        padding: 12px 15px; pointer-events: auto;
+      }
+      #delivery-hud .music-title { display: flex; justify-content: space-between; font-size: 9px; color: #cbbd95; letter-spacing: 2px; }
+      #delivery-hud #track { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; margin: 5px 0 9px; }
+      #delivery-hud .music button { padding: 5px 8px; font-size: 10px; margin-right: 3px; }
+      #delivery-hud input[type=range] { width: 62px; accent-color: #d9bd83; vertical-align: middle; }
+      #delivery-hud .music label { font-size: 10px; }
+      #delivery-hud .notice {
+        position: absolute; bottom: 145px; left: 50%; transform: translateX(-50%);
+        max-width: 390px; color: #f1e9d2; background: #152c34c9;
+        padding: 8px 12px; border-radius: 5px; text-align: center; font-size: 11px;
+      }
+      #delivery-hud #result { display: none; margin-top: 10px; padding: 10px 0; border-top: 1px solid #425d5c; }
+      #delivery-hud #pay { font: 32px 'InstrumentSerif', serif; color: #e2c78c; }
       </style>
       <div class="top"><div class="sub">NEW YORK · 6:42 PM</div><div class="wordmark">我在纽约送外卖</div><div class="route" id="route"></div></div>
       <section class="phone"><div class="phone-header"><span>ORCHARD / DELIVERY</span><span>● 4G</span></div><h2 id="restaurant"></h2><div class="muted" id="order-id"></div><div class="order-detail" id="items"></div><div class="muted">交接码</div><div class="code" id="order-code"></div><div class="muted" id="customer"></div><div class="status" id="status"></div>
@@ -355,7 +407,7 @@ export class DeliveryDemo extends Component {
     const player = this.inCar ? this.vehicle : this.walker;
     const sorted = [...this.frames].sort((a, b) => a - b);
     const average = this.frames.reduce((sum, frame) => sum + frame, 0) / Math.max(1, this.frames.length);
-    text('diagnostics', `x ${player.x.toFixed(2)}  z ${player.z.toFixed(2)}  yaw ${(player.yaw * DEG).toFixed(1)}\nFPS ${(1 / average).toFixed(1)}  p95 ${((sorted[Math.floor(sorted.length * .95)] || 0) * 1000).toFixed(1)} ms\n${innerWidth} × ${innerHeight}  DPR ${devicePixelRatio}\nAudio ${this.music.audio.currentTime.toFixed(2)} s  gain ${this.music.effectiveVolume.toFixed(3)}\nSingle player · ${this.music.audio.paused ? 'paused' : 'playing'}`);
+    text('diagnostics', `x ${player.x.toFixed(2)}  z ${player.z.toFixed(2)}  yaw ${(player.yaw * DEG).toFixed(1)}\nFPS ${(1 / average).toFixed(1)}  p95 ${((sorted[Math.floor(sorted.length * .95)] || 0) * 1000).toFixed(1)} ms\n${innerWidth} × ${innerHeight}  DPR ${devicePixelRatio}\nAudio ${this.music.audio.currentTime.toFixed(2)} s  gain ${this.music.effectiveVolume.toFixed(3)}\nSingle player · ${this.music.audio.paused || this.music.audio.error ? 'paused' : 'playing'}`);
   }
 
   onDestroy(): void {

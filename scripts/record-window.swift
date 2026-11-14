@@ -3,6 +3,7 @@
 import Foundation
 import ScreenCaptureKit
 import AVFoundation
+import AppKit
 
 final class RecordingDelegate: NSObject, SCRecordingOutputDelegate {
     var finished = false
@@ -21,8 +22,10 @@ final class RecordingDelegate: NSObject, SCRecordingOutputDelegate {
 }
 
 @main
+@MainActor
 struct Recorder {
     static func main() async {
+        _ = NSApplication.shared
         do {
             try await record()
         } catch {

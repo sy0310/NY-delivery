@@ -65,7 +65,9 @@ export class MusicPlayer {
       await this.audio.play();
       this.message = this.tracks[this.index]?.name || '正在播放';
     } catch {
-      this.message = '播放未开始，请选一首有效曲目后再次点击播放';
+      this.message = this.audio.error
+        ? '无法播放该文件，请重新选 MP3 / WAV 或切回演示曲'
+        : '播放未开始，请选一首有效曲目后再次点击播放';
     }
   }
 
