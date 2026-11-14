@@ -67,12 +67,12 @@ export class World {
     light.color = new Color(255, 225, 185);
     light.illuminance = 44000;
     light.shadowEnabled = true;
-    light.shadowDistance = 85;
+    light.shadowDistance = 55;
     light.shadowBias = .001;
     const globals = this.root.scene.globals;
     globals.shadows.enabled = true;
     globals.shadows.type = 1;
-    globals.shadows.shadowMapSize = 1024;
+    globals.shadows.shadowMapSize = 2048;
     globals.fog.enabled = true;
     globals.fog.type = 0;
     globals.fog.fogStart = 105;
@@ -199,6 +199,15 @@ export class World {
         if (Math.abs(z) < 65) {
           this.storefront(side, z, index);
           this.fireEscape(side, z, height);
+          for (let row = 0; row < 7; row++) {
+            const sillY = (681 - row * 93) / 768 * height;
+            if (sillY < 4.2) continue;
+            for (let column = 0; column < 5; column++) {
+              const windowZ = z + (column - 2) * 2.87;
+              g.box('Projecting window sill', side * 9.88, sillY, windowZ,
+                .3, .11, 1.85, '#bdc0af');
+            }
+          }
         }
       }
     }
@@ -244,8 +253,14 @@ export class World {
       for (let offset = -1.4; offset <= 1.5; offset += .38) {
         g.box('Rail post', side * 9.08, y + .4, z + 2.8 + offset, .025, .7, .025, '#36464a');
       }
-      g.beam('Fire-escape ladder', new Vec3(side * 9.4, y, z + 1.4),
-        new Vec3(side * 9.4, y + 3, z + 4.1), .055, '#36464a');
+      for (const x of [side * 9.2, side * 9.7]) {
+        g.beam('Fire-escape ladder rail', new Vec3(x, y, z + 1.4),
+          new Vec3(x, y + 3, z + 4.1), .027, '#36464a');
+      }
+      for (let step = 1; step <= 12; step++) {
+        g.box('Fire-escape rung', side * 9.45, y + step / 4, z + 1.4 + step * .225,
+          .53, .035, .09, '#526264');
+      }
     }
   }
 
@@ -373,12 +388,23 @@ export class World {
     const g = this.geometry;
     const x = side * 5.65;
     const color = side < 0 ? '#748e91' : '#a3977b';
-    this.wall('Parked car', x, .65, z, 1.8, .62, 4.05, color);
-    g.box('Parked cabin', x, 1.18, z + .1, 1.56, .52, 1.95, '#425c65');
-    g.box('Parked roof', x, 1.49, z + .1, 1.55, .1, 1.88, color);
+    this.obstacles.push({ x, z, width: 1.8, depth: 4.05 });
+    g.roundedBox('Rounded parked body', x, .65, z, 1.8, .62, 4.05, .14, color);
+    g.roundedBox('Parked cabin glazing', x, 1.18, z + .1, 1.56, .52, 1.95, .16, '#425c65');
+    g.roundedBox('Parked roof', x, 1.49, z + .1, 1.55, .1, 1.88, .04, color);
+    for (const edge of [-1, 1]) {
+      g.roundedBox('Parked headlight', x + edge * .62, .75, z - 2.025,
+        .34, .13, .04, .018, '#e3ddbd');
+      g.roundedBox('Parked rear light', x + edge * .62, .75, z + 2.025,
+        .34, .13, .04, .018, '#9e5047');
+      g.box('Parked window pillar', x + edge * .79, 1.2, z + .15, .035, .48, .075, color);
+    }
     for (const wheelSide of [-1, 1]) for (const offset of [-1.24, 1.24]) {
       const tire = g.cylinder('Parked tire', x + wheelSide * .9, .43, z + offset, .32, .18, '#263137');
       tire.setRotationFromEuler(0, 0, 90);
+      const rim = g.cylinder('Parked alloy wheel', x + wheelSide * 1.005, .43, z + offset,
+        .21, .025, '#a2aeab');
+      rim.setRotationFromEuler(0, 0, 90);
     }
   }
 }

@@ -10,7 +10,7 @@ import { MusicPlayer } from './MusicPlayer';
 
 const { ccclass, property } = _decorator;
 const DEG = 180 / Math.PI;
-const DRIVER_EYE = new Vec3(-.43, 1.68, .3);
+const DRIVER_EYE = new Vec3(-.43, 1.48, .3);
 const KEY_BINDINGS: Partial<Record<KeyCode, string>> = {
   [KeyCode.KEY_W]: 'KeyW',
   [KeyCode.KEY_S]: 'KeyS',
@@ -171,14 +171,15 @@ export class DeliveryDemo extends Component {
 
   private updateBag(): void {
     const stage = this.order.stage;
+    const parent = stage === 'stowed' ? this.world.car : this.node;
+    if (this.world.bag.parent !== parent) this.world.bag.setParent(parent);
     this.world.bag.active = stage !== 'idle' && stage !== 'delivered';
     if (stage === 'carrying' || stage === 'delivering') {
       const yaw = this.walker.yaw;
       this.world.bag.setPosition(this.walker.x + .45 * Math.cos(yaw) - .65 * Math.sin(yaw),
         1.05, this.walker.z - .45 * Math.sin(yaw) - .65 * Math.cos(yaw));
     } else if (stage === 'stowed') {
-      this.world.bag.setPosition(this.vehicle.x + .45 * Math.cos(this.vehicle.yaw),
-        1.26, this.vehicle.z - .45 * Math.sin(this.vehicle.yaw) + .35);
+      this.world.bag.setPosition(.45, 1.06, .35);
     } else this.world.bag.setPosition(-15.5, 1.55, -.6);
   }
 

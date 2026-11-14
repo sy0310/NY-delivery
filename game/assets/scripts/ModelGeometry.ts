@@ -1,5 +1,5 @@
 import {
-  Node, Material, Mesh, MeshRenderer, utils, primitives, Color, Vec3, Quat,
+  Node, Material, Mesh, MeshRenderer, utils, primitives, Color, Vec3, Quat, Mat4,
   ImageAsset, Texture2D, gfx,
 } from 'cc';
 
@@ -17,15 +17,33 @@ export class ModelGeometry {
   private sphereMesh = utils.createMesh(primitives.sphere(.5, { segments: 12 }));
   private cylinderMesh = utils.createMesh(primitives.cylinder(1, 1, 1, { radialSegments: 16 }));
   private staticRenderers: MeshRenderer[] = [];
+  private roundedMeshes = new Map<string, Mesh>();
 
   constructor(readonly root: Node, private surface: Material, private unlit: Material) {}
 
-  material(hex: string, metallic = 0, roughness = .8): Material {
-    const key = `${hex}/${metallic}/${roughness}`;
+  material(hex: string, metallic = 0, roughness = .8, finish?: 'grain' | 'brushed'): Material {
+    const key = `${hex}/${metallic}/${roughness}/${finish || ''}`;
     let material = this.materials.get(key);
     if (!material) {
       material = new Material();
       material.copy(this.surface);
+      if (finish) {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 128;
+        const context = canvas.getContext('2d')!;
+        const pixels = context.createImageData(128, 128);
+        for (let y = 0; y < 128; y++) for (let x = 0; x < 128; x++) {
+          const shade = finish === 'brushed' ? 234 + y * 47 % 18 + x % 3
+            : 230 + (x * 73 + y * 31 + x * y * 13) % 25;
+          const offset = (y * 128 + x) * 4;
+          pixels.data.set([shade, shade, shade, 255], offset);
+        }
+        context.putImageData(pixels, 0, 0);
+        const texture = new Texture2D();
+        texture.image = new ImageAsset(canvas);
+        material.copy(this.surface, { defines: { USE_ALBEDO_MAP: true } });
+        material.setProperty('mainTexture', texture);
+      }
       material.setProperty('mainColor', new Color().fromHEX(hex));
       material.setProperty('metallic', metallic);
       material.setProperty('roughness', roughness);
@@ -52,6 +70,76 @@ export class ModelGeometry {
     node.setPosition(x, y, z);
     node.setScale(width, height, depth);
     return node;
+  }
+
+  /** Rounded edge normals preserve highlights on close-up interior parts. */
+  roundedBox(name: string, x: number, y: number, z: number, width: number, height: number,
+    depth: number, radius: number, color: string | Material, parent: Node = this.root): Node {
+    const bevel = Math.min(radius, width / 2, height / 2, depth / 2);
+    const key = `${width}/${height}/${depth}/${bevel}`;
+    let mesh = this.roundedMeshes.get(key);
+    if (!mesh) {
+      const half = [width / 2, height / 2, depth / 2];
+      const core = half.map(value => value - bevel);
+      const samples = half.map(value => Array.from(new Set([
+        -value, -value + bevel * .25, -value + bevel * .75, -value + bevel,
+        value - bevel, value - bevel * .75, value - bevel * .25, value,
+      ])));
+      const positions: number[] = [];
+      const normals: number[] = [];
+      const uvs: number[] = [];
+      const indices: number[] = [];
+      for (let axis = 0; axis < 3; axis++) for (const sign of [-1, 1]) {
+        const uAxis = (axis + 1) % 3;
+        const vAxis = (axis + 2) % 3;
+        const columns = samples[uAxis].length;
+        const rows = samples[vAxis].length;
+        const base = positions.length / 3;
+        for (const v of samples[vAxis]) for (const u of samples[uAxis]) {
+          const point = [0, 0, 0];
+          point[axis] = sign * half[axis];
+          point[uAxis] = u;
+          point[vAxis] = v;
+          const closest = point.map((value, index) => Math.max(-core[index], Math.min(core[index], value)));
+          const normal = point.map((value, index) => value - closest[index]);
+          const length = Math.hypot(...normal);
+          for (let index = 0; index < 3; index++) {
+            positions.push(closest[index] + normal[index] / length * bevel);
+            normals.push(normal[index] / length);
+          }
+          uvs.push((u / half[uAxis] + 1) / 2, (v / half[vAxis] + 1) / 2);
+        }
+        for (let row = 0; row < rows - 1; row++) for (let column = 0; column < columns - 1; column++) {
+          const a = base + row * columns + column;
+          const b = a + 1;
+          const c = a + columns;
+          const d = c + 1;
+          if (sign > 0) indices.push(a, b, c, b, d, c);
+          else indices.push(a, c, b, b, c, d);
+        }
+      }
+      mesh = utils.createMesh({ positions, normals, uvs, indices });
+      this.roundedMeshes.set(key, mesh);
+    }
+    const node = this.mesh(name, mesh, typeof color === 'string' ? this.material(color) : color, parent);
+    node.setPosition(x, y, z);
+    return node;
+  }
+
+  glassMaterial(tinted = false): Material {
+    const key = tinted ? 'tinted-window-glass' : 'windshield-glass';
+    const existing = this.materials.get(key);
+    if (existing) return existing;
+    const material = new Material();
+    material.copy(this.surface, {
+      technique: 1,
+      states: { rasterizerState: { cullMode: gfx.CullMode.NONE } },
+    });
+    material.setProperty('mainColor', tinted ? new Color(38, 62, 70, 170) : new Color(165, 192, 198, 30));
+    material.setProperty('roughness', .15);
+    material.setProperty('metallic', .2);
+    this.materials.set(key, material);
+    return material;
   }
 
   sphere(name: string, x: number, y: number, z: number, width: number, height: number, depth: number,
@@ -132,9 +220,13 @@ export class ModelGeometry {
   }
 
   /** Preserve material boundaries while reducing thousands of static detail draws. */
-  batchStatic(): void {
+  batchStatic(parent: Node = this.root): void {
     const groups = new Map<Material, MeshRenderer[]>();
-    for (const renderer of this.staticRenderers) {
+    const sources = parent === this.root ? this.staticRenderers : parent.children
+      .map(node => node.getComponent(MeshRenderer))
+      .filter((renderer): renderer is MeshRenderer => renderer !== null
+        && renderer.shadowCastingMode === MeshRenderer.ShadowCastingMode.ON);
+    for (const renderer of sources) {
       const material = renderer.sharedMaterials[0]!;
       const group = groups.get(material) || [];
       group.push(renderer);
@@ -145,9 +237,13 @@ export class ModelGeometry {
         const chunk = renderers.slice(offset, offset + 350);
         if (chunk.length < 2) continue;
         const merged = new Mesh();
-        for (const renderer of chunk) merged.merge(renderer.mesh!, renderer.node.worldMatrix);
+        for (const renderer of chunk) {
+          const transform = Mat4.fromRTS(new Mat4(), renderer.node.rotation,
+            renderer.node.position, renderer.node.scale);
+          merged.merge(renderer.mesh!, transform);
+        }
         const node = new Node('Static city detail batch');
-        this.root.addChild(node);
+        parent.addChild(node);
         const renderer = node.addComponent(MeshRenderer);
         renderer.mesh = merged;
         renderer.setMaterial(material, 0);
@@ -155,6 +251,6 @@ export class ModelGeometry {
         for (const original of chunk) original.node.destroy();
       }
     }
-    this.staticRenderers = [];
+    if (parent === this.root) this.staticRenderers = [];
   }
 }
