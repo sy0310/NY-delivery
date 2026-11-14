@@ -313,7 +313,12 @@ export class DeliveryDemo extends Component {
       <section class="music"><div class="music-title"><span>ORCHARD RADIO</span><span id="music-time">00:00</span></div><div id="track"></div><button id="play">播放 / 暂停</button><button id="choose">本地 MP3 / WAV</button><button id="next">切歌</button><label>音量 <input id="volume" aria-label="音乐音量" type="range" min="0" max="1" step=".01" value=".55"></label><label style="font-size:10px"><input id="continuous" type="checkbox">连续聆听</label></section>
       <div class="notice" id="notice"></div><pre id="diagnostics" style="display:none;position:absolute;left:28px;top:165px;background:#142b30dd;padding:12px;font:11px monospace"></pre>`;
     document.body.appendChild(this.hud);
-    const on = (id: string, action: () => void) => this.hud.querySelector('#' + id)!.addEventListener('click', action);
+    const on = (id: string, action: () => void) => {
+      this.hud.querySelector('#' + id)!.addEventListener('click', () => {
+        action();
+        game.canvas.focus();
+      });
+    };
     on('play', () => this.music.toggle());
     on('choose', () => this.music.choose());
     on('next', () => this.music.next());
