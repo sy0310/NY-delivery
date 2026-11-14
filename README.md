@@ -4,6 +4,10 @@
 
 汽车样片包含一段傍晚街道、带内饰的汽车、餐厅排队取餐、音乐与送达结算。首个平台为电脑 Web Desktop。当前验收状态见 [验证记录](docs/VALIDATION.md)。
 
+驾驶舱有实时 mph 仪表、中控导航与后视画面。街道延续至远处楼群，当前可活动路段约 300 m。
+
+![发布版驾驶舱实机画面](docs/media/cockpit-refined.jpg)
+
 ## 打开工程
 
 安装 Cocos Creator **3.8.8**，在 Dashboard 中添加本地版本，再打开本仓库的 game 目录。
@@ -15,6 +19,8 @@ python3 scripts/open-editor.py
 ```
 
 这个入口使用该版本支持的离线打开参数。场景中的 Delivery Demo 组件在运行时生成街区与车厢，点击编辑器顶部播放按钮预览。
+
+本机已下载并验证官方完整编辑器包，已通过 Dashboard 添加本地 Creator 3.8.8，并导入 game 工程。
 
 ## 在 Cocos 编辑器里试玩
 
@@ -64,6 +70,8 @@ python3 scripts/serve.py --directory "/path/to/output/web-desktop" --port 8080
 6. 停车下车，走到门口按 E 交付，查看 $9.75 结算。点击“开始下一单”重开。
 
 M 控制播放与暂停。R 将人和车恢复至起点安全位置，保留订单和歌曲进度。F3 显示坐标、帧率与音频诊断。车外音乐默认随距离衰减，可勾选连续聆听。
+
+同一运行实例已连续完成两单。三张发布版截图保存在 docs/media，本机 65 秒有声录像保存在 .local/media/delivery-v01.mp4，具体证据与剩余复测见验证记录。
 
 驾驶采用简化运动学模型与几何障碍碰撞。当前构建物理后端为 Cocos Bullet / Ammo，车辆与步行位置由各自控制器维护。
 
