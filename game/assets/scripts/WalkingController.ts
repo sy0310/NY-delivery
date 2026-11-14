@@ -1,4 +1,4 @@
-import { CanMove, Position } from './VehicleController';
+import type { CanMove, Position } from './VehicleController';
 
 export class WalkingController {
   x = 0;
