@@ -309,7 +309,14 @@ export class DeliveryDemo extends Component {
     this.hud.querySelector<HTMLElement>('#code-panel')!.style.display = stage === 'accepted' && this.order.queueJoined ? 'block' : 'none';
     this.hud.querySelector<HTMLElement>('#result')!.style.display = stage === 'delivered' ? 'block' : 'none';
     this.hud.querySelector<HTMLElement>('#action')!.style.display = stage === 'delivered' ? 'none' : 'block';
-    text('action', stage === 'idle' ? '接单 · $' + data.pay.toFixed(2) : this.inCar ? 'E · 停稳下车' : this.atCounter() && stage === 'accepted' ? 'E · 排队 / 交接' : this.distance(this.vehicle.x, this.vehicle.z) < 3.4 ? stage === 'carrying' || stage === 'delivering' ? 'E · 装袋' : 'E · 上车' : 'E · 交互');
+    let action = 'E · 交互';
+    if (stage === 'idle') action = '接单 · $' + data.pay.toFixed(2);
+    else if (this.inCar) action = 'E · 停稳下车';
+    else if (this.atCounter() && stage === 'accepted') action = 'E · 排队 / 交接';
+    else if (this.distance(this.vehicle.x, this.vehicle.z) < 3.4) {
+      action = stage === 'carrying' || stage === 'delivering' ? 'E · 装袋' : 'E · 上车';
+    }
+    text('action', action);
     text('pay', '$' + this.order.earnings.toFixed(2));
     text('summary', Math.round(this.vehicle.distance) + ' m · ' + Math.round(this.elapsed) + ' s');
     const diagnostics = this.hud.querySelector<HTMLElement>('#diagnostics')!;

@@ -22,7 +22,16 @@ final class RecordingDelegate: NSObject, SCRecordingOutputDelegate {
 
 @main
 struct Recorder {
-    static func main() async throws {
+    static func main() async {
+        do {
+            try await record()
+        } catch {
+            fputs("Recording failed — \(error.localizedDescription)\n", stderr)
+            exit(1)
+        }
+    }
+
+    static func record() async throws {
         let arguments = CommandLine.arguments
         guard arguments.count >= 3 else {
             print("Usage — record-window output.mp4 seconds [window title substring]")
