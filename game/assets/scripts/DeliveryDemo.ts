@@ -135,7 +135,7 @@ export class DeliveryDemo extends Component {
   private updateBag(): void {
     const stage = this.order.stage;
     this.world.bag.active = stage !== 'idle' && stage !== 'delivered';
-    if (stage === 'carrying') {
+    if (stage === 'carrying' || stage === 'delivering') {
       const yaw = this.walker.yaw;
       this.world.bag.setPosition(this.walker.x + .45 * Math.cos(yaw) - .65 * Math.sin(yaw),
         1.05, this.walker.z - .45 * Math.sin(yaw) - .65 * Math.cos(yaw));
@@ -152,13 +152,14 @@ export class DeliveryDemo extends Component {
       this.walker.place(exit, this.vehicle.yaw);
       this.inCar = false;
       this.clearKeys();
-      this.notice = this.order.stage === 'stowed'
+      this.order.retrieve();
+      this.notice = this.order.stage === 'delivering'
         ? '已下车。步行到 18 Orchard Walk 门口，按 E 交付。'
         : '已下车。W/S 步行，A/D 转身，靠近取餐柜台按 E。';
       return;
     }
     if (this.distance(this.vehicle.x, this.vehicle.z) < 3.4) {
-      if (this.order.stage === 'carrying') {
+      if (this.order.stage === 'carrying' || this.order.stage === 'delivering') {
         this.order.stow();
         this.notice = '餐袋已放在副驾驶。再次按 E 上车，沿街驶向 18 Orchard Walk。';
         this.music.chime();
@@ -179,7 +180,7 @@ export class DeliveryDemo extends Component {
       } else this.notice = '留在取餐区等候，轮到你后在手机中输入交接码。';
       return;
     }
-    if (this.distance(9.4, -30) < 2.5 && this.order.stage === 'stowed') {
+    if (this.distance(9.4, -30) < 2.5 && this.order.stage === 'delivering') {
       this.order.deliver();
       this.notice = '送达成功。顾客收到了热餐，结算已完成。';
       this.music.chime();
@@ -292,6 +293,7 @@ export class DeliveryDemo extends Component {
       accepted: `← Juniper Kitchen · ${Math.round(this.distance(-10, 0))} m`,
       carrying: '回到汽车旁 · 按 E 将餐袋装车',
       stowed: `18 Orchard Walk → · ${Math.round(this.distance(9.4, -30))} m`,
+      delivering: `携带餐袋 · 18 Orchard Walk → · ${Math.round(this.distance(9.4, -30))} m`,
       delivered: '订单完成 · 享受你的傍晚',
     };
     text('route', routes[stage]);
@@ -300,13 +302,14 @@ export class DeliveryDemo extends Component {
       accepted: `队列 ${this.order.queueJoined ? Math.ceil(this.order.queueRemaining) + ' s' : '尚未加入'} · 厨房 ${Math.ceil(this.order.kitchenRemaining)} s`,
       carrying: `餐袋 ${data.id} · 标签 ${data.code} · 已领取`,
       stowed: '餐袋已装车 · 门口下车后按 E 交付',
+      delivering: `餐袋 ${data.id} · 标签 ${data.code} · 送往门口`,
       delivered: '已交付 · 本单只结算一次',
     };
     text('status', statuses[stage]);
     this.hud.querySelector<HTMLElement>('#code-panel')!.style.display = stage === 'accepted' && this.order.queueJoined ? 'block' : 'none';
     this.hud.querySelector<HTMLElement>('#result')!.style.display = stage === 'delivered' ? 'block' : 'none';
     this.hud.querySelector<HTMLElement>('#action')!.style.display = stage === 'delivered' ? 'none' : 'block';
-    text('action', stage === 'idle' ? '接单 · $' + data.pay.toFixed(2) : this.inCar ? 'E · 停稳下车' : this.atCounter() ? 'E · 排队 / 交接' : this.distance(this.vehicle.x, this.vehicle.z) < 3.4 ? stage === 'carrying' ? 'E · 装袋' : 'E · 上车' : 'E · 交互');
+    text('action', stage === 'idle' ? '接单 · $' + data.pay.toFixed(2) : this.inCar ? 'E · 停稳下车' : this.atCounter() && stage === 'accepted' ? 'E · 排队 / 交接' : this.distance(this.vehicle.x, this.vehicle.z) < 3.4 ? stage === 'carrying' || stage === 'delivering' ? 'E · 装袋' : 'E · 上车' : 'E · 交互');
     text('pay', '$' + this.order.earnings.toFixed(2));
     text('summary', Math.round(this.vehicle.distance) + ' m · ' + Math.round(this.elapsed) + ' s');
     const diagnostics = this.hud.querySelector<HTMLElement>('#diagnostics')!;

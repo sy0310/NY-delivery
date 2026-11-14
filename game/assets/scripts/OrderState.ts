@@ -18,7 +18,7 @@ export const DEMO_ORDER: Readonly<OrderData> = Object.freeze({
   pay: 9.75,
 });
 
-export type OrderStage = 'idle' | 'accepted' | 'carrying' | 'stowed' | 'delivered';
+export type OrderStage = 'idle' | 'accepted' | 'carrying' | 'stowed' | 'delivering' | 'delivered';
 
 /** Shared by the phone, counter and bag. Time is game time, independent of audio. */
 export class OrderState {
@@ -61,13 +61,19 @@ export class OrderState {
   }
 
   stow(): boolean {
-    if (this.stage !== 'carrying') return false;
+    if (this.stage !== 'carrying' && this.stage !== 'delivering') return false;
     this.stage = 'stowed';
     return true;
   }
 
-  deliver(): boolean {
+  retrieve(): boolean {
     if (this.stage !== 'stowed') return false;
+    this.stage = 'delivering';
+    return true;
+  }
+
+  deliver(): boolean {
+    if (this.stage !== 'delivering') return false;
     this.stage = 'delivered';
     this.earnings = this.data.pay;
     return true;
