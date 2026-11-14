@@ -260,16 +260,16 @@ export class DeliveryDemo extends Component {
         padding: 10px 14px; max-width: 340px; border-radius: 0 7px 7px 0; font-size: 12px;
       }
       #delivery-hud .phone {
-        position: absolute; right: 23px; top: 86px; width: 252px; padding: 18px;
+        position: absolute; right: 23px; top: 86px; width: 252px; padding: 16px;
         background: #14272dee; border: 1px solid #81938a; border-radius: 18px;
         box-shadow: 0 8px 25px #10233260; pointer-events: auto;
       }
       #delivery-hud .phone-header { display: flex; justify-content: space-between; font-size: 10px; color: #9db4ae; letter-spacing: 1px; }
-      #delivery-hud .phone h2 { font: 26px 'InstrumentSerif', serif; margin: 12px 0 4px; }
+      #delivery-hud .phone h2 { font: 24px 'InstrumentSerif', serif; margin: 8px 0 4px; }
       #delivery-hud .muted { color: #a9bbb2; font-size: 11px; }
-      #delivery-hud .order-detail { border-top: 1px solid #425d5c; margin: 12px 0 9px; padding-top: 11px; font-size: 11px; }
-      #delivery-hud .code { font-size: 24px; letter-spacing: 6px; color: #dfc68f; margin: 3px 0 9px; }
-      #delivery-hud .status { margin: 10px 0; color: #cbd8cf; font-size: 11px; min-height: 32px; }
+      #delivery-hud .order-detail { border-top: 1px solid #425d5c; margin: 10px 0 8px; padding-top: 9px; font-size: 11px; }
+      #delivery-hud .code { font-size: 22px; letter-spacing: 6px; color: #dfc68f; margin: 3px 0 6px; }
+      #delivery-hud .status { margin: 8px 0; color: #cbd8cf; font-size: 11px; min-height: 28px; }
       #delivery-hud #action { width: 100%; }
       #delivery-hud #code-panel { display: none; margin: 10px 0; }
       #handoff-code { background: #e5e2cf; color: #203c3f; width: 100%; border: 0; border-radius: 5px; padding: 8px; margin-bottom: 7px; letter-spacing: 6px; }

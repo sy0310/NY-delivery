@@ -17,6 +17,8 @@ export class CarModel {
   private steering = new Node('Steering wheel');
   private instruments: PaintedPanel;
   private navigation: PaintedPanel;
+  private rearCamera!: Camera;
+  private rearTexture!: RenderTexture;
   private refresh = 0;
 
   constructor(private geometry: ModelGeometry) {
@@ -158,9 +160,16 @@ export class CarModel {
     camera.near = .1;
     camera.far = 450;
     camera.clearColor = new Color(185, 210, 224);
+    this.rearCamera = camera;
+    this.rearTexture = texture;
   }
 
   update(dt: number, telemetry: CarTelemetry): void {
+    // Creator's native preview redirects scene cameras when its panel opens or resizes.
+    const camera = this.rearCamera.camera;
+    if (camera && camera.window !== this.rearTexture.window) {
+      camera.changeTargetWindow(this.rearTexture.window);
+    }
     this.steering.setRotationFromEuler(67, telemetry.steering * 28, 0);
     this.refresh += dt;
     if (this.refresh < .12) return;
