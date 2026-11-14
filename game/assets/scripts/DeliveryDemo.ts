@@ -64,6 +64,7 @@ export class DeliveryDemo extends Component {
     })));
     if (!this.isValid) return;
     this.world = new World(this.node, this.surfaceMaterial, this.signMaterial, this.order.data);
+    this.world.car.setPosition(this.vehicle.x, 0, this.vehicle.z);
     const scene = this.node.scene;
     scene.globals.ambient.skyColor = new Vec4(.48, .61, .72, 1);
     scene.globals.ambient.skyIllum = 20000;
@@ -149,17 +150,23 @@ export class DeliveryDemo extends Component {
   }
 
   private updateView(blend: number): void {
-    const target = new Vec3();
-    const yaw = this.inCar ? this.vehicle.yaw : this.walker.yaw;
     if (this.inCar) {
-      target.set(this.vehicle.x - .43 * Math.cos(yaw) + .3 * Math.sin(yaw), 1.68,
-        this.vehicle.z + .43 * Math.sin(yaw) + .3 * Math.cos(yaw));
-    } else target.set(this.walker.x, 1.7, this.walker.z);
+      if (this.camera.parent !== this.world.car) this.camera.setParent(this.world.car);
+      this.camera.setPosition(DRIVER_EYE);
+      this.camera.setRotationFromEuler(-4, 0, 0);
+      return;
+    }
+    if (this.camera.parent !== this.node) {
+      this.camera.setParent(this.node, true);
+      this.viewPosition.set(this.camera.worldPosition);
+      this.viewRotation.set(this.camera.worldRotation);
+    }
+    const target = new Vec3(this.walker.x, 1.7, this.walker.z);
     Vec3.lerp(this.viewPosition, this.viewPosition, target, blend);
-    const rotation = Quat.fromEuler(new Quat(), -4, yaw * DEG, 0);
+    const rotation = Quat.fromEuler(new Quat(), -4, this.walker.yaw * DEG, 0);
     Quat.slerp(this.viewRotation, this.viewRotation, rotation, blend);
-    this.camera.setPosition(this.viewPosition);
-    this.camera.setRotation(this.viewRotation);
+    this.camera.setWorldPosition(this.viewPosition);
+    this.camera.setWorldRotation(this.viewRotation);
   }
 
   private updateBag(): void {
