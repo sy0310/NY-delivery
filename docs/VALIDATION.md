@@ -88,3 +88,13 @@
 - 全部下车落点同时受阻的组合已通过真实模块测试，实机场景中的该组合尚待补测。
 - 冷启动耗时、长时间稳定性及更多本地音频编码格式尚待测试。
 - Dashboard 原始在线下载流程仍按已验证绕行记录，详情见 ENVIRONMENT.md。
+
+## 驾驶镜头回归复测
+
+用户反馈加速时驾驶位向后漂移。修复前已在真实 Creator 预览中复现，持续加速后，摄像机相对驾驶座的偏移为 0.9503 m。初次场景初始化还记录到 23.1355 m 的峰值，来自摄像机与车辆初始位置的同步时机。
+
+新增 F3 的 Seat drift / Seat yaw 实机采样，以及 tests/driver-camera.integration.mjs。检查器读取实际预览采集的诊断文本，以 0.002 m 与 0.002° 为固定驾驶位的数值容差。修复前运行以下检查，因真实驾驶位偏移而失败。
+
+```bash
+node tests/driver-camera.integration.mjs .local/camera-before.txt
+```

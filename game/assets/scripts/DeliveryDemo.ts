@@ -10,6 +10,7 @@ import { MusicPlayer } from './MusicPlayer';
 
 const { ccclass, property } = _decorator;
 const DEG = 180 / Math.PI;
+const DRIVER_EYE = new Vec3(-.43, 1.68, .3);
 const KEY_BINDINGS: Partial<Record<KeyCode, string>> = {
   [KeyCode.KEY_W]: 'KeyW',
   [KeyCode.KEY_S]: 'KeyS',
@@ -46,6 +47,8 @@ export class DeliveryDemo extends Component {
   private diagnostics = false;
   private viewPosition = new Vec3();
   private viewRotation = new Quat();
+  private peakSeatDrift = 0;
+  private peakSeatYawDrift = 0;
 
   async start(): Promise<void> {
     await Promise.all(['DM-Sans', 'InstrumentSerif'].map(name => new Promise<void>(resolve => {
@@ -412,7 +415,24 @@ export class DeliveryDemo extends Component {
     const player = this.inCar ? this.vehicle : this.walker;
     const sorted = [...this.frames].sort((a, b) => a - b);
     const average = this.frames.reduce((sum, frame) => sum + frame, 0) / Math.max(1, this.frames.length);
-    text('diagnostics', `x ${player.x.toFixed(2)}  z ${player.z.toFixed(2)}  yaw ${(player.yaw * DEG).toFixed(1)}\nFPS ${(1 / average).toFixed(1)}  p95 ${((sorted[Math.floor(sorted.length * .95)] || 0) * 1000).toFixed(1)} ms\n${innerWidth} × ${innerHeight}  DPR ${devicePixelRatio}\nAudio ${this.music.audio.currentTime.toFixed(2)} s  gain ${this.music.effectiveVolume.toFixed(3)}\nSingle player · ${this.music.audio.paused || this.music.audio.error ? 'paused' : 'playing'}`);
+    const seat = this.world.car.inverseTransformPoint(new Vec3(), this.camera.worldPosition);
+    const seatDrift = Vec3.distance(seat, DRIVER_EYE);
+    const cameraYaw = Math.atan2(-this.camera.forward.x, -this.camera.forward.z);
+    const yawDifference = cameraYaw - this.vehicle.yaw;
+    const seatYawDrift = Math.abs(Math.atan2(Math.sin(yawDifference), Math.cos(yawDifference)) * DEG);
+    if (this.inCar && this.diagnostics) {
+      this.peakSeatDrift = Math.max(this.peakSeatDrift, seatDrift);
+      this.peakSeatYawDrift = Math.max(this.peakSeatYawDrift, seatYawDrift);
+    }
+    text('diagnostics', [
+      `x ${player.x.toFixed(2)}  z ${player.z.toFixed(2)}  yaw ${(player.yaw * DEG).toFixed(1)}`,
+      `FPS ${(1 / average).toFixed(1)}  p95 ${((sorted[Math.floor(sorted.length * .95)] || 0) * 1000).toFixed(1)} ms`,
+      `${innerWidth} × ${innerHeight}  DPR ${devicePixelRatio}`,
+      `Seat drift ${seatDrift.toFixed(4)} m (peak ${this.peakSeatDrift.toFixed(4)} m)`,
+      `Seat yaw ${seatYawDrift.toFixed(4)} deg (peak ${this.peakSeatYawDrift.toFixed(4)} deg)`,
+      `Audio ${this.music.audio.currentTime.toFixed(2)} s  gain ${this.music.effectiveVolume.toFixed(3)}`,
+      `Single player · ${this.music.audio.paused || this.music.audio.error ? 'paused' : 'playing'}`,
+    ].join('\n'));
   }
 
   onDestroy(): void {
