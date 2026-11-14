@@ -37,9 +37,12 @@ export class MusicPlayer {
   }
 
   setDemo(url: string): void {
+    if (this.tracks.length) this.index += 1;
     this.tracks.unshift({ name: 'Evening on Orchard · Original demo', url, local: false });
-    if (!this.audio.src) this.audio.src = url;
-    this.message = '演示曲已就绪，点击播放或选择本地歌曲';
+    if (!this.audio.src) {
+      this.audio.src = url;
+      this.message = '演示曲已就绪，点击播放或选择本地歌曲';
+    }
   }
 
   unlock(): void {
@@ -49,6 +52,7 @@ export class MusicPlayer {
       this.gain.gain.value = this.userVolume;
       this.capture = this.context.createMediaStreamDestination();
       this.context.createMediaElementSource(this.audio).connect(this.gain);
+      this.audio.volume = 1;
       this.gain.connect(this.context.destination);
       this.gain.connect(this.capture);
     }
