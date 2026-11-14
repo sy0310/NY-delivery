@@ -45,7 +45,9 @@
 
 独立安装路径已完成真实工程导入，Creator UI 显示 Orchard.scene 与 Delivery Demo 脚本绑定。Web Desktop 构建多次返回 36，产物可由本机 HTTP 打开，已实际完成一单。
 
-编辑器使用该版本实际启动代码支持的 --nologin 参数打开，构建通过正式 --project 与 --build 接口执行。脚本支持 COCOS_CREATOR 覆盖路径。Dashboard 本地版本列表恢复尚待界面复测。
+编辑器使用该版本实际启动代码支持的 --nologin 参数打开，构建通过正式 --project 与 --build 接口执行。脚本支持 COCOS_CREATOR 覆盖路径。
+
+10:10 后完成 Dashboard“添加本地版本”，列表显示正确的用户安装路径，原“编辑器丢失”提示消失。随后通过“导入项目”选取仓库 game 目录，项目列表显示 game、Creator 3.8.8，双击后实际打开工程。Dashboard 当前也已显示登录状态。原下载入口尚未重新下载验证。
 
 ### 仍待确认
 

@@ -1,4 +1,7 @@
-import { _decorator, Component, Node, Camera, Color, Vec3, Vec4, Quat, resources, AudioClip, Material, Font, profiler } from 'cc';
+import {
+  _decorator, Component, Node, Camera, Color, Vec3, Vec4, Quat, resources,
+  AudioClip, Material, Font, profiler, game, input, Input, EventKeyboard, KeyCode,
+} from 'cc';
 import { OrderState } from './OrderState';
 import { VehicleController } from './VehicleController';
 import { WalkingController } from './WalkingController';
@@ -7,6 +10,21 @@ import { MusicPlayer } from './MusicPlayer';
 
 const { ccclass, property } = _decorator;
 const DEG = 180 / Math.PI;
+const KEY_BINDINGS: Partial<Record<KeyCode, string>> = {
+  [KeyCode.KEY_W]: 'KeyW',
+  [KeyCode.KEY_S]: 'KeyS',
+  [KeyCode.KEY_A]: 'KeyA',
+  [KeyCode.KEY_D]: 'KeyD',
+  [KeyCode.KEY_E]: 'KeyE',
+  [KeyCode.KEY_R]: 'KeyR',
+  [KeyCode.KEY_M]: 'KeyM',
+  [KeyCode.SPACE]: 'Space',
+  [KeyCode.ARROW_UP]: 'ArrowUp',
+  [KeyCode.ARROW_DOWN]: 'ArrowDown',
+  [KeyCode.ARROW_LEFT]: 'ArrowLeft',
+  [KeyCode.ARROW_RIGHT]: 'ArrowRight',
+  [KeyCode.F3]: 'F3',
+};
 
 @ccclass('DeliveryDemo')
 export class DeliveryDemo extends Component {
@@ -62,25 +80,25 @@ export class DeliveryDemo extends Component {
       if (error) this.music.message = '演示曲载入失败，仍可选择本地歌曲';
       else this.music.setDemo(clip.nativeUrl);
     });
-    window.addEventListener('keydown', this.onKeyDown);
-    window.addEventListener('keyup', this.onKeyUp);
+    input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
+    input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
     window.addEventListener('blur', this.clearKeys);
     this.updateView(1);
     this.renderHUD();
   }
 
-  private onKeyDown = (event: KeyboardEvent): void => {
-    if ((event.target as HTMLElement)?.matches('input,select')) return;
-    if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.code)) event.preventDefault();
-    this.keys.add(event.code);
-    if (event.repeat) return;
-    if (event.code === 'KeyE') this.interact();
-    if (event.code === 'KeyR') this.recover();
-    if (event.code === 'KeyM') this.music.toggle();
-    if (event.code === 'F3') { event.preventDefault(); this.diagnostics = !this.diagnostics; }
+  private onKeyDown = (event: EventKeyboard): void => {
+    if (document.activeElement?.matches('input,select')) return;
+    const code = KEY_BINDINGS[event.keyCode];
+    if (!code || this.keys.has(code)) return;
+    this.keys.add(code);
+    if (code === 'KeyE') this.interact();
+    if (code === 'KeyR') this.recover();
+    if (code === 'KeyM') this.music.toggle();
+    if (code === 'F3') this.diagnostics = !this.diagnostics;
   };
 
-  private onKeyUp = (event: KeyboardEvent): void => { this.keys.delete(event.code); };
+  private onKeyUp = (event: EventKeyboard): void => { this.keys.delete(KEY_BINDINGS[event.keyCode]); };
   private clearKeys = (): void => { this.keys.clear(); };
   private axis(positive: string[], negative: string[]): number {
     return Number(positive.some(key => this.keys.has(key))) - Number(negative.some(key => this.keys.has(key)));
@@ -274,6 +292,19 @@ export class DeliveryDemo extends Component {
   }
 
   private renderHUD(): void {
+    const viewport = game.canvas.getBoundingClientRect();
+    const scale = Math.min(1, viewport.width / 1100, viewport.height / 650);
+    if (scale > 0) {
+      Object.assign(this.hud.style, {
+        inset: 'auto',
+        left: viewport.left + 'px',
+        top: viewport.top + 'px',
+        width: viewport.width / scale + 'px',
+        height: viewport.height / scale + 'px',
+        transformOrigin: 'top left',
+        transform: `scale(${scale})`,
+      });
+    }
     const text = (id: string, value: string) => { this.hud.querySelector('#' + id)!.textContent = value; };
     const data = this.order.data;
     const stage = this.order.stage;
@@ -328,8 +359,8 @@ export class DeliveryDemo extends Component {
   }
 
   onDestroy(): void {
-    window.removeEventListener('keydown', this.onKeyDown);
-    window.removeEventListener('keyup', this.onKeyUp);
+    input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
+    input.off(Input.EventType.KEY_UP, this.onKeyUp, this);
     window.removeEventListener('blur', this.clearKeys);
     this.music?.dispose();
     this.hud?.remove();

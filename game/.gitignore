@@ -24,3 +24,6 @@ node_modules/
 # WebStorm
 #//////////////////////////
 .idea/
+
+# Editor-generated link to the script template help page.
+/.creator/asset-template/typescript/Custom Script Template Help Documentation.url
