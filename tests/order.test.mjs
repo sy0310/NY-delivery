@@ -19,6 +19,9 @@ test('one order completes once, with one shared order and a fresh restart', () =
   assert.equal(order.deliver(), false);
   assert.equal(order.stow(), true);
   assert.equal(order.stow(), false);
+  assert.equal(order.deliver(), false);
+  assert.equal(order.retrieve(), true);
+  assert.equal(order.retrieve(), false);
   assert.equal(order.deliver(), true);
   assert.equal(order.deliver(), false);
   assert.equal(order.earnings, DEMO_ORDER.pay);
@@ -60,8 +63,26 @@ test('replacement order data drives code and pay, and invalid time is ignored', 
   assert.equal(order.take('4826'), false);
   assert.equal(order.take('9999'), true);
   order.stow();
+  order.retrieve();
   order.deliver();
   assert.equal(order.earnings, 12.5);
   order.restart();
   assert.equal(order.data.code, '9999');
+});
+
+test('delivery bag must leave the car and can be safely stowed again', () => {
+  const order = new OrderState();
+  assert.equal(order.retrieve(), false);
+  order.accept();
+  order.joinQueue();
+  order.tick(30, true);
+  order.take('4826');
+  order.stow();
+  assert.equal(order.deliver(), false);
+  assert.equal(order.retrieve(), true);
+  assert.equal(order.stage, 'delivering');
+  assert.equal(order.stow(), true);
+  assert.equal(order.deliver(), false);
+  order.retrieve();
+  assert.equal(order.deliver(), true);
 });
