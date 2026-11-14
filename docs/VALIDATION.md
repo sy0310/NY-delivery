@@ -70,3 +70,18 @@
 ScreenCaptureKit 录屏脚本已编译，首次试录报告当前可见窗口中未找到 NY Delivery。随后尝试定位 Brave 前台窗口时，Computer Use 因当前浏览器页面访问限制终止界面控制。已请用户将前台页切至本机样片，等待继续。当前尚无已验证的带声音录屏。
 
 录屏使用系统 ScreenCaptureKit 的 capturesAudio，目标为真实游戏窗口和应用音频。大文件保留在本机 .local/media，后续检查视频时长、音轨和声音有效电平。
+
+### 恢复录屏的入口
+
+先在浏览器中将本机样片切为前台页。完成一单的步骤见 README，三张截图分别在驾驶位、柜台核验与送达门口拍摄。
+
+从仓库根目录运行以下命令，开始后在游戏中操作 75 秒。录屏脚本需要 macOS 15+ 和系统屏幕录制权限。
+
+```bash
+mkdir -p .local/media
+swiftc -parse-as-library scripts/record-window.swift -o .local/record-window
+.local/record-window .local/media/delivery-v0.1.mp4 75 "NY Delivery"
+ffprobe -v error -show_entries format=duration:stream=codec_type,codec_name .local/media/delivery-v0.1.mp4
+```
+
+该命令已完成编译验证，当前尚未成功录得游戏视频。浏览器前台标题必须包含 NY Delivery，目标不可见时脚本明确失败。
