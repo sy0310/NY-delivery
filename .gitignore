@@ -1,0 +1,10 @@
+.DS_Store
+game/library/
+game/temp/
+game/local/
+game/profiles/
+game/node_modules/
+game/build/
+node_modules/
+.local/
+*.log
