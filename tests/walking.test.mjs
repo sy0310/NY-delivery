@@ -24,6 +24,7 @@ test('movement follows the viewed heading and normalizes diagonals while preserv
   walker.place({ x: 0, z: 0 }, 0);
   walker.update(1, 1, 1, () => true);
   close(Math.hypot(walker.x, walker.z), 3.3);
+  assert.ok(walker.x > 0 && walker.z < 0);
   walker.place({ x: 0, z: 0 }, 0);
   walker.update(1, .25, 0, () => true);
   close(walker.z, -.825);
