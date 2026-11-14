@@ -27,6 +27,7 @@
 - 使用用户授权的账号在 Dashboard 复测登录，等待后显示“由于没有连上网络，将跳过登录”。账号信息未写入仓库。
 - 重启并重新下载后取得明确错误 `getCdnUrl failed: user not logged in`，调用栈位于 Dashboard editor/cdn-url.ccc 的 getCdnUrl，再进入 downloadCreatorInner。当前下载入口在取得登录关联 CDN 地址阶段失败。
 - 直连和显式使用本地 HTTP 代理访问官方版本接口都返回 HTTP 200。登录服务的联网失败仍需单独调查。
+- 读取当前 Dashboard 内置 @editor/user 的实际请求实现，登录端点为官方 creator-api.cocos.com/api/account/signin，使用 Node HTTPS 与 8 秒请求超时。空参数的 Node 请求约 0.6 秒返回 Missing Username。使用用户授权账号的独立 HTTPS 请求约 0.96 秒返回 status=0、登录成功，响应会话数据仅在进程内存中处理。由此确认账号有效且终端登录链路可用，Dashboard 应用内请求失败仍待原入口定位。
 
 ## 当前处理
 
