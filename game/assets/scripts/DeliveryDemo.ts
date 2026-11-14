@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Camera, Color, Vec3, Vec4, Quat, resources, AudioClip, Material, profiler } from 'cc';
+import { _decorator, Component, Node, Camera, Color, Vec3, Vec4, Quat, resources, AudioClip, Material, Font, profiler } from 'cc';
 import { OrderState } from './OrderState';
 import { VehicleController } from './VehicleController';
 import { WalkingController } from './WalkingController';
@@ -29,7 +29,19 @@ export class DeliveryDemo extends Component {
   private viewPosition = new Vec3();
   private viewRotation = new Quat();
 
-  start(): void {
+  async start(): Promise<void> {
+    await Promise.all(['DM-Sans', 'InstrumentSerif'].map(name => new Promise<void>(resolve => {
+      resources.load('fonts/' + name, Font, async (error, font) => {
+        if (!error) {
+          try {
+            const face = new FontFace(name, `url("${font.nativeUrl}")`);
+            document.fonts.add(await face.load());
+          } catch { /* Keep the browser's readable fallback if font loading fails. */ }
+        }
+        resolve();
+      });
+    })));
+    if (!this.isValid) return;
     this.world = new World(this.node, this.surfaceMaterial, this.signMaterial);
     const scene = this.node.scene;
     scene.globals.ambient.skyColor = new Vec4(.55, .52, .6, 1);
@@ -200,25 +212,25 @@ export class DeliveryDemo extends Component {
     this.hud.id = 'delivery-hud';
     this.hud.innerHTML = `
       <style>
-      #delivery-hud{position:fixed;inset:0;pointer-events:none;color:#f7eed8;font:14px 'Arial',sans-serif;z-index:100;line-height:1.5}
+      #delivery-hud{position:fixed;inset:0;pointer-events:none;color:#f7eed8;font:14px 'DM-Sans',sans-serif;z-index:100;line-height:1.5}
       #delivery-hud *{box-sizing:border-box}#delivery-hud button,#delivery-hud input{pointer-events:auto;font:inherit}
       #delivery-hud button{background:#e7bb73;color:#183b3d;border:0;border-radius:7px;padding:10px 14px;cursor:pointer;font-weight:700}
       #delivery-hud button:hover{background:#ffe1a9}#delivery-hud button:disabled{opacity:.45;cursor:default}
-      #delivery-hud .top{position:absolute;top:22px;left:28px}#delivery-hud .wordmark{font:29px Georgia,serif;letter-spacing:.5px;text-shadow:0 2px 12px #182832}
+      #delivery-hud .top{position:absolute;top:22px;left:28px}#delivery-hud .wordmark{font:29px 'InstrumentSerif',serif;letter-spacing:.5px;text-shadow:0 2px 12px #182832}
       #delivery-hud .sub{font-size:11px;letter-spacing:3px;color:#e6d7ba}#delivery-hud .route{margin-top:13px;background:#1b3536ed;border-left:3px solid #e7bb73;padding:10px 16px;max-width:380px}
       #delivery-hud .phone{position:absolute;right:24px;top:22px;width:270px;background:#152b30ed;border:2px solid #6b7a78;border-radius:23px;padding:21px;box-shadow:0 12px 40px #14233155;pointer-events:auto}
-      #delivery-hud .phone-header{display:flex;justify-content:space-between;font-size:11px;color:#a9c6bc;letter-spacing:1px}.phone h2{font:24px Georgia,serif;margin:19px 0 4px}.phone .muted{color:#a8bdb8;font-size:12px}
+      #delivery-hud .phone-header{display:flex;justify-content:space-between;font-size:11px;color:#a9c6bc;letter-spacing:1px}.phone h2{font:24px 'InstrumentSerif',serif;margin:19px 0 4px}.phone .muted{color:#a8bdb8;font-size:12px}
       #delivery-hud .order-detail{border-top:1px solid #54706a;margin-top:15px;padding-top:12px;font-size:12px}
       #delivery-hud .code{font-size:28px;letter-spacing:7px;color:#e7bb73;margin:5px 0}#delivery-hud .status{margin:12px 0;color:#cbded2;font-size:12px;min-height:38px}
       #delivery-hud #action{width:100%}#delivery-hud #code-panel{display:none;margin:10px 0}#handoff-code{background:#ebdfc7;color:#183b3d;width:100%;border:0;border-radius:5px;padding:9px;margin-bottom:7px;letter-spacing:6px}
       #delivery-hud .controls{position:absolute;left:28px;bottom:124px;font-size:12px;background:#193238ce;padding:12px 16px;border-radius:8px;color:#c6d4cc}
       #delivery-hud kbd{color:#ffe0a3;font:12px monospace}#delivery-hud .speed{position:absolute;left:28px;bottom:25px;display:flex;align-items:baseline;gap:9px;text-shadow:0 2px 10px #152b30}
-      #delivery-hud #mph{font:64px Georgia,serif}#delivery-hud #mode{font-size:12px;letter-spacing:2px}
+      #delivery-hud #mph{font:64px 'InstrumentSerif',serif}#delivery-hud #mode{font-size:12px;letter-spacing:2px}
       #delivery-hud .music{position:absolute;bottom:24px;left:210px;right:320px;border:1px solid #61796b;background:#183a3be8;border-radius:13px;padding:13px 18px;pointer-events:auto}
       #delivery-hud .music-title{display:flex;justify-content:space-between;font-size:11px;color:#e6c68c;letter-spacing:1px}#delivery-hud #track{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;margin:5px 0 9px}
       #delivery-hud .music button{padding:5px 9px;font-size:11px;margin-right:4px}#delivery-hud input[type=range]{width:78px;accent-color:#e7bb73;vertical-align:middle}
       #delivery-hud .notice{position:absolute;bottom:130px;left:50%;transform:translateX(-50%);max-width:470px;background:#1a3438e6;padding:10px 17px;border-radius:8px;text-align:center;font-size:12px}
-      #delivery-hud #result{display:none;margin-top:12px;padding:12px 0;border-top:1px solid #54706a}#delivery-hud #pay{font:32px Georgia,serif;color:#e7bb73}
+      #delivery-hud #result{display:none;margin-top:12px;padding:12px 0;border-top:1px solid #54706a}#delivery-hud #pay{font:32px 'InstrumentSerif',serif;color:#e7bb73}
       @media(max-width:950px){#delivery-hud .phone{width:230px;padding:16px;right:12px}.music{right:255px!important;left:140px!important}.controls{max-width:240px}.wordmark{font-size:23px!important}}
       </style>
       <div class="top"><div class="sub">NEW YORK · 6:42 PM</div><div class="wordmark">我在纽约送外卖</div><div class="route" id="route"></div></div>

@@ -75,7 +75,7 @@ export class World {
     context.fillStyle = '#ffe4a3';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.font = 'bold 76px Georgia';
+    context.font = '82px InstrumentSerif';
     context.fillText(text, 512, 102, 950);
     const texture = new Texture2D();
     texture.image = new ImageAsset(canvas);
