@@ -171,6 +171,9 @@ export class DeliveryDemo extends Component {
       this.district=next;this.world.setOrder(this.order.data);
       Object.assign(this.vehicle,{x:next.spawn.x,z:next.spawn.z,yaw:next.spawn.yaw/DEG,speed:0});
       this.walker.place(next.spawn,this.vehicle.yaw);this.lastExit={...next.spawn};this.inCar=true;this.recenterView();
+      this.world.car.setPosition(this.vehicle.x,0,this.vehicle.z);
+      this.world.car.setRotationFromEuler(0,next.spawn.yaw,0);
+      this.updateView();
       this.world.setQuality(this.quality);this.sceneReady=true;
       if(changed)this.switchEvents.push({seconds:performance.now()/1000,from:previousDistrict,to:next.id,
         before:audioBefore,after:this.musicSnapshot(),generation:this.world.generation});
