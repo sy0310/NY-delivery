@@ -45,3 +45,15 @@ test('diagonal driving surfaces match their polylines without joining geometric 
   assert.equal(isAccessible(map,point(25,35),'car',1),false);
   assert.equal(routeInDistrict(map,point(10,10),point(90,10),'car').reachable,false);
 });
+test('collision broad phase skips distant polygon work within the same spatial cell',()=>{
+ const surface=road('wide','a','b',point(0,0),point(100,0));surface.width=64;
+ const map=district([surface]);let reads=0;
+ const footprint=[point(20,20),point(30,20),point(30,30),point(20,30)];
+ map.buildings=[{id:'far',height:10,block:'test',style:0,get footprint(){reads++;return footprint;}}];
+ assert.equal(isAccessible(map,point(50,0),'car',.35),true);reads=0;
+ for(let i=0;i<100;i++)assert.equal(isAccessible(map,point(50,0),'car',.35),true);
+ assert.equal(reads,0,'bounding boxes avoid repeated polygon scans');
+ assert.equal(isAccessible(map,point(25,25),'car',.35),false);
+ assert.equal(isAccessible(map,point(25,19.8),'car',.35),false);
+ assert.equal(isAccessible(map,point(25,19.5),'car',.35),true);
+});
