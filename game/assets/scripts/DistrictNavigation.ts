@@ -11,7 +11,8 @@ interface Segment {
 interface Edge { a: string; b: string; start: CityPoint; end: CityPoint; width: number; roadId: string; length: number }
 interface Graph { positions: Map<string,CityPoint>; edges: Edge[]; adjacent: Map<string,Edge[]> }
 const graphs = new WeakMap<DistrictDefinition,Map<TravelMode,{signature: string; graph: Graph}>>();
-const collisionGrids = new WeakMap<DistrictDefinition,Map<string,DistrictBuilding[]>>();
+interface CollisionEntry {building:DistrictBuilding;minX:number;maxX:number;minZ:number;maxZ:number}
+const collisionGrids = new WeakMap<DistrictDefinition,Map<string,CollisionEntry[]>>();
 export const pointDistance = (a: CityPoint,b: CityPoint) => Math.hypot(a.x-b.x,a.z-b.z);
 
 export function projectPoint(point: CityPoint,a: CityPoint,b: CityPoint) {
@@ -116,11 +117,12 @@ function nearbyBuildings(district: DistrictDefinition,point: CityPoint,radius: n
     grid=new Map();
     for (const building of district.buildings) {
       const xs=building.footprint.map(p=>p.x), zs=building.footprint.map(p=>p.z);
-      for (let x=Math.floor(Math.min(...xs)/64);x<=Math.floor(Math.max(...xs)/64);x++) {
-        for (let z=Math.floor(Math.min(...zs)/64);z<=Math.floor(Math.max(...zs)/64);z++) {
+      const entry={building,minX:Math.min(...xs),maxX:Math.max(...xs),minZ:Math.min(...zs),maxZ:Math.max(...zs)};
+      for (let x=Math.floor(entry.minX/64);x<=Math.floor(entry.maxX/64);x++) {
+        for (let z=Math.floor(entry.minZ/64);z<=Math.floor(entry.maxZ/64);z++) {
           const key=x+','+z;
           if (!grid.has(key)) grid.set(key,[]);
-          grid.get(key)!.push(building);
+          grid.get(key)!.push(entry);
         }
       }
     }
@@ -129,7 +131,10 @@ function nearbyBuildings(district: DistrictDefinition,point: CityPoint,radius: n
   const found=new Set<DistrictBuilding>();
   for (let x=Math.floor((point.x-radius)/64);x<=Math.floor((point.x+radius)/64);x++) {
     for (let z=Math.floor((point.z-radius)/64);z<=Math.floor((point.z+radius)/64);z++) {
-      for (const building of grid.get(x+','+z) || []) found.add(building);
+      for (const entry of grid.get(x+','+z) || []) {
+        if(point.x+radius<entry.minX || point.x-radius>entry.maxX || point.z+radius<entry.minZ || point.z-radius>entry.maxZ)continue;
+        found.add(entry.building);
+      }
     }
   }
   return Array.from(found);
