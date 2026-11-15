@@ -8,7 +8,6 @@ export class TouchControls {
   private abort = new AbortController();
   private inCar = true;
   private gear = 1;
-  private editorTarget: HTMLElement | null = null;
   private lookPointer: number | null = null;
   private lookX = 0;
   private lookY = 0;
@@ -125,21 +124,6 @@ export class TouchControls {
     this.applyMode();
   }
 
-  /** Creator forwards native canvas dragging through Cocos mouse events. */
-  editorMouse(type: string, x: number, y: number): void {
-    if (type === 'mouse-up') { this.editorTarget = null; return; }
-    if (type === 'mouse-down' && document.elementFromPoint(x, y) === this.canvas) {
-      this.editorTarget = this.canvas;
-      this.lookX = x;
-      this.lookY = y;
-    }
-    if (this.editorTarget !== this.canvas) return;
-    const width = this.canvas.getBoundingClientRect().width;
-    this.look((x - this.lookX) / width * 2.8, (y - this.lookY) / width * 2.8);
-    this.lookX = x;
-    this.lookY = y;
-  }
-
   private button(id: string): HTMLButtonElement { return this.root.querySelector<HTMLButtonElement>('#' + id)!; }
   private drawStick(): void {
     const knob = this.root.querySelector<HTMLElement>('.stick-knob')!;
@@ -149,7 +133,6 @@ export class TouchControls {
   toggle(): void { this.enabled = !this.enabled; this.clear(); this.applyMode(); }
   clear(): void {
     this.input.clear();
-    this.editorTarget = null;
     this.lookPointer = null;
     this.root.querySelectorAll('.held').forEach(button => button.classList.remove('held'));
     this.drawStick();

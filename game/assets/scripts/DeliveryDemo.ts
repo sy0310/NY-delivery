@@ -1,6 +1,6 @@
 import {
   _decorator, Component, Node, Camera, Color, Vec3, Vec4, resources,
-  AudioClip, Material, Font, profiler, game, input, Input, EventKeyboard, EventMouse, KeyCode,
+  AudioClip, Material, Font, profiler, game, input, Input, EventKeyboard, KeyCode,
 } from 'cc';
 import { EDITOR } from 'cc/env';
 import { OrderState } from './OrderState';
@@ -13,6 +13,11 @@ import { MusicPlayer } from './MusicPlayer';
 const { ccclass, property } = _decorator;
 const DEG = 180 / Math.PI;
 const DRIVER_EYE = new Vec3(-.43, 1.48, .3);
+const FORWARD_KEYS = EDITOR ? ['KeyW'] : ['KeyW', 'ArrowUp'];
+const BACKWARD_KEYS = EDITOR ? ['KeyS'] : ['KeyS', 'ArrowDown'];
+const LEFT_KEYS = EDITOR ? ['KeyA'] : ['KeyA', 'ArrowLeft'];
+const RIGHT_KEYS = EDITOR ? ['KeyD'] : ['KeyD', 'ArrowRight'];
+const LOOK_HINT = EDITOR ? '方向键调整视角' : '拖动空白处转视角';
 const KEY_BINDINGS: Partial<Record<KeyCode, string>> = {
   [KeyCode.KEY_W]: 'KeyW',
   [KeyCode.KEY_S]: 'KeyS',
@@ -50,17 +55,6 @@ export class DeliveryDemo extends Component {
   private touch!: TouchControls;
   private driverLookYaw = 0;
   private viewPitch = -4;
-  private onEditorMouse = (event: EventMouse): void => {
-    if (event.type === Input.EventType.MOUSE_DOWN && event.getButton() !== 0) return;
-    if (event.type === Input.EventType.MOUSE_MOVE && event.getButton() !== 0) {
-      this.touch.editorMouse('mouse-up', 0, 0);
-      return;
-    }
-    const bounds = game.canvas.getBoundingClientRect();
-    this.touch.editorMouse(event.type,
-      bounds.left + event.getLocationX() / game.canvas.width * bounds.width,
-      bounds.bottom - event.getLocationY() / game.canvas.height * bounds.height);
-  };
   private peakSeatDrift = 0;
   private peakSeatYawDrift = 0;
 
@@ -100,9 +94,6 @@ export class DeliveryDemo extends Component {
     });
     input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
     input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
-    if (EDITOR) for (const type of [Input.EventType.MOUSE_DOWN, Input.EventType.MOUSE_MOVE, Input.EventType.MOUSE_UP] as const) {
-      input.on(type, this.onEditorMouse, this);
-    }
     window.addEventListener('blur', this.clearKeys);
     this.updateView();
     this.renderHUD();
@@ -145,8 +136,12 @@ export class DeliveryDemo extends Component {
     if (this.frames.length > 600) this.frames.shift();
     const step = Math.min(dt, .05);
     const controls = this.touch.input;
-    const horizontal = Math.max(-1, Math.min(1, this.axis(['KeyD', 'ArrowRight'], ['KeyA', 'ArrowLeft']) + controls.horizontal));
-    const keyboardForward = this.axis(['KeyW', 'ArrowUp'], ['KeyS', 'ArrowDown']);
+    const horizontal = Math.max(-1, Math.min(1, this.axis(RIGHT_KEYS, LEFT_KEYS) + controls.horizontal));
+    const keyboardForward = this.axis(FORWARD_KEYS, BACKWARD_KEYS);
+    if (EDITOR) {
+      this.look(this.axis(['ArrowRight'], ['ArrowLeft']) * step * 1.8,
+        this.axis(['ArrowDown'], ['ArrowUp']) * step * 1.2);
+    }
     const forward = Math.max(-1, Math.min(1, keyboardForward + (this.inCar ? controls.throttle : controls.forward)));
     if (this.inCar) this.vehicle.update(step, forward, -horizontal, this.keys.has('Space') || controls.braking, this.world.canMove);
     else this.walker.update(step, forward, horizontal, (x, z, radius) => {
@@ -219,7 +214,7 @@ export class DeliveryDemo extends Component {
       this.order.retrieve();
       this.notice = this.order.stage === 'delivering'
         ? '已下车。步行到 18 Orchard Walk 门口，按 E 交付。'
-        : '已下车。W/S 前后走，A/D 横移，拖动空白处转视角，靠近取餐柜台按 E。';
+        : `已下车。W/S 前后走，A/D 横移，${LOOK_HINT}，靠近取餐柜台按 E。`;
       return;
     }
     if (this.distance(this.vehicle.x, this.vehicle.z) < 3.4) {
@@ -384,7 +379,7 @@ export class DeliveryDemo extends Component {
       <section class="phone"><div class="phone-header"><span>ORCHARD / DELIVERY</span><span>● 4G</span></div><h2 id="restaurant"></h2><div class="muted" id="order-id"></div><div class="order-detail" id="items"></div><div class="muted">交接码</div><div class="code" id="order-code"></div><div class="muted" id="customer"></div><div class="status" id="status"></div>
       <div id="code-panel"><input id="handoff-code" inputmode="numeric" maxlength="4" placeholder="输入交接码" aria-label="交接码"><button id="verify">核对并取餐</button><button id="skip">等餐快进</button></div>
       <button id="action">接单</button><div id="result"><div class="muted">DELIVERED · 本单收入</div><div id="pay"></div><div id="summary" class="muted"></div><button id="restart">开始下一单</button></div></section>
-      <div class="controls"><kbd>W / S</kbd> 前进 / 后退　<kbd>A / D</kbd> 驾驶转向 / 步行横移<br>鼠标拖动空白处 · 自由观察　<kbd>SPACE</kbd> 刹车<br><kbd>E</kbd> 上下车 / 交互　<kbd>R</kbd> 卡住恢复<br><kbd>M</kbd> 音乐播放 / 暂停</div>
+      <div class="controls"><kbd>W / S</kbd> 前进 / 后退　<kbd>A / D</kbd> 驾驶转向 / 步行横移<br>${LOOK_HINT} · 自由观察　<kbd>SPACE</kbd> 刹车<br><kbd>E</kbd> 上下车 / 交互　<kbd>R</kbd> 卡住恢复<br><kbd>M</kbd> 音乐播放 / 暂停</div>
       <div class="speed"><span id="mph">0</span><span>mph<br><span id="mode">DRIVING</span></span></div>
       <section class="music"><div class="music-title"><span>ORCHARD RADIO</span><span id="music-time">00:00</span></div><div id="track"></div><button id="play">播放 / 暂停</button><button id="choose">本地 MP3 / WAV</button><button id="next">切歌</button><label>音量 <input id="volume" aria-label="音乐音量" type="range" min="0" max="1" step=".01" value=".55"></label><label style="font-size:10px"><input id="continuous" type="checkbox">连续聆听</label></section>
       <div class="notice" id="notice"></div><pre id="diagnostics" style="display:none;position:absolute;left:28px;top:165px;background:#142b30dd;padding:12px;font:11px monospace"></pre>`;
@@ -519,9 +514,6 @@ export class DeliveryDemo extends Component {
     input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
     input.off(Input.EventType.KEY_UP, this.onKeyUp, this);
     window.removeEventListener('blur', this.clearKeys);
-    if (EDITOR) for (const type of [Input.EventType.MOUSE_DOWN, Input.EventType.MOUSE_MOVE, Input.EventType.MOUSE_UP] as const) {
-      input.off(type, this.onEditorMouse, this);
-    }
     this.touch?.dispose();
     this.music?.dispose();
     this.hud?.remove();
