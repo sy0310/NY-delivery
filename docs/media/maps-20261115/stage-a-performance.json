@@ -1,0 +1,310 @@
+{
+  "engine": "3.8.8",
+  "time": "2026-11-15T19:28:36.576Z",
+  "viewport": {
+    "width": 1512,
+    "height": 777,
+    "dpr": 2
+  },
+  "timeToHudMs": 6379.200000047684,
+  "summary": {
+    "active": {
+      "frames": 8130,
+      "seconds": 136.9624999999966,
+      "fps": 59.35931368075351,
+      "p95": 24.700000047683716,
+      "p99": 29.90000009536743,
+      "longFrames": 0,
+      "over100ms": 0
+    },
+    "idle": {
+      "frames": 34,
+      "seconds": 0.6365000000000001,
+      "fps": 53.41712490180675,
+      "p95": 25.700000047683716,
+      "p99": 37.69999980926514,
+      "longFrames": 0,
+      "over100ms": 0
+    },
+    "paused": {
+      "frames": 32,
+      "seconds": 0.5561000001430512,
+      "fps": 57.5436072500779,
+      "p95": 21.299999952316284,
+      "p99": 36.200000047683716,
+      "longFrames": 0,
+      "over100ms": 0
+    },
+    "background": {
+      "frames": 0,
+      "seconds": 0,
+      "fps": 0,
+      "p95": 0,
+      "p99": 0,
+      "longFrames": 0,
+      "over100ms": 0
+    }
+  },
+  "resources": [
+    {
+      "seconds": 0.011799999952316283,
+      "mode": "idle",
+      "drawCalls": 1689,
+      "triangles": 2046524,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 69520831
+    },
+    {
+      "seconds": 5.015599999904633,
+      "mode": "active",
+      "drawCalls": 1668,
+      "triangles": 2074448,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 93682784
+    },
+    {
+      "seconds": 10.017299999952316,
+      "mode": "active",
+      "drawCalls": 1709,
+      "triangles": 2100592,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 139794203
+    },
+    {
+      "seconds": 15.030099999904632,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 178535229
+    },
+    {
+      "seconds": 20.040199999809264,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 112647013
+    },
+    {
+      "seconds": 25.046799999952317,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 127910596
+    },
+    {
+      "seconds": 30.047,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 58917887
+    },
+    {
+      "seconds": 35.053299999952316,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 98268095
+    },
+    {
+      "seconds": 40.05889999985695,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 137156454
+    },
+    {
+      "seconds": 45.063299999952314,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 69317241
+    },
+    {
+      "seconds": 50.067699999809264,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 111832232
+    },
+    {
+      "seconds": 55.086,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 155503019
+    },
+    {
+      "seconds": 60.09219999980927,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 92186364
+    },
+    {
+      "seconds": 65.09529999995232,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 111063934
+    },
+    {
+      "seconds": 70.0995,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 150977108
+    },
+    {
+      "seconds": 75.108,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 92303935
+    },
+    {
+      "seconds": 80.11309999990463,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 76148152
+    },
+    {
+      "seconds": 85.1205,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 101708058
+    },
+    {
+      "seconds": 90.12539999985695,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 140425709
+    },
+    {
+      "seconds": 95.12939999985694,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 155588371
+    },
+    {
+      "seconds": 100.1345,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 85659636
+    },
+    {
+      "seconds": 105.14589999985695,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 129318581
+    },
+    {
+      "seconds": 110.16259999990463,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 172973972
+    },
+    {
+      "seconds": 115.16339999985695,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 104390075
+    },
+    {
+      "seconds": 120.17509999990463,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 145723410
+    },
+    {
+      "seconds": 125.185,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 163461669
+    },
+    {
+      "seconds": 130.1987999999523,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 97860604
+    },
+    {
+      "seconds": 135.20819999980927,
+      "mode": "active",
+      "drawCalls": 1678,
+      "triangles": 2088600,
+      "textureBytes": 220129840,
+      "bufferBytes": 16858772,
+      "jsHeapBytes": 138239725
+    }
+  ],
+  "frameColumns": [
+    "milliseconds",
+    "mode",
+    "district"
+  ],
+  "memoryScope": "Cocos estimated texture/buffer bytes and browser-reported JS heap. Native/driver/process memory is not collected.",
+  "notes": "Legacy district, same session with 8s driving, braking, exiting and mostly stationary on-foot baseline. Full active-labelled period includes stationary foreground time. Not the later 15-minute continuous delivery trial.",
+  "codeCommit": "1b2189ef59b0bd03718df7740e099c015966ebff"
+}
