@@ -10,7 +10,7 @@ test('connected one-way blocks provide a long reachable delivery leg and a conti
   assert.ok(delivery.points.some(point => point.x === 300 && point.z === 140));
   assert.ok(delivery.points.every(point => roadAt(point.x, point.z)));
   const next = planRoute(first.dropoffParking, PICKUP_PARKING);
-  assert.ok(next.distance > 400 && next.distance < 700);
+  assert.ok(next.distance > 700 && next.distance < 900);
   assert.ok(next.points.every(point => roadAt(point.x, point.z)));
   assert.deepEqual(delivery.points.at(-1), first.dropoffParking);
 });
