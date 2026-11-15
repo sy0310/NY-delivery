@@ -34,4 +34,7 @@ settings = json.loads((output / 'src/settings.json').read_text())
 scene_urls = [scene['url'] for scene in config['scenes'] if scene['uuid'] == config['startScene']]
 if settings.get('launch', {}).get('launchScene') not in [config['startScene']] + scene_urls:
     raise SystemExit('产物启动场景与共享构建配置不一致，请检查日志。')
+revision = subprocess.check_output(['git', '-C', str(project), 'rev-parse', 'HEAD'], text=True).strip()
+dirty = bool(subprocess.check_output(['git', '-C', str(project), 'status', '--porcelain', '--untracked-files=no'], text=True).strip())
+(output / 'build-info.json').write_text(json.dumps({'commit': revision, 'dirty': dirty, 'engine': '3.8.8'}, indent=2))
 print(f'构建已验证 — Creator 退出码 {result.returncode}，产物 {output}')
