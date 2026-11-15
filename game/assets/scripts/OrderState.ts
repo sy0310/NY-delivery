@@ -12,6 +12,8 @@ export interface OrderData {
   note?: string;
   pickup?: {x: number; z: number};
   dropoff?: {x: number; z: number};
+  pickupParking?: {x: number; z: number};
+  dropoffParking?: {x: number; z: number};
 } 
 
 export interface BagLabel {

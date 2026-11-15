@@ -4,6 +4,7 @@ import type { PaintedPanel } from './ModelGeometry';
 import type { BagLabel } from './OrderState';
 import { CarModel, CarTelemetry } from './CarModel';
 import { OrderData } from './OrderState';
+import { AVENUES, CROSS_STREETS, roadAt } from './CityLayout';
 
 interface Obstacle { x: number; z: number; width: number; depth: number }
 
@@ -18,14 +19,16 @@ export class World {
   private bagPanel!: PaintedPanel;
   private facades = new Map<string, Material>();
 
-  constructor(private root: Node, surface: Material, unlit: Material, private order: Readonly<OrderData>) {
+  constructor(private root: Node, private surface: Material, private unlit: Material, private order: Readonly<OrderData>) {
     this.geometry = new ModelGeometry(root, surface, unlit);
     this.lighting();
     this.geometry.sky();
     this.street();
     this.city();
-    this.restaurant();
-    this.destination();
+    this.buildAt('Juniper Kitchen', 300, -120, () => this.restaurant());
+    for (const [z, address] of [[-360, '18 ORCHARD WALK'], [60, '42 ORCHARD WALK'], [-250, '76 ORCHARD · LOBBY']] as const) {
+      this.buildAt(address, 0, z + 30, () => this.destination(address));
+    }
     this.streetFurniture();
     this.geometry.batchStatic();
     this.sedan = new CarModel(this.geometry);
@@ -60,12 +63,26 @@ export class World {
   }
 
   canMove = (x: number, z: number, radius: number): boolean => {
-    if (Math.abs(x) > 32 || z > 150 || z < -150) return false;
+    if (x < -40 || x > 340 || z > 180 || z < -520) return false;
+    if (radius > 1 && !roadAt(x, z)) return false;
     return this.obstacles.every(o => Math.abs(x - o.x) >= o.width / 2 + radius
       || Math.abs(z - o.z) >= o.depth / 2 + radius);
   };
 
   update(dt: number, telemetry: CarTelemetry): void { this.sedan.update(dt, telemetry); }
+
+  private buildAt(name: string, x: number, z: number, build: () => void): void {
+    const previous = this.geometry;
+    const group = new Node(name);
+    this.root.addChild(group);
+    this.geometry = new ModelGeometry(group, this.surface, this.unlit);
+    const obstacleStart = this.obstacles.length;
+    build();
+    this.geometry.batchStatic();
+    for (const obstacle of this.obstacles.slice(obstacleStart)) { obstacle.x += x; obstacle.z += z; }
+    group.setPosition(x, 0, z);
+    this.geometry = previous;
+  }
 
   private wall(name: string, x: number, y: number, z: number, w: number, h: number,
     d: number, color: string | Material): Node {
@@ -115,47 +132,48 @@ export class World {
 
   private street(): void {
     const g = this.geometry;
-    // Fog is interpolated from vertices, so long road surfaces need local segments.
-    for (let x = -375; x <= 375; x += 30) for (let z = -375; z <= 375; z += 30) {
+    for (let x = -90; x <= 390; x += 30) for (let z = -570; z <= 240; z += 30) {
       g.box('City ground', x, -.35, z, 30, .4, 30, '#9b9d93');
     }
-    for (let z = -315; z <= 315; z += 10) {
-      g.box('Continuous avenue asphalt', 0, -.07, z, 14, .15, 10, '#3a454d');
-    }
-    for (const junction of [-174, -94, -14, 66, 146, 226]) {
-      for (let x = -290; x <= 290; x += 20) {
-        g.box('Continuing cross street', x, -.055, junction, 20, .13, 12, '#3a454d');
-      }
-      for (const edge of [-1, 1]) {
-        for (let x = -5.6; x < 7; x += 1.4) {
-          g.box('Crossing stripe', x, .024, junction + edge * 7.2, .8, .018, 2.5, '#d4d2bc');
-        }
-        for (const side of [-1, 1]) g.box('Stop line', side * 3.5, .026,
-          junction + edge * 9.2, 5.1, .019, .2, '#d4d2bc');
-      }
-    }
-    const sidewalkSpans = [[-325, -180], [-168, -100], [-88, -20], [-8, 60], [72, 140], [152, 220], [232, 325]];
-    for (const side of [-1, 1]) {
-      for (const [from, to] of sidewalkSpans) {
-        for (let z = from; z < to; z += 12) {
-          const length = Math.min(12, to - z);
-          g.box('Raised sidewalk', side * 8.55, .075, z + length / 2, 3.1, .25, length, '#b5b5a7');
-          g.box('Curb stone', side * 7.05, .13, z + length / 2, .17, .29, length, '#d1cfba');
-        }
-        for (let z = from + 1.5; z < to; z += 3) {
-          g.box('Sidewalk joint', side * 8.55, .207, z, 2.9, .008, .025, '#909b96');
+    for (const avenue of AVENUES) {
+      for (let z = -480; z <= 140; z += 10) g.box('Connected avenue', avenue, -.07, z, 14, .15, 10, '#3a454d');
+      for (let z = -470; z < 140; z += 6) {
+        if (CROSS_STREETS.some(cross => Math.abs(z-cross) < 18)) continue;
+        g.box('One-way lane divider', avenue, .025, z, .10, .015, 3, '#ddd4b5');
+        for (const side of [-1,1]) {
+          g.box('Sidewalk', avenue+side*8.55, .075, z, 3.1, .25, 6, '#b5b5a7');
+          g.box('Curb', avenue+side*7.05, .13, z, .17, .29, 6, '#d1cfba');
         }
       }
+      for (const cross of CROSS_STREETS) {
+        for (let x = -5.5; x <= 6; x += 1.4) for (const side of [-1,1]) {
+          g.box('Pedestrian crossing', avenue+x, .03, cross+side*10, .8, .02, 2.5, '#d4d2bc');
+        }
+      }
+      for (let z = -430; z < 100; z += 130) {
+        const arrow = g.panel('One way road arrow', 1.8, 4, 128, 256);
+        arrow.context.fillStyle = '#d8d6bc';
+        arrow.context.font = 'bold 210px sans-serif';
+        arrow.context.textAlign = 'center';
+        arrow.context.fillText('↑',64,215);
+        arrow.texture.uploadData(arrow.canvas);
+        arrow.node.setPosition(avenue+2.5, .045, z);
+        arrow.node.setRotationFromEuler(-90, avenue === 0 ? 0 : 180, 0);
+      }
     }
-    for (let z = -310; z < 315; z += 5) {
-      if (Math.abs(z + 14 - Math.round((z + 14) / 80) * 80) < 11) continue;
-      for (const x of [-.12, .12]) g.box('Double yellow line', x, .018, z, .085, .012, 2.8, '#c8aa60');
+    for (const cross of CROSS_STREETS) {
+      for (let x = 0; x <= 300; x += 10) {
+        g.box('Connected cross street', x, -.055, cross, 10, .13, 14, '#3a454d');
+        if (x > 18 && x < 282) {
+          for (const side of [-1,1]) g.box('Cross-street sidewalk', x, .075, cross+side*8.55, 10, .25, 3.1, '#b5b5a7');
+          g.box('Cross-street lane marking', x, .026, cross, 4, .02, .10, '#ddd4b5');
+        }
+      }
     }
-    for (const z of [-146, 146]) {
-      this.wall('Roadworks boundary', 0, .48, z, 13.7, .8, .55, '#b6b6a5');
-      for (let x = -6; x <= 6; x += 1.5) g.box('Boundary reflector', x, .73,
-        z + (z < 0 ? .29 : -.29), .4, .17, .02, '#d59a4d');
-      this.sign('LOCAL ACCESS · ROAD WORK', 0, 1.55, z, 5, z < 0 ? 0 : 180, '#8a6539');
+    for (const [x,z,name] of [[294.5,-106,'JUNIPER PICKUP'],[5.5,-350,'18 ORCHARD'],[5.5,70,'42 ORCHARD'],[5.5,-240,'76 LOBBY']] as const) {
+      for (const side of [-1,1]) g.box('Parking bay side', x+side*1.2,.04,z,.08,.02,6,'#dbd1a9');
+      g.box('Parking bay end',x,.04,z-3,2.4,.02,.08,'#dbd1a9');
+      this.sign(name,x > 200 ? 292.4 : 8.2,2.2,z,2.8,x > 200 ? -90 : 90,'#355b55');
     }
   }
 
@@ -196,51 +214,26 @@ export class World {
   }
 
   private city(): void {
-    const g = this.geometry;
     const colors = ['#9b806b', '#a49b83', '#7f9295', '#997568', '#879391'];
-    for (const side of [-1, 1]) {
-      for (let index = 0; index < 33; index++) {
-        const z = 250 - index * 16;
-        if (Math.abs(z + 14 - Math.round((z + 14) / 80) * 80) < 11) continue;
-        if (side < 0 && Math.abs(z) < 14) continue;
-        if (side > 0 && z < -20 && z > -43) continue;
-        const height = 13 + (index * 7 % 5) * 2.7;
-        this.wall('Masonry avenue building', side * 17, height / 2, z, 14, height, 14.7,
-          this.facade(colors[index % colors.length], index));
-        g.box('Stone building base', side * 17, .8, z, 14.1, 1.6, 14.8, '#7e8883');
-        g.box('Roof cornice', side * 17, height - .15, z, 14.5, .35, 15.1, '#bac0b1');
-        g.box('Roof parapet', side * 10.1, height + .35, z, .2, .8, 14.5, '#78847f');
-        if (Math.abs(z) < 65) {
-          this.storefront(side, z, index);
-          this.fireEscape(side, z, height);
-          for (let row = 0; row < 7; row++) {
-            const sillY = (681 - row * 93) / 768 * height;
-            if (sillY < 4.2) continue;
-            for (let column = 0; column < 5; column++) {
-              const windowZ = z + (column - 2) * 2.87;
-              g.box('Projecting window sill', side * 9.88, sillY, windowZ,
-                .3, .11, 1.85, '#bdc0af');
-            }
-          }
-        }
+    for (const avenue of AVENUES) this.buildAt('Avenue frontage', avenue, 0, () => {
+      const g = this.geometry;
+      for (const side of [-1,1]) for (let index=0; index<34; index++) {
+        const z = -466+index*18;
+        if (CROSS_STREETS.some(cross => Math.abs(z-cross)<23)) continue;
+        if (avenue===300 && side<0 && Math.abs(z+120)<18) continue;
+        if (avenue===0 && side>0 && [-360,60,-250].some(door => Math.abs(z-door)<18)) continue;
+        const height = 13+(index*7%5)*2.7;
+        this.wall('Masonry frontage',side*17,height/2,z,14,height,16.7,this.facade(colors[index%5],index));
+        g.box('Stone base',side*17,.8,z,14.1,1.6,16.8,'#7e8883');
+        g.box('Roof cornice',side*17,height-.15,z,14.5,.35,17.1,'#bac0b1');
+        this.storefront(side,z,index);
+        if (index%3===0) this.fireEscape(side,z,height);
       }
-    }
-    for (const side of [-1, 1]) {
-      for (let row = 0; row < 4; row++) {
-        for (let index = 0; index < 13; index++) {
-          const x = side * (42 + row * 26);
-          const z = 235 - index * 39 + (row % 2) * 12;
-          const height = 21 + (index * 13 + row * 7) % 42;
-          g.box('Distant skyline', x, height / 2, z, 20, height, 25,
-            this.facade(colors[(index + row) % colors.length], row + index));
-          g.box('Rooftop setback', x, height + 1.4, z, 13, 2.8, 17, '#7f9298');
-        }
-      }
-    }
-    for (const z of [-300, 300]) for (let index = -3; index <= 3; index++) {
-      const height = 30 + Math.abs(index) * 6;
-      g.box('Horizon frontage', index * 22, height / 2, z, 20, height, 24,
-        this.facade(colors[(index + 5) % colors.length], index + 4));
+    });
+    for (const x of [-58,62,112,188,238,358]) for (let z=-510;z<=180;z+=42) {
+      if (CROSS_STREETS.some(cross => Math.abs(z-cross)<28)) continue;
+      const height=22+Math.abs((x+z)%27);
+      this.geometry.box('Interior city block',x,height/2,z,30,height,27,this.facade(colors[Math.abs(z)%5],z));
     }
   }
 
@@ -322,7 +315,7 @@ export class World {
       g.cylinder('Lamp shade', -14, 3.12, z, .32, .16, '#57645b');
       g.cylinder('Warm diffuser', -14, 3.025, z, .26, .025, '#ead29b');
       const lamp = new Node('Warm restaurant light');
-      this.root.addChild(lamp);
+      g.root.addChild(lamp);
       lamp.setPosition(-14, 2.95, z);
       const light = lamp.addComponent(SphereLight);
       light.color = new Color(255, 210, 144);
@@ -333,8 +326,8 @@ export class World {
       g.cylinder('Counter paper cup', -16.05, 1.43, z, .085, .22, '#e2d9be');
       g.cylinder('Cup lid', -16.05, 1.55, z, .09, .022, '#465653');
     }
-    this.person(-17.8, 0, '#b7a67e', this.root);
-    this.root.addChild(this.npc);
+    this.person(-17.8, 0, '#b7a67e', g.root);
+    g.root.addChild(this.npc);
     this.person(0, 0, '#6b8391', this.npc);
     this.npc.setPosition(-14.2, 0, .2);
     g.box('Queue mat', -12.8, .27, 0, 1.4, .02, 1.5, '#8b9c7c');
@@ -374,7 +367,7 @@ export class World {
     this.geometry.batchStatic(person);
   }
 
-  private destination(): void {
+  private destination(address: string): void {
     const g = this.geometry;
     this.wall('Delivery apartment', 17, 8.5, -31, 14, 17, 16, this.facade('#9c806a', 4));
     g.box('Apartment stone base', 17, .65, -31, 14.1, 1.3, 16.1, '#83918a');
@@ -384,39 +377,30 @@ export class World {
     for (const z of [-30.45, -29.55]) g.box('Door inset', 9.55, 1.2, z, .045, 1.7, .56, '#345e53');
     g.sphere('Brass handle', 9.5, 1.25, -29.45, .08, .08, .08, '#bbab7a');
     g.box('Door canopy', 9.31, 3.15, -30, 1.4, .12, 2.8, '#3d5650');
-    this.sign('18 ORCHARD WALK', 8.59, 3.19, -30, 2.6, -90);
+    this.sign(address, 8.59, 3.19, -30, 2.6, -90);
   }
 
   private streetFurniture(): void {
     const g = this.geometry;
-    for (const z of [-67, -45, -27, -4, 19, 43, 85]) {
-      for (const side of [-1, 1]) {
-        g.cylinder('Street lamp post', side * 7.75, 2.8, z, .055, 5.6, '#3e5154');
-        g.beam('Lamp arm', new Vec3(side * 7.75, 5.5, z), new Vec3(side * 6.9, 5.35, z), .05, '#3e5154');
-        g.box('Lamp housing', side * 6.85, 5.32, z, .65, .1, .3, '#495a5a');
-        g.box('Lamp diffuser', side * 6.85, 5.25, z, .5, .025, .22, '#d9d4ad');
-        const treeZ = z === -4 ? -6.5 : z + 3.5;
-        this.wall('Tree planting bed', side * 8.65, .27, treeZ, 1.2, .2, 1.25, '#7d8c7b');
-        g.cylinder('Tree trunk', side * 8.65, 1.7, treeZ, .12, 2.7, '#706450');
-        g.sphere('Foliage crown', side * 8.65, 3.55, treeZ, 2.3, 2.75, 2.25, '#677e57');
-        g.sphere('Foliage side', side * 8.35, 3.7, treeZ + .4, 1.7, 2.1, 1.7, '#7e9065');
+    for (const avenue of AVENUES) for (let z=-450;z<130;z+=54) {
+      if (CROSS_STREETS.some(cross => Math.abs(z-cross)<18)) continue;
+      for (const side of [-1,1]) {
+        if (avenue===0 && side>0 && [-360,60,-250].some(door => Math.abs(z-door)<12)) continue;
+        if (avenue===300 && side<0 && Math.abs(z+120)<25) continue;
+        g.cylinder('Street lamp',avenue+side*7.8,2.8,z,.055,5.6,'#3e5154');
+        g.box('Street light housing',avenue+side*7.6,5.45,z,.65,.12,.3,'#495a5a');
+        g.box('Street light diffuser',avenue+side*7.6,5.37,z,.5,.025,.22,'#d9d4ad');
+        g.cylinder('Tree trunk',avenue+side*8.8,1.6,z+4,.12,2.6,'#706450');
+        g.sphere('Street foliage',avenue+side*8.8,3.5,z+4,2.3,2.7,2.25,'#71875c');
       }
     }
-    for (const [side, z] of [[1, 20], [-1, 11], [1, -44], [-1, -48]]) this.parkedCar(side, z);
-    for (const side of [-1, 1]) {
-      const z = side < 0 ? -6.5 : -21.5;
-      g.cylinder('Signal pole', side * 7.6, 2.1, z, .065, 4.2, '#526260');
-      g.box('Signal housing', side * 7.6, 3.85, z, .32, .9, .22, '#24343a');
-      for (let index = 0; index < 3; index++) {
-        const lens = g.cylinder('Signal lens', side * 7.6, 4.11 - index * .27, z + side * .13,
-          .095, .025, index === 2 ? '#87ad7b' : '#394b4a');
-        lens.setRotationFromEuler(90, 0, 0);
-      }
-      this.sign('ORCHARD AVE', side * 7.6, 3.1, z, 2.6, side < 0 ? 0 : 180);
-    }
-    for (const z of [10, -24]) {
-      g.cylinder('Litter bin', 8.4, .65, z, .28, .9, '#42615b');
-      g.cylinder('Bin lid', 8.4, 1.13, z, .31, .07, '#294b46');
+    for (const avenue of AVENUES) this.buildAt('Parked cars',avenue,0,()=> {
+      this.parkedCar(1,-40); this.parkedCar(1,-180); this.parkedCar(-1,-420);
+    });
+    for (const avenue of AVENUES) for (const cross of CROSS_STREETS) {
+      g.cylinder('Street sign pole',avenue-8.2,1.9,cross-12,.055,3.8,'#526260');
+      this.sign(avenue===0 ? 'ORCHARD ↑' : 'MERCER ↓',avenue-8.2,3.1,cross-12,3,0);
+      this.sign(cross===140 ? 'RIVER ←' : 'JUNIPER →',avenue-8.2,2.6,cross-12,3,0);
     }
   }
 

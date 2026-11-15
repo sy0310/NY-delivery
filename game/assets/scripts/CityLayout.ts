@@ -46,7 +46,7 @@ export function planRoute(from: CityPoint, to: CityPoint): {points: CityPoint[];
   const pending = new Set(nodes.map((_,index) => index));
   costs[start.b] = 0;
   while (pending.size) {
-    const current = [...pending].sort((a,b) => costs[a]-costs[b])[0];
+    const current = Array.from(pending).sort((a,b) => costs[a]-costs[b])[0];
     pending.delete(current);
     if (current === end.a) break;
     for (const [a,b] of edges.filter(([a]) => a === current)) {

@@ -2,7 +2,7 @@ export interface Position { x: number; z: number }
 export type CanMove = (x: number, z: number, radius: number) => boolean;
 
 export class VehicleController {
-  x = -2.5;
+  x = 2.5;
   z = 23;
   yaw = 0;
   speed = 0;
@@ -37,7 +37,7 @@ export class VehicleController {
   }
 
   reset(): void {
-    this.x = -2.5;
+    this.x = 2.5;
     this.z = 23;
     this.yaw = 0;
     this.speed = 0;

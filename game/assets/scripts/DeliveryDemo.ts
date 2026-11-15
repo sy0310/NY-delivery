@@ -12,6 +12,8 @@ import { resolveInteraction, directionTo } from './Interaction';
 import type { Interaction } from './Interaction';
 import { MusicPlayer } from './MusicPlayer';
 import { MusicPanel } from './MusicPanel';
+import { orderLocation, planRoute } from './CityLayout';
+import { OrderTiming } from './OrderTiming';
 
 const { ccclass, property } = _decorator;
 const DEG = 180 / Math.PI;
@@ -20,6 +22,7 @@ const FORWARD_KEYS = EDITOR ? ['KeyW'] : ['KeyW', 'ArrowUp'];
 const BACKWARD_KEYS = EDITOR ? ['KeyS'] : ['KeyS', 'ArrowDown'];
 const LEFT_KEYS = EDITOR ? ['KeyA'] : ['KeyA', 'ArrowLeft'];
 const RIGHT_KEYS = EDITOR ? ['KeyD'] : ['KeyD', 'ArrowRight'];
+const deliveryOrder = (sequence: number) => ({...createOrder(sequence), ...orderLocation(sequence)});
 const LOOK_HINT = EDITOR ? '方向键调整视角' : '拖动空白处转视角';
 const KEY_BINDINGS: Partial<Record<KeyCode, string>> = {
   [KeyCode.KEY_W]: 'KeyW',
@@ -41,8 +44,9 @@ const KEY_BINDINGS: Partial<Record<KeyCode, string>> = {
 export class DeliveryDemo extends Component {
   @property(Material) surfaceMaterial: Material = null!;
   @property(Material) signMaterial: Material = null!;
-  private order = new OrderState(createOrder(0));
+  private order = new OrderState(deliveryOrder(0));
   private orderSequence = 0;
+  private timing = new OrderTiming();
   private orderStartDistance = 0;
   private working = true;
   private vehicle = new VehicleController();
@@ -90,7 +94,7 @@ export class DeliveryDemo extends Component {
     const camera = this.camera.addComponent(Camera);
     camera.fov = 70;
     camera.near = .05;
-    camera.far = 560;
+    camera.far = 1600;
     camera.clearColor = new Color(188, 209, 222, 255);
     this.music = new MusicPlayer();
     profiler.hideStats();
@@ -188,6 +192,8 @@ export class DeliveryDemo extends Component {
       const localZ = dx * Math.sin(this.vehicle.yaw) + dz * Math.cos(this.vehicle.yaw);
       return this.world.canMove(x, z, radius) && (Math.abs(localX) > 1.05 + radius || Math.abs(localZ) > 2.15 + radius);
     });
+    this.timing.tick(dt, this.order.stage, this.inCar, this.vehicle.speed,
+      this.order.queueJoined && this.atCounter(), this.order.queueRemaining > 0 || this.order.kitchenRemaining > 0);
     this.order.tick(Math.min(dt, .25), this.atCounter());
     this.world.npc.active = this.order.queueRemaining > 0;
     this.world.car.setPosition(this.vehicle.x, 0, this.vehicle.z);
@@ -200,6 +206,8 @@ export class DeliveryDemo extends Component {
       z: this.vehicle.z,
       yaw: this.vehicle.yaw,
       destination: ['stowed', 'delivering', 'delivered'].includes(this.order.stage),
+      target: this.order.stage === 'accepted' || this.order.stage === 'idle' ? this.order.data.pickupParking! : this.order.data.dropoffParking!,
+      address: this.order.stage === 'accepted' || this.order.stage === 'idle' ? this.order.data.restaurant : this.order.data.address,
     });
     this.updateView();
     this.updateBag();
@@ -237,7 +245,7 @@ export class DeliveryDemo extends Component {
         1.05, this.walker.z - .45 * Math.sin(yaw) - .65 * Math.cos(yaw));
     } else if (stage === 'stowed') {
       this.world.bag.setPosition(.45, 1.06, .35);
-    } else this.world.bag.setPosition(-15.5, 1.55, -.6);
+    } else this.world.bag.setPosition(this.pickup.x - 1.2, 1.55, this.pickup.z - .6);
   }
 
   private interact(): void {
@@ -249,17 +257,19 @@ export class DeliveryDemo extends Component {
         this.order.accept();
         this.working = true;
         this.elapsed = 0;
+        this.timing.reset();
         this.orderStartDistance = this.vehicle.distance;
         this.notice = '已接单，驶向 ' + this.order.data.restaurant + '。';
         this.music.chime();
         break;
       case 'continue':
-        if (!this.order.next(createOrder(this.orderSequence + 1))) return;
+        if (!this.order.next(deliveryOrder(this.orderSequence + 1))) return;
         this.orderSequence += 1;
         this.order.accept();
         this.world.setOrder(this.order.data);
         this.working = true;
         this.elapsed = 0;
+        this.timing.reset();
         this.orderStartDistance = this.vehicle.distance;
         this.clearKeys();
         (this.hud.querySelector('#handoff-code') as HTMLInputElement).value = '';
@@ -308,7 +318,7 @@ export class DeliveryDemo extends Component {
   private recover(): void {
     this.vehicle.reset();
     this.recenterView();
-    this.walker.place({ x: -5, z: 23 }, 0);
+    this.walker.place({ x: .6, z: 23 }, 0);
     this.clearKeys();
     this.notice = '已回到起点安全位置，订单与音乐进度保留。';
   }
@@ -486,13 +496,17 @@ export class DeliveryDemo extends Component {
     this.musicPanel.render();
     const target = stage === 'carrying' ? this.vehicle : ['stowed','delivering'].includes(stage) ? this.dropoff : this.pickup;
     const playerHeading = this.inCar ? this.vehicle : this.walker;
-    const navigation = directionTo(playerHeading, target);
+    const parking = stage === 'accepted' ? data.pickupParking! : data.dropoffParking!;
+    const route = this.inCar ? planRoute(this.vehicle, parking) : {points:[target],distance:this.distance(target.x,target.z)};
+    const navigation = directionTo(playerHeading, route.points[0]);
+    const routeDistance = Math.round(route.distance);
+    const nextTurn = this.inCar && route.points.length > 1 ? ' · 路口按路线转弯' : this.inCar ? ' · 路边停车' : '';
     const routes = {
       idle: '自由选歌或静音 · 接单出发',
-      accepted: `${navigation.symbol} ${data.restaurant} · ${Math.round(navigation.distance)} m`,
+      accepted: `${navigation.symbol} ${data.restaurant} · ${routeDistance} m${nextTurn}`,
       carrying: `${navigation.symbol} 回到汽车旁 · 装餐并上车`,
-      stowed: `${navigation.symbol} ${data.address} · ${Math.round(navigation.distance)} m`,
-      delivering: `${navigation.symbol} 携带餐袋 · ${data.address} · ${Math.round(navigation.distance)} m`,
+      stowed: `${navigation.symbol} ${data.address} · ${routeDistance} m${nextTurn}`,
+      delivering: `${navigation.symbol} 携带餐袋 · ${data.address} · ${routeDistance} m${nextTurn}`,
       delivered: '订单完成 · 享受你的傍晚',
     };
     text('route', routes[stage]);
@@ -541,6 +555,9 @@ export class DeliveryDemo extends Component {
       `Walk eye ${Math.hypot(this.camera.worldPosition.x - this.walker.x, this.camera.worldPosition.z - this.walker.z).toFixed(4)} m`,
       `Audio ${this.music.audio.currentTime.toFixed(2)} s  gain ${this.music.effectiveVolume.toFixed(3)}`,
       `Single player · ${this.music.audio.paused || this.music.audio.error ? 'paused' : 'playing'}`,
+      `Order ${this.order.data.id} · ${this.order.completedOrders} completed · $${this.order.totalEarnings.toFixed(2)}`,
+      `Phases ${JSON.stringify(Object.fromEntries(Object.entries(this.timing.seconds).map(([phase,seconds]) => [phase,Math.round(seconds)])))}`,
+      `Driving ${this.timing.driving.toFixed(1)} / ${this.timing.total.toFixed(1)} s · ${(100*this.timing.driving/Math.max(1,this.timing.total)).toFixed(1)}%`,
     ].join('\n'));
   }
 

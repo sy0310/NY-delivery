@@ -26,5 +26,5 @@ test('blocked driver side uses a safe passenger-side exit, or refuses both sides
   assert.ok(car.yaw > 0);
   assert.ok(car.distance > 0);
   car.reset();
-  assert.deepEqual([car.x, car.z, car.yaw, car.speed], [-2.5, 23, 0, 0]);
+  assert.deepEqual([car.x, car.z, car.yaw, car.speed], [2.5, 23, 0, 0]);
 });

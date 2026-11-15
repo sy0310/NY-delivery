@@ -1,5 +1,7 @@
 import { Node, Vec3, MeshRenderer, utils, primitives, Camera, RenderTexture, Color, SphereLight } from 'cc';
 import { ModelGeometry, PaintedPanel } from './ModelGeometry';
+import { AVENUES, CROSS_STREETS, planRoute } from './CityLayout';
+import type { CityPoint } from './CityLayout';
 
 export interface CarTelemetry {
   speed: number;
@@ -9,6 +11,8 @@ export interface CarTelemetry {
   z: number;
   yaw: number;
   destination: boolean;
+  target: CityPoint;
+  address: string;
 }
 
 /** Original sedan with a modeled cockpit, live instruments and a rear-view camera. */
@@ -293,39 +297,38 @@ export class CarModel {
     const { context: c, texture, canvas } = this.navigation;
     c.fillStyle = '#d9e1d0';
     c.fillRect(0, 0, 512, 352);
-    const mapX = (x: number) => 256 + x * 10;
-    const mapY = (z: number) => 174 + (z + 5) * 3.1;
-    c.fillStyle = '#bdc9ba';
-    for (const x of [40, 326]) for (const y of [60, 240]) c.fillRect(x, y, 145, 71);
-    c.fillStyle = '#f0f0dc';
-    c.fillRect(218, 0, 76, 352);
-    c.fillRect(0, mapY(-14) - 18, 512, 36);
-    c.strokeStyle = '#42766e';
-    c.lineWidth = 12;
-    c.lineJoin = 'round';
-    const targetX = telemetry.destination ? 9.4 : -10;
-    const targetZ = telemetry.destination ? -30 : 0;
+    const mapX = (x: number) => 40 + x * 1.44;
+    const mapY = (z: number) => 20 + (z + 480) * .41;
+    c.strokeStyle = '#f0f0dc';
+    c.lineWidth = 15;
     c.beginPath();
-    c.moveTo(mapX(telemetry.x), mapY(telemetry.z));
-    c.lineTo(mapX(telemetry.x), mapY(targetZ));
-    c.lineTo(mapX(targetX), mapY(targetZ));
+    for (const x of AVENUES) { c.moveTo(mapX(x),mapY(-480)); c.lineTo(mapX(x),mapY(140)); }
+    for (const z of CROSS_STREETS) { c.moveTo(mapX(0),mapY(z)); c.lineTo(mapX(300),mapY(z)); }
+    c.stroke();
+    c.strokeStyle = '#42766e';
+    c.lineWidth = 6;
+    c.lineJoin = 'round';
+    c.beginPath();
+    c.moveTo(mapX(telemetry.x),mapY(telemetry.z));
+    for (const point of planRoute(telemetry,telemetry.target).points) c.lineTo(mapX(point.x),mapY(point.z));
     c.stroke();
     c.fillStyle = '#b17c3f';
-    c.beginPath(); c.arc(mapX(targetX), mapY(targetZ), 11, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(mapX(telemetry.target.x),mapY(telemetry.target.z),7,0,Math.PI*2); c.fill();
     c.save();
-    c.translate(mapX(telemetry.x), mapY(telemetry.z));
+    c.translate(mapX(telemetry.x),mapY(telemetry.z));
     c.rotate(-telemetry.yaw);
     c.fillStyle = '#1c4e51';
-    c.beginPath(); c.moveTo(0, -17); c.lineTo(12, 13); c.lineTo(0, 8); c.lineTo(-12, 13); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(0,-12); c.lineTo(8,9); c.lineTo(0,5); c.lineTo(-8,9); c.closePath(); c.fill();
     c.restore();
     c.fillStyle = '#26484b';
-    c.font = '18px DM-Sans';
-    c.fillText('ORCHARD AVE', 313, 95);
+    c.font = '16px DM-Sans';
+    c.fillText('ORCHARD ↑',55,283);
+    c.fillText('MERCER ↓',335,283);
     c.fillStyle = '#18363b';
-    c.fillRect(0, 302, 512, 50);
+    c.fillRect(0,302,512,50);
     c.fillStyle = '#f5e8cd';
     c.font = '21px DM-Sans';
-    c.fillText(telemetry.destination ? '18 ORCHARD WALK' : 'JUNIPER KITCHEN', 22, 334);
+    c.fillText(telemetry.address.toUpperCase(),22,334,468);
     texture.uploadData(canvas);
   }
 }

@@ -30,7 +30,7 @@ export class Playlist {
     if (this.activeSource === 'external') return undefined;
     return this.tracks.find(track => track.id === this.selected[this.activeSource]) ?? this.tracks[0];
   }
-  get localURLs(): string[] { return [...new Set(this.local.map(track => track.url))]; }
+  get localURLs(): string[] { return Array.from(new Set(this.local.map(track => track.url))); }
 
   registerRadio(tracks: Track[]): void {
     for (const track of tracks) if (!this.radio.some(existing => existing.id === track.id)) this.radio.push({...track});

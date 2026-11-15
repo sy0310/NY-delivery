@@ -215,7 +215,8 @@ export class ModelGeometry {
         depthStencilState: { depthWrite: false },
       },
     });
-    const sky = this.mesh('Blue evening sky dome', utils.createMesh(primitives.sphere(480, { segments: 48 })), material);
+    const sky = this.mesh('Blue evening sky dome', utils.createMesh(primitives.sphere(1100, { segments: 48 })), material);
+    sky.setPosition(150, 0, -170);
     sky.getComponent(MeshRenderer)!.shadowCastingMode = MeshRenderer.ShadowCastingMode.OFF;
   }
 
