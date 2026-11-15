@@ -18,3 +18,14 @@ print(json.dumps([local_point([1100,2200],[1000,2000],2263),roof_height(0),roof_
   assert.ok(Math.abs(height.height-30.48)<.01);
   assert.equal(bridge,null);
 });
+test('large background buildings remain when their nearest footprint edge is close to the district',()=>{
+ const output=execFileSync('python3',['-c',`
+import sys
+sys.path.insert(0,'scripts')
+from district_data import polygon_distance
+boundary=[{'x':0,'z':0},{'x':30,'z':0},{'x':30,'z':100},{'x':0,'z':100}]
+building=[{'x':40,'z':0},{'x':1000,'z':0},{'x':1000,'z':100},{'x':40,'z':100}]
+print(polygon_distance(building,boundary))
+`],{encoding:'utf8'});
+ assert.equal(Number(output),10);
+});
