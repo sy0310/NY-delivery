@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { planRoute, orderLocation, PICKUP_PARKING, roadAt } from '../game/assets/scripts/CityLayout.ts';
+import { planRoute, orderLocation, PICKUP_PARKING, roadAt, EAST_AVENUE, SOUTH_STREET } from '../game/assets/scripts/CityLayout.ts';
 import { OrderTiming } from '../game/assets/scripts/OrderTiming.ts';
 
 test('connected one-way blocks provide a long reachable delivery leg and a continuous return', () => {
   const first = orderLocation(0);
   const delivery = planRoute(PICKUP_PARKING, first.dropoffParking);
-  assert.ok(delivery.distance > 950 && delivery.distance < 1150);
-  assert.ok(delivery.points.some(point => point.x === 300 && point.z === 140));
+  assert.ok(delivery.distance > 1150 && delivery.distance < 1300);
+  assert.ok(delivery.points.some(point => point.x === EAST_AVENUE && point.z === SOUTH_STREET));
   assert.ok(delivery.points.every(point => roadAt(point.x, point.z)));
   const next = planRoute(first.dropoffParking, PICKUP_PARKING);
   assert.ok(next.distance > 700 && next.distance < 900);
@@ -17,7 +17,7 @@ test('connected one-way blocks provide a long reachable delivery leg and a conti
 
 test('moving through a junction advances the next target and near-goal route stays short', () => {
   assert.deepEqual(planRoute({x:2.5,z:23},PICKUP_PARKING).points[0], {x:0,z:-120});
-  assert.deepEqual(planRoute({x:30,z:-120},PICKUP_PARKING).points[0], {x:300,z:-120});
+  assert.deepEqual(planRoute({x:30,z:-120},PICKUP_PARKING).points[0], {x:EAST_AVENUE,z:-120});
   assert.ok(planRoute({x:PICKUP_PARKING.x,z:PICKUP_PARKING.z-1},PICKUP_PARKING).distance < 15);
   assert.equal(new Set([0,1,2].map(i => orderLocation(i).address)).size, 3);
 });
@@ -46,7 +46,7 @@ test('restaurant counter and back wall stay outside the connected asphalt juncti
 });
 
 test('a small parking overshoot guides a short maneuver instead of a complete block loop', () => {
-  const from = {x:300,z:PICKUP_PARKING.z+8};
+  const from = {x:EAST_AVENUE,z:PICKUP_PARKING.z+8};
   assert.ok(planRoute(from,PICKUP_PARKING).distance < 20);
 });
 

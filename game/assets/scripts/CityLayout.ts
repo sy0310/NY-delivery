@@ -1,12 +1,15 @@
 export interface CityPoint { x: number; z: number }
-export const AVENUES = [0, 300];
-export const CROSS_STREETS = [-480, -120, 140];
-export const RESTAURANT_ORIGIN = {x:300, z:-85};
+export const EAST_AVENUE = 350;
+export const NORTH_STREET = -480;
+export const SOUTH_STREET = 200;
+export const AVENUES = [0, EAST_AVENUE];
+export const CROSS_STREETS = [NORTH_STREET, -120, SOUTH_STREET];
+export const RESTAURANT_ORIGIN = {x:EAST_AVENUE, z:-85};
 export const COUNTER = {x:RESTAURANT_ORIGIN.x-14.3, z:RESTAURANT_ORIGIN.z};
 export const PICKUP_PARKING = {x:RESTAURANT_ORIGIN.x-5.5, z:RESTAURANT_ORIGIN.z+14};
 export const SPAWN = {x:2.5, z:23};
-const nodes: CityPoint[] = [{x:0,z:140},{x:0,z:-120},{x:0,z:-480},
-  {x:300,z:-480},{x:300,z:-120},{x:300,z:140}];
+const nodes: CityPoint[] = [{x:0,z:SOUTH_STREET},{x:0,z:-120},{x:0,z:NORTH_STREET},
+  {x:EAST_AVENUE,z:NORTH_STREET},{x:EAST_AVENUE,z:-120},{x:EAST_AVENUE,z:SOUTH_STREET}];
 // Orchard northbound, Mercer southbound, Juniper eastbound, River westbound.
 const edges = [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[1,4]];
 const distance = (a: CityPoint, b: CityPoint) => Math.hypot(a.x-b.x,a.z-b.z);
@@ -20,8 +23,8 @@ export function orderLocation(sequence: number) {
 }
 
 export function roadAt(x: number, z: number): boolean {
-  return AVENUES.some(center => Math.abs(x-center) <= 6.8 && z >= -486.8 && z <= 146.8)
-    || CROSS_STREETS.some(center => Math.abs(z-center) <= 6.8 && x >= -6.8 && x <= 306.8);
+  return AVENUES.some(center => Math.abs(x-center) <= 6.8 && z >= NORTH_STREET-6.8 && z <= SOUTH_STREET+6.8)
+    || CROSS_STREETS.some(center => Math.abs(z-center) <= 6.8 && x >= -6.8 && x <= EAST_AVENUE+6.8);
 }
 
 function project(point: CityPoint, a: CityPoint, b: CityPoint) {

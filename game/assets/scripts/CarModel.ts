@@ -1,6 +1,6 @@
 import { Node, Vec3, MeshRenderer, utils, primitives, Camera, RenderTexture, Color, SphereLight } from 'cc';
 import { ModelGeometry, PaintedPanel } from './ModelGeometry';
-import { AVENUES, CROSS_STREETS, planRoute } from './CityLayout';
+import { AVENUES, CROSS_STREETS, planRoute, EAST_AVENUE, NORTH_STREET, SOUTH_STREET } from './CityLayout';
 import type { CityPoint } from './CityLayout';
 
 export interface CarTelemetry {
@@ -297,13 +297,13 @@ export class CarModel {
     const { context: c, texture, canvas } = this.navigation;
     c.fillStyle = '#233c43';
     c.fillRect(0, 0, 512, 352);
-    const mapX = (x: number) => 40 + x * 1.44;
-    const mapY = (z: number) => 20 + (z + 480) * .41;
+    const mapX = (x: number) => 40 + x * (432 / EAST_AVENUE);
+    const mapY = (z: number) => 20 + (z - NORTH_STREET) * (254 / (SOUTH_STREET - NORTH_STREET));
     c.strokeStyle = '#8fa9a8';
     c.lineWidth = 15;
     c.beginPath();
-    for (const x of AVENUES) { c.moveTo(mapX(x),mapY(-480)); c.lineTo(mapX(x),mapY(140)); }
-    for (const z of CROSS_STREETS) { c.moveTo(mapX(0),mapY(z)); c.lineTo(mapX(300),mapY(z)); }
+    for (const x of AVENUES) { c.moveTo(mapX(x),mapY(NORTH_STREET)); c.lineTo(mapX(x),mapY(SOUTH_STREET)); }
+    for (const z of CROSS_STREETS) { c.moveTo(mapX(0),mapY(z)); c.lineTo(mapX(EAST_AVENUE),mapY(z)); }
     c.stroke();
     c.strokeStyle = '#e5be79';
     c.lineWidth = 6;

@@ -4,7 +4,7 @@ import type { PaintedPanel } from './ModelGeometry';
 import type { BagLabel } from './OrderState';
 import { CarModel, CarTelemetry } from './CarModel';
 import { OrderData } from './OrderState';
-import { AVENUES, CROSS_STREETS, roadAt, RESTAURANT_ORIGIN, PICKUP_PARKING } from './CityLayout';
+import { AVENUES, CROSS_STREETS, roadAt, RESTAURANT_ORIGIN, PICKUP_PARKING, EAST_AVENUE, NORTH_STREET, SOUTH_STREET } from './CityLayout';
 import { Person } from './Person';
 import type { OrderStage } from './OrderState';
 
@@ -84,7 +84,7 @@ export class World {
   }
 
   canMove = (x: number, z: number, radius: number): boolean => {
-    if (x < -40 || x > 340 || z > 180 || z < -520) return false;
+    if (x < -40 || x > EAST_AVENUE+40 || z > SOUTH_STREET+40 || z < NORTH_STREET-40) return false;
     if (radius > 1 && !roadAt(x, z)) return false;
     return this.obstacles.every(o => Math.abs(x - o.x) >= o.width / 2 + radius
       || Math.abs(z - o.z) >= o.depth / 2 + radius);
@@ -187,12 +187,12 @@ export class World {
 
   private street(): void {
     const g = this.geometry;
-    for (let x = -90; x <= 390; x += 30) for (let z = -570; z <= 240; z += 30) {
+    for (let x = -390; x <= EAST_AVENUE+390; x += 30) for (let z = NORTH_STREET-390; z <= SOUTH_STREET+390; z += 30) {
       g.box('City ground', x, -.35, z, 30, .4, 30, '#9b9d93');
     }
     for (const avenue of AVENUES) {
-      for (let z = -480; z <= 140; z += 10) g.box('Connected avenue', avenue, -.07, z, 14, .15, 10, '#3a454d');
-      for (let z = -470; z < 140; z += 6) {
+      for (let z = NORTH_STREET; z <= SOUTH_STREET; z += 10) g.box('Connected avenue', avenue, -.07, z, 14, .15, 10, '#3a454d');
+      for (let z = -470; z < SOUTH_STREET; z += 6) {
         if (CROSS_STREETS.some(cross => Math.abs(z-cross) < 18)) continue;
         g.box('One-way lane divider', avenue, .025, z, .10, .015, 3, '#ddd4b5');
         for (const side of [-1,1]) {
@@ -217,9 +217,9 @@ export class World {
       }
     }
     for (const cross of CROSS_STREETS) {
-      for (let x = 0; x <= 300; x += 10) {
+      for (let x = 0; x <= EAST_AVENUE; x += 10) {
         g.box('Connected cross street', x, -.055, cross, 10, .13, 14, '#3a454d');
-        if (x > 18 && x < 282) {
+        if (x > 18 && x < EAST_AVENUE-18) {
           for (const side of [-1,1]) g.box('Cross-street sidewalk', x, .075, cross+side*8.55, 10, .25, 3.1, '#b5b5a7');
           g.box('Cross-street lane marking', x, .026, cross, 4, .02, .10, '#ddd4b5');
         }
@@ -228,7 +228,7 @@ export class World {
     for (const [x,z,name] of [[PICKUP_PARKING.x,PICKUP_PARKING.z,'JUNIPER PICKUP'],[5.5,-350,'18 ORCHARD'],[5.5,70,'42 ORCHARD'],[5.5,-240,'76 LOBBY']] as const) {
       for (const side of [-1,1]) g.box('Parking bay side', x+side*1.2,.04,z,.08,.02,6,'#dbd1a9');
       g.box('Parking bay end',x,.04,z-3,2.4,.02,.08,'#dbd1a9');
-      this.sign(name,x > 200 ? 292.4 : 8.2,2.2,z,2.8,x > 200 ? -90 : 90,'#355b55');
+      this.sign(name,x > 200 ? x-2.1 : x+2.7,2.2,z,2.8,x > 200 ? -90 : 90,'#355b55');
     }
   }
 
@@ -272,7 +272,7 @@ export class World {
     const colors = ['#9b806b', '#a49b83', '#7f9295', '#997568', '#879391'];
     for (const avenue of AVENUES) this.buildAt('Avenue frontage', avenue, 0, () => {
       const g = this.geometry;
-      for (const side of [-1,1]) for (let index=0; index<34; index++) {
+      for (const side of [-1,1]) for (let index=0; index<38; index++) {
         const z = -466+index*18;
         if (CROSS_STREETS.some(cross => Math.abs(z-cross)<23)) continue;
         if (avenue===RESTAURANT_ORIGIN.x && side<0 && Math.abs(z-RESTAURANT_ORIGIN.z)<18) continue;
@@ -285,7 +285,7 @@ export class World {
         if (index%3===0) this.fireEscape(side,z,height);
       }
     });
-    for (const x of [-58,62,112,188,238,358]) for (let z=-510;z<=180;z+=42) {
+    for (const x of [-58,62,112,188,238,EAST_AVENUE+58]) for (let z=-510;z<=SOUTH_STREET+40;z+=42) {
       if (CROSS_STREETS.some(cross => Math.abs(z-cross)<28)) continue;
       const height=22+Math.abs((x+z)%27);
       this.geometry.box('Interior city block',x,height/2,z,30,height,27,this.facade(colors[Math.abs(z)%5],z));
@@ -444,7 +444,7 @@ export class World {
 
   private streetFurniture(): void {
     const g = this.geometry;
-    for (const avenue of AVENUES) for (let z=-450;z<130;z+=54) {
+    for (const avenue of AVENUES) for (let z=-450;z<SOUTH_STREET-10;z+=54) {
       if (CROSS_STREETS.some(cross => Math.abs(z-cross)<18)) continue;
       for (const side of [-1,1]) {
         if (avenue===0 && side>0 && [-360,60,-250].some(door => Math.abs(z-door)<12)) continue;
@@ -462,7 +462,7 @@ export class World {
     for (const avenue of AVENUES) for (const cross of CROSS_STREETS) {
       g.cylinder('Street sign pole',avenue-8.2,1.9,cross-12,.055,3.8,'#526260');
       this.sign(avenue===0 ? 'ORCHARD ↑' : 'MERCER ↓',avenue-8.2,3.1,cross-12,3,0);
-      this.sign(cross===140 ? 'RIVER ←' : 'JUNIPER →',avenue-8.2,2.6,cross-12,3,0);
+      this.sign(cross===SOUTH_STREET ? 'RIVER ←' : cross===NORTH_STREET ? 'CANAL →' : 'JUNIPER →',avenue-8.2,2.6,cross-12,3,0);
     }
   }
 
