@@ -41,6 +41,13 @@ export function routeWalking(district:DistrictDefinition,from:CityPoint,to:CityP
     for(let index=5;index>0;index=previous[index])detour.unshift(nodes[index]);
     points.push(...detour);start=end;
   }
-  const distance=points.reduce((sum,point,index)=>sum+pointDistance(index?points[index-1]:from,point),0);
-  return {...base,points,distance};
+  const simplified:CityPoint[]=[];
+  let anchor=from,index=0;
+  while(index<points.length) {
+    let next=points.length-1;
+    while(next>index && !clear(anchor,points[next]))next--;
+    simplified.push(points[next]);anchor=points[next];index=next+1;
+  }
+  const distance=simplified.reduce((sum,point,index)=>sum+pointDistance(index?simplified[index-1]:from,point),0);
+  return {...base,points:simplified,distance};
 }
