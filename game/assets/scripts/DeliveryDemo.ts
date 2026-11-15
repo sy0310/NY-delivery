@@ -11,6 +11,7 @@ import { World } from './World';
 import { resolveInteraction, directionTo } from './Interaction';
 import type { Interaction } from './Interaction';
 import { MusicPlayer } from './MusicPlayer';
+import { MusicPanel } from './MusicPanel';
 
 const { ccclass, property } = _decorator;
 const DEG = 180 / Math.PI;
@@ -48,6 +49,7 @@ export class DeliveryDemo extends Component {
   private walker = new WalkingController();
   private world!: World;
   private music!: MusicPlayer;
+  private musicPanel!: MusicPanel;
   private camera!: Node;
   private hud!: HTMLElement;
   private keys = new Set<string>();
@@ -96,6 +98,9 @@ export class DeliveryDemo extends Component {
     resources.load('music/evening-loop', AudioClip, (error, clip) => {
       if (error) this.music.message = '演示曲载入失败，仍可选择本地歌曲';
       else this.music.setDemo(clip.nativeUrl);
+    });
+    resources.load('music/river-lights', AudioClip, (error, clip) => {
+      if (!error) this.music.setDemo(clip.nativeUrl, 'river', 'River Lights');
     });
     input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
     input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
@@ -198,7 +203,7 @@ export class DeliveryDemo extends Component {
     });
     this.updateView();
     this.updateBag();
-    this.music.update(this.inCar, Math.hypot(this.walker.x - this.vehicle.x, this.walker.z - this.vehicle.z));
+    this.music.update(this.inCar, Math.hypot(this.walker.x - this.vehicle.x, this.walker.z - this.vehicle.z), this.vehicle.speed);
     this.refresh += dt;
     if (this.refresh > .1) { this.renderHUD(); this.refresh = 0; }
   }
@@ -380,7 +385,6 @@ export class DeliveryDemo extends Component {
       #delivery-hud #pay { font: 32px 'InstrumentSerif', serif; color: #e2c78c; }
       #delivery-hud .toolbar { position:absolute; top:22px; right:130px; display:flex; gap:8px; pointer-events:auto; }
       #delivery-hud .toolbar button { background:#183339d9; color:#e4e5dc; border:1px solid #718f85; min-height:44px; }
-      #delivery-hud:not(.touch-mode) #order-toggle, #delivery-hud:not(.touch-mode) #music-toggle { display:none; }
       #delivery-hud.touch-mode .controls, #delivery-hud.touch-mode .phone, #delivery-hud.touch-mode .music { display:none; }
       #delivery-hud.touch-mode.phone-open .phone, #delivery-hud.touch-mode.music-open .music { display:block; }
       #delivery-hud.touch-mode .top { top:12px; left:16px; }
@@ -404,6 +408,13 @@ export class DeliveryDemo extends Component {
         #delivery-hud.touch-mode .look-hint { top:140px; right:16px; }
         #delivery-hud.touch-mode .touch-tools { bottom:174px; left:24px; transform:none; }
       }
+      #delivery-hud .music-details { display:none; margin-top:10px; max-height:55vh; overflow:auto; }
+      #delivery-hud.music-open .music-details { display:block; }
+      #delivery-hud .music-details select { background:#243e43; color:#f0e8d4; min-height:36px; max-width:170px; }
+      #delivery-hud .music-note { font-size:11px; line-height:1.5; color:#c7d2c9; }
+      #delivery-hud .playlist-row { display:flex; gap:6px; margin:6px 0; }
+      #delivery-hud .playlist-row button:first-child { flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; }
+      #delivery-hud #music-toggle { display:block; }
       </style>
       <nav class="toolbar"><button id="touch-toggle">触屏操作</button><button id="order-toggle">订单</button><button id="music-toggle">音乐</button></nav>
       <div class="top"><div class="sub">NEW YORK · 6:42 PM</div><div class="wordmark">我在纽约送外卖</div><div class="route" id="route"></div></div>
@@ -412,8 +423,10 @@ export class DeliveryDemo extends Component {
       <button id="action">接单</button><div id="result"><div class="muted">DELIVERED · 本单收入</div><div id="pay"></div><div id="summary" class="muted"></div><button id="restart">继续接单</button><button id="end-work">结束本次工作</button></div></section>
       <div class="controls"><kbd>W / S</kbd> 前进 / 后退　<kbd>A / D</kbd> 驾驶转向 / 步行横移<br>${LOOK_HINT} · 自由观察　<kbd>SPACE</kbd> 刹车<br><kbd>E</kbd> 上下车 / 交互　<kbd>R</kbd> 卡住恢复<br><kbd>M</kbd> 音乐播放 / 暂停</div>
       <div class="speed"><span id="mph">0</span><span>mph<br><span id="mode">DRIVING</span></span></div>
-      <section class="music"><div class="music-title"><span>ORCHARD RADIO</span><span id="music-time">00:00</span></div><div id="track"></div><button id="play">播放 / 暂停</button><button id="choose">本地 MP3 / WAV</button><button id="next">切歌</button><label>音量 <input id="volume" aria-label="音乐音量" type="range" min="0" max="1" step=".01" value=".55"></label><label style="font-size:10px"><input id="continuous" type="checkbox">连续聆听</label></section>
+
       <div class="notice" id="notice"></div><pre id="diagnostics" style="display:none;position:absolute;left:28px;top:165px;background:#142b30dd;padding:12px;font:11px monospace"></pre>`;
+    this.musicPanel = new MusicPanel(this.music);
+    this.hud.appendChild(this.musicPanel.element);
     document.body.appendChild(this.hud);
     this.touch = new TouchControls(this.hud, game.canvas, this.look,
       () => this.orderAction(), this.recenterView, () => this.recover(), EDITOR);
@@ -426,9 +439,6 @@ export class DeliveryDemo extends Component {
     on('touch-toggle', () => { this.clearKeys(); this.touch.toggle(); });
     on('order-toggle', () => this.hud.classList.toggle('phone-open'));
     on('music-toggle', () => this.hud.classList.toggle('music-open'));
-    on('play', () => this.music.toggle());
-    on('choose', () => this.music.choose());
-    on('next', () => this.music.next());
     on('restart', () => this.interact());
     on('end-work', () => { this.working = false; this.notice = '本次工作结束，累计完成 ' + this.order.completedOrders + ' 单 · $' + this.order.totalEarnings.toFixed(2); });
     on('action', () => this.orderAction());
@@ -445,8 +455,6 @@ export class DeliveryDemo extends Component {
         this.notice = '等待已快进，歌曲保持原播放速度。请核对交接码取餐。';
       }
     });
-    this.hud.querySelector('#volume')!.addEventListener('input', event => this.music.volume(Number((event.target as HTMLInputElement).value)));
-    this.hud.querySelector('#continuous')!.addEventListener('change', event => { this.music.continuous = (event.target as HTMLInputElement).checked; });
   }
 
   private renderHUD(): void {
@@ -475,9 +483,7 @@ export class DeliveryDemo extends Component {
     text('mph', String(Math.round(Math.abs(this.vehicle.speed) * 2.23694)));
     text('mode', this.inCar ? 'DRIVING' : 'ON FOOT');
     text('notice', this.notice);
-    text('track', this.music.message);
-    const time = Math.floor(this.music.audio.currentTime || 0);
-    text('music-time', String(Math.floor(time / 60)).padStart(2, '0') + ':' + String(time % 60).padStart(2, '0'));
+    this.musicPanel.render();
     const target = stage === 'carrying' ? this.vehicle : ['stowed','delivering'].includes(stage) ? this.dropoff : this.pickup;
     const playerHeading = this.inCar ? this.vehicle : this.walker;
     const navigation = directionTo(playerHeading, target);

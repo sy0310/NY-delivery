@@ -30,3 +30,15 @@
 ## 运行证据
 
 docs/media 保存 Cocos 发布构建及编辑器预览的实机截图。录屏保留在本机 .local/media，完成情况与声音轨检查结果见 VALIDATION.md。
+
+## Review 默认音乐权利记录
+
+两首音乐均为本项目编写的确定性合成作品，未使用外部录音、采样或歌曲旋律。以下 CC0 声明覆盖本项目原创音乐与录音，保留的第三方字体和引擎各自遵循原许可。完整文本保存于 `docs/licenses/CC0-1.0.txt`。
+
+| 曲名 | 作者 / 权利来源 | 来源 URL | 许可版本 | 必要署名 | 修改 | 适用范围 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Evening on Orchard | NY-delivery 项目原创合成 | [生成脚本](https://github.com/sy0310/NY-delivery/blob/codex/bootstrap-delivery-demo/scripts/generate-music.py) | CC0 1.0 Universal | 无强制署名，可标注本项目 | 本轮生成脚本重构，音频 SHA-256 核对保持一致 | 可随游戏分发、修改、公开宣传录屏与直播使用 |
+| River Lights | NY-delivery 项目原创合成 | [生成脚本](https://github.com/sy0310/NY-delivery/blob/codex/bootstrap-delivery-demo/scripts/generate-music.py) | CC0 1.0 Universal | 无强制署名，可标注本项目 | 本轮新增，120 秒，64 BPM，无人声 | 可随游戏分发、修改、公开宣传录屏与直播使用 |
+| 游戏交互提示与环境声 | MusicPlayer.ts 实时合成 | [合成代码](https://github.com/sy0310/NY-delivery/blob/codex/bootstrap-delivery-demo/game/assets/scripts/MusicPlayer.ts) | CC0 1.0 Universal | 无强制署名 | 本轮缩短提示、独立混音 | 游戏分发与宣传视频 |
+
+录屏用音乐模式仅允许以上可用电台音乐或内部静音，隐藏本地文件名。本地选歌的权利由所选曲目的真实许可决定，录屏开关仅控制游戏自身音轨。外部音乐 App 与系统录音仍由设备和录屏工具控制。
