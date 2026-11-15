@@ -28,7 +28,10 @@ export class MusicPlayer {
   private lifecycle = new AbortController();
   continuous = false;
   message = '电台载入中，可静音出发';
-  get effectiveVolume(): number { return this.gain?.gain.value ?? this.audio.volume; }
+  get effectiveVolume(): number {
+    if (this.context && this.context.state !== 'running') return 0;
+    return this.gain?.gain.value ?? this.audio.volume;
+  }
   get levels() { return {music:this.userVolume, environment:this.ambientVolume, effects:this.effectVolume}; }
   private get policy() {
     return audioPolicy({...this.levels, source:this.playlist.source, wantsPlayback:this.playlist.wantsPlayback,
@@ -97,7 +100,10 @@ export class MusicPlayer {
     this.userVolume = this.ambientVolume = this.effectVolume = 0;
     clearTimeout(this.duckTimer);
     this.duckTimer = undefined;
-    if (this.context && this.gain) this.gain.gain.cancelScheduledValues(this.context.currentTime);
+    if (this.context && this.gain) {
+      this.gain.gain.cancelScheduledValues(this.context.currentTime);
+      this.gain.gain.setValueAtTime(0, this.context.currentTime);
+    }
     if (this.effects) this.effects.gain.value = 0;
     if (this.ambient) this.ambient.gain.value = 0;
     this.mix();
