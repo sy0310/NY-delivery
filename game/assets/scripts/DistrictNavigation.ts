@@ -1,4 +1,4 @@
-import type { CityPoint, DistrictBuilding, DistrictDefinition, DistrictRoad, TravelMode } from './DistrictDefinition';
+import type { CityPoint, DistrictBuilding, DistrictDefinition, DistrictRoad, DistrictPlace, TravelMode } from './DistrictDefinition';
 
 export interface DistrictRoute {
   reachable: boolean; points: CityPoint[]; distance: number; roads: string[];
@@ -10,14 +10,24 @@ interface Segment {
 }
 interface Edge { a: string; b: string; start: CityPoint; end: CityPoint; width: number; roadId: string; length: number }
 interface Graph { positions: Map<string,CityPoint>; edges: Edge[]; adjacent: Map<string,Edge[]> }
-const graphs = new WeakMap<DistrictDefinition,Map<TravelMode,{signature: string; graph: Graph}>>();
+interface RoadState {road:DistrictRoad;enabled:boolean;width:number;points:CityPoint[]}
+const graphs = new WeakMap<DistrictDefinition,Map<TravelMode,{roads:RoadState[];graph:Graph}>>();
 interface CollisionEntry {building:DistrictBuilding;minX:number;maxX:number;minZ:number;maxZ:number}
 const collisionGrids = new WeakMap<DistrictDefinition,Map<string,CollisionEntry[]>>();
 export const pointDistance = (a: CityPoint,b: CityPoint) => Math.hypot(a.x-b.x,a.z-b.z);
 
+function projectionFraction(point:CityPoint,a:CityPoint,b:CityPoint):number {
+  const dx=b.x-a.x,dz=b.z-a.z;
+  return Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.z-a.z)*dz)/(dx*dx+dz*dz || 1)));
+}
+function segmentDistanceSquared(point:CityPoint,a:CityPoint,b:CityPoint):number {
+  const t=projectionFraction(point,a,b);
+  const dx=point.x-a.x-(b.x-a.x)*t,dz=point.z-a.z-(b.z-a.z)*t;
+  return dx*dx+dz*dz;
+}
 export function projectPoint(point: CityPoint,a: CityPoint,b: CityPoint) {
   const dx=b.x-a.x, dz=b.z-a.z;
-  const t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.z-a.z)*dz)/(dx*dx+dz*dz || 1)));
+  const t=projectionFraction(point,a,b);
   const position={x:a.x+dx*t,z:a.z+dz*t};
   return {position,t,distance:pointDistance(point,position)};
 }
@@ -60,9 +70,11 @@ function segments(district: DistrictDefinition,mode: TravelMode): Segment[] {
 function graphFor(district: DistrictDefinition,mode: TravelMode): Graph {
   let cached=graphs.get(district);
   if (!cached) { cached=new Map(); graphs.set(district,cached); }
-  const signature=district.roads.filter(road=>road[mode]).map(road=>road.id).join('|');
   const existing=cached.get(mode);
-  if (existing?.signature===signature) return existing.graph;
+  if(existing && existing.roads.length===district.roads.length && existing.roads.every((state,index)=>{
+    const road=district.roads[index];
+    return state.road===road && state.enabled===Boolean(road[mode]) && state.width===road.width && state.points===road.points;
+  }))return existing.graph;
   const graph: Graph={positions:new Map(),edges:[],adjacent:new Map()};
   const list=segments(district,mode);
   const accesses: {key: string; points: CityPoint[]; id: string; width: number}[]=[];
@@ -107,7 +119,7 @@ function graphFor(district: DistrictDefinition,mode: TravelMode): Graph {
       a=b;
     }
   }
-  cached.set(mode,{signature,graph});
+  cached.set(mode,{roads:district.roads.map(road=>({road,enabled:Boolean(road[mode]),width:road.width,points:road.points})),graph});
   return graph;
 }
 
@@ -143,18 +155,23 @@ function nearbyBuildings(district: DistrictDefinition,point: CityPoint,radius: n
 export function isAccessible(district: DistrictDefinition,point: CityPoint,mode: TravelMode,radius=0): boolean {
   const bounds=district.bounds;
   if (point.x<bounds.minX || point.x>bounds.maxX || point.z<bounds.minZ || point.z>bounds.maxZ) return false;
-  const room=(mode==='foot' ? [...district.restaurants,...district.deliveries] : []).find(shop=>{
-    if (!shop.width || !shop.depth) return false;
+  const containsRoom=(shop:DistrictPlace)=>{
+    if(!shop.width || !shop.depth)return false;
+    const extent=shop.width/2+shop.depth+3+Math.abs(radius)*2;
+    if(Math.abs(point.x-shop.entry.x)>extent || Math.abs(point.z-shop.entry.z)>extent)return false;
     const p=roomPoint(shop.entry,shop.yaw,point);
     return Math.abs(p.x)<shop.width/2-radius && p.z>=-3 && p.z<shop.depth-radius
       && (Math.abs(p.z)>radius+.05 || Math.abs(p.x)<1.1-radius);
+  };
+  const room=mode==='foot' ? district.restaurants.find(containsRoom) || district.deliveries.find(containsRoom) : undefined;
+  const onSurface=graphFor(district,mode).edges.some(edge=>{
+    const extent=edge.width/2-radius+.01;
+    return extent>=0 && segmentDistanceSquared(point,edge.start,edge.end)<=extent*extent;
   });
-  const onSurface=graphFor(district,mode).edges.some(edge=>
-    projectPoint(point,edge.start,edge.end).distance<=edge.width/2-radius+.01);
   if (!onSurface && !(mode==='foot' && room)) return false;
   for (const building of nearbyBuildings(district,point,radius)) {
     const blocked=insidePolygon(point,building.footprint) || radius>0 && building.footprint.some((a,index)=>
-      projectPoint(point,a,building.footprint[(index+1)%building.footprint.length]).distance<radius);
+      segmentDistanceSquared(point,a,building.footprint[(index+1)%building.footprint.length])<radius*radius);
     if (blocked && !(mode==='foot' && room?.buildingId===building.id)) return false;
   }
   return true;
