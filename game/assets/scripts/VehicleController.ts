@@ -12,7 +12,7 @@ export class VehicleController {
     const drag = Math.sign(this.speed) * Math.min(Math.abs(this.speed), dt * 0.9);
     this.speed = Math.max(-3, Math.min(13, this.speed + throttle * dt * 4.2 - drag));
     if (brake) this.speed = Math.sign(this.speed) * Math.max(0, Math.abs(this.speed) - dt * 10);
-    this.yaw += steer * this.speed * dt * 0.085;
+    this.yaw += steer * this.speed * dt * 0.16;
     const x = this.x - Math.sin(this.yaw) * this.speed * dt;
     const z = this.z - Math.cos(this.yaw) * this.speed * dt;
     if (canMove(x, z, 1.25)) {
