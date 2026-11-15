@@ -1,6 +1,6 @@
 import {
   Node, Material, Mesh, MeshRenderer, utils, primitives, Color, Vec3, Quat, Mat4,
-  ImageAsset, Texture2D, gfx,
+  ImageAsset, Texture2D, gfx, Asset,
 } from 'cc';
 
 export interface PaintedPanel {
@@ -13,19 +13,40 @@ export interface PaintedPanel {
 /** Shared meshes and materials for the original city and vehicle models. */
 export class ModelGeometry {
   private materials = new Map<string, Material>();
+  private owned = new Set<Asset>();
+  private panels = new Map<string, {material:Material;mesh:Mesh}>();
   private boxMesh = utils.createMesh(primitives.box());
   private sphereMesh = utils.createMesh(primitives.sphere(.5, { segments: 12 }));
   private cylinderMesh = utils.createMesh(primitives.cylinder(1, 1, 1, { radialSegments: 16 }));
   private staticRenderers: MeshRenderer[] = [];
   private roundedMeshes = new Map<string, Mesh>();
 
-  constructor(readonly root: Node, private surface: Material, private unlit: Material) {}
+  constructor(readonly root: Node, private surface: Material, private unlit: Material) {
+    this.owned.add(this.boxMesh); this.owned.add(this.sphereMesh); this.owned.add(this.cylinderMesh);
+  }
+  dispose(): void {
+    for (const asset of Array.from(this.owned)) if (asset.isValid) asset.destroy();
+    this.owned.clear(); this.materials.clear(); this.panels.clear(); this.roundedMeshes.clear();
+  }
+  cachedPanel(key:string,width:number,height:number,paint:(c:CanvasRenderingContext2D)=>void,parent:Node=this.root):Node {
+    let shared=this.panels.get(key);
+    if (!shared) {
+      const panel=this.panel(key,width,height,512,128,parent);
+      paint(panel.context); panel.texture.uploadData(panel.canvas);
+      shared={material:panel.node.getComponent(MeshRenderer)!.sharedMaterial!,mesh:panel.node.getComponent(MeshRenderer)!.mesh!};
+      this.panels.set(key,shared); return panel.node;
+    }
+    const node=this.mesh(key,shared.mesh,shared.material,parent); node.setScale(width,height,1);
+    node.getComponent(MeshRenderer)!.shadowCastingMode=MeshRenderer.ShadowCastingMode.OFF;
+    return node;
+  }
 
   material(hex: string, metallic = 0, roughness = .8, finish?: 'grain' | 'brushed'): Material {
     const key = `${hex}/${metallic}/${roughness}/${finish || ''}`;
     let material = this.materials.get(key);
     if (!material) {
       material = new Material();
+      this.owned.add(material);
       material.copy(this.surface);
       if (finish) {
         const canvas = document.createElement('canvas');
@@ -41,6 +62,7 @@ export class ModelGeometry {
         context.putImageData(pixels, 0, 0);
         const texture = new Texture2D();
         texture.image = new ImageAsset(canvas);
+        this.owned.add(texture); this.owned.add(texture.image);
         material.copy(this.surface, { defines: { USE_ALBEDO_MAP: true } });
         material.setProperty('mainTexture', texture);
       }
@@ -53,6 +75,7 @@ export class ModelGeometry {
   }
 
   mesh(name: string, mesh: Mesh, material: Material, parent: Node = this.root): Node {
+    this.owned.add(mesh);
     const node = new Node(name);
     parent.addChild(node);
     const renderer = node.addComponent(MeshRenderer);
@@ -131,6 +154,7 @@ export class ModelGeometry {
     const existing = this.materials.get(key);
     if (existing) return existing;
     const material = new Material();
+    this.owned.add(material);
     material.copy(this.surface, {
       technique: 1,
       states: { rasterizerState: { cullMode: gfx.CullMode.NONE } },
@@ -169,7 +193,9 @@ export class ModelGeometry {
   paintedMaterial(canvas: HTMLCanvasElement, lit = false): { material: Material; texture: Texture2D } {
     const texture = new Texture2D();
     texture.image = new ImageAsset(canvas);
+    this.owned.add(texture); this.owned.add(texture.image);
     const material = new Material();
+    this.owned.add(material);
     if (lit) {
       material.initialize({ effectAsset: this.surface.effectAsset, defines: { USE_ALBEDO_MAP: true } });
       material.setProperty('roughness', .9);
@@ -208,6 +234,7 @@ export class ModelGeometry {
     context.fillRect(0, 0, 512, 512);
     const painted = this.paintedMaterial(canvas);
     const material = new Material();
+    this.owned.add(material);
     material.copy(painted.material, {
       defines: { USE_TEXTURE: true, CC_USE_FOG: 0 },
       states: {
@@ -238,6 +265,7 @@ export class ModelGeometry {
         const chunk = renderers.slice(offset, offset + 350);
         if (chunk.length < 2) continue;
         const merged = new Mesh();
+        this.owned.add(merged);
         for (const renderer of chunk) {
           const transform = Mat4.fromRTS(new Mat4(), renderer.node.rotation,
             renderer.node.position, renderer.node.scale);

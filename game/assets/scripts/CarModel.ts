@@ -28,6 +28,8 @@ export class CarModel {
   private rearCamera!: Camera;
   private rearTexture!: RenderTexture;
   private refresh = 0;
+  private rearTick=0;
+  private rearInterval=1/30;
   private wheelSpin = 0;
   private steeringAngle = 0;
   private wheels: { node: Node; front: boolean }[] = [];
@@ -48,6 +50,12 @@ export class CarModel {
     geometry.batchStatic(this.interior);
     geometry.batchStatic(this.node);
   }
+
+  setQuality(quality:'low'|'standard'):void {
+    this.rearInterval=quality==='low'?1/15:1/30;
+    this.rearTexture.reset({width:quality==='low'?128:256,height:quality==='low'?48:96});
+  }
+  dispose():void {this.rearCamera.targetTexture=null;this.rearTexture.destroy();}
 
   private body(): void {
     const g = this.geometry;
@@ -248,6 +256,8 @@ export class CarModel {
     for (const wheel of this.wheels) {
       wheel.node.setRotationFromEuler(this.wheelSpin, wheel.front ? this.steeringAngle / 90 * 22 : 0, 0);
     }
+    this.rearTick+=dt;this.rearCamera.enabled=this.rearTick>=this.rearInterval;
+    if(this.rearCamera.enabled)this.rearTick=0;
     this.refresh += dt;
     if (this.refresh < .12) return;
     this.refresh = 0;

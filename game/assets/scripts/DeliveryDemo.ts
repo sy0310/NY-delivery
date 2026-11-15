@@ -13,7 +13,7 @@ import type { Interaction } from './Interaction';
 import { MusicPlayer } from './MusicPlayer';
 import { MusicPanel } from './MusicPanel';
 import { planRoute } from './CityLayout';
-import { LEGACY_DISTRICT } from './LegacyDistrict';
+import { FLUSHING_DISTRICT } from './FlushingDistrict';
 import { createDistrictOrder } from './DistrictOrders';
 import { drawDistrictMap } from './DistrictMap';
 import { OrderTiming } from './OrderTiming';
@@ -46,7 +46,7 @@ const KEY_BINDINGS: Partial<Record<KeyCode, string>> = {
 export class DeliveryDemo extends Component {
   @property(Material) surfaceMaterial: Material = null!;
   @property(Material) signMaterial: Material = null!;
-  private district = LEGACY_DISTRICT;
+  private district = FLUSHING_DISTRICT;
   private order = new OrderState(createDistrictOrder(this.district,0));
   private orderSequence = 0;
   private timing = new OrderTiming();
@@ -86,7 +86,7 @@ export class DeliveryDemo extends Component {
   private lastExit = {x:.6,z:23};
 
   async start(): Promise<void> {
-    await Promise.all(['DM-Sans', 'InstrumentSerif'].map(name => new Promise<void>(resolve => {
+    await Promise.all(['DM-Sans', 'InstrumentSerif','NYDistrictSans'].map(name => new Promise<void>(resolve => {
       resources.load('fonts/' + name, Font, async (error, font) => {
         if (!error) {
           try {
@@ -102,6 +102,7 @@ export class DeliveryDemo extends Component {
     this.vehicle.z=this.district.spawn.z;
     this.vehicle.yaw=this.district.spawn.yaw*Math.PI/180;
     this.world = new World(this.node, this.surfaceMaterial, this.signMaterial, this.order.data);
+    await this.world.loadDistrict(this.district);
     this.world.car.setPosition(this.vehicle.x, 0, this.vehicle.z);
     const scene = this.node.scene;
     scene.globals.ambient.skyColor = new Vec4(.48, .61, .72, 1);
@@ -194,7 +195,7 @@ export class DeliveryDemo extends Component {
   }
 
   update(dt: number): void {
-    if (!this.world) return;
+    if (!this.world || !this.hud || this.world.loading) return;
     this.samplePerformance(dt);
     if (!this.paused && this.order.stage !== 'idle' && this.order.stage !== 'delivered') this.elapsed += dt;
     this.noticeAge += dt;
@@ -319,8 +320,9 @@ export class DeliveryDemo extends Component {
       this.world.bag.setPosition(.45, 1.06, .35);
       this.world.bag.setRotationFromEuler(0,180,0);
     } else {
-      this.world.bag.setPosition(this.pickup.x - 1.6, 1.55, this.pickup.z - .6);
-      this.world.bag.setRotationFromEuler(0,90,0);
+      const pose=this.world.bagPose;
+      this.world.bag.setPosition(pose.x,1.47,pose.z);
+      this.world.bag.setRotationFromEuler(0,pose.yaw,0);
     }
   }
 
@@ -406,8 +408,9 @@ export class DeliveryDemo extends Component {
 
   private recover(): void {
     this.vehicle.reset();
+    Object.assign(this.vehicle,{x:this.district.spawn.x,z:this.district.spawn.z,yaw:this.district.spawn.yaw/DEG});
     this.recenterView();
-    this.walker.place({ x: .6, z: 23 }, 0);
+    this.walker.place(this.district.spawn,this.vehicle.yaw);
     this.clearKeys();
     this.notice = '已回到起点安全位置，订单与音乐进度保留。';
   }
@@ -714,6 +717,9 @@ export class DeliveryDemo extends Component {
       `Context ${this.music.context?.state ?? 'uninitialized'} · music ${this.music.levels.music} environment ${this.music.levels.environment} effects ${this.music.levels.effects}`,
       `Draws ${director.root!.device.numDrawCalls} · triangles ${director.root!.device.numTris} · texture ${(director.root!.device.memoryStatus.textureSize/1048576).toFixed(1)} MiB`,
       this.runSummary,
+      `District ${this.world.resourceState}`,
+      `Route ${JSON.stringify(route.points)}`,
+      `Goal ${JSON.stringify(this.inCar?parking:target)}`,
       `Order ${this.order.data.id} · ${this.order.completedOrders} completed · $${this.order.totalEarnings.toFixed(2)}`,
       `Phases ${JSON.stringify(Object.fromEntries(Object.entries(this.timing.seconds).map(([phase,seconds]) => [phase,Math.round(seconds)])))}`,
       `Driving ${this.timing.driving.toFixed(1)} / ${this.timing.total.toFixed(1)} s · ${(100*this.timing.driving/Math.max(1,this.timing.total)).toFixed(1)}%`,
@@ -726,6 +732,7 @@ export class DeliveryDemo extends Component {
     window.removeEventListener('blur', this.clearKeys);
     this.touch?.dispose();
     this.music?.dispose();
+    this.world?.dispose();
     this.hud?.remove();
   }
 }
