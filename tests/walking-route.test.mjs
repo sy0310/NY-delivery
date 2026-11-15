@@ -17,3 +17,9 @@ test('the walking route from the driver door goes around the parked car to the n
   }
  }
 });
+test('rerouting at the Union lobby car-detour corner keeps forward progress toward the doorway',()=>{
+ const lobby=map.deliveries[1],car={...lobby.parking,yaw:148.9*Math.PI/180};
+ const from={x:284.94,z:-130.36};
+ const route=routeWalking(map,from,lobby.target,car);
+ assert.equal(route.reachable,true);assert.ok(route.distance<13,'avoid returning to the road-centre junction after rounding the car');
+});
