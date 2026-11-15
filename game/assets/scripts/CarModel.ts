@@ -1,4 +1,5 @@
 import { Node, Vec3, MeshRenderer, utils, primitives, Camera, RenderTexture, Color, SphereLight } from 'cc';
+import type { Material } from 'cc';
 import { WHEELBASE, MAX_ROAD_WHEEL_ANGLE } from './VehicleController';
 import { QUALITY_PRESETS } from './QualityPreset';
 import { ModelGeometry, PaintedPanel } from './ModelGeometry';
@@ -29,6 +30,7 @@ export class CarModel {
   private navigation: PaintedPanel;
   private rearCamera!: Camera;
   private rearTexture!: RenderTexture;
+  private rearMaterial!: Material;
   private refresh = 0;
   private rearTick=0;
   private rearInterval=1/30;
@@ -56,7 +58,8 @@ export class CarModel {
   setQuality(quality:'low'|'standard'):void {
     const preset=QUALITY_PRESETS[quality];
     this.rearInterval=1/preset.mirrorFps;
-    this.rearTexture.reset({width:preset.mirrorWidth,height:preset.mirrorHeight});
+    this.rearTexture.resize(preset.mirrorWidth,preset.mirrorHeight);
+    this.rearMaterial.setProperty('mainTexture',this.rearTexture);
   }
   dispose():void {this.rearCamera.targetTexture=null;this.rearTexture.destroy();}
 
@@ -231,6 +234,7 @@ export class CarModel {
     const mirror = g.panel('Real rear-view reflection', .35, .116, 256, 96, this.interior);
     mirror.node.setPosition(0, 1.912, -.705);
     const material = mirror.node.getComponent(MeshRenderer)!.getMaterialInstance(0)!;
+    this.rearMaterial = material;
     material.setProperty('mainTexture', texture);
     const cameraNode = new Node('Rear-view camera');
     this.interior.addChild(cameraNode);
