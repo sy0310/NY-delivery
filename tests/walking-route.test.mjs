@@ -23,3 +23,8 @@ test('rerouting at the Union lobby car-detour corner keeps forward progress towa
  const route=routeWalking(map,from,lobby.target,car);
  assert.equal(route.reachable,true);assert.ok(route.distance<13,'avoid returning to the road-centre junction after rounding the car');
 });
+test('a physically valid position next to the Union parked car remains a valid navigation start',()=>{
+ const lobby=map.deliveries[1],car={x:284.83,z:-127.29,yaw:148.9*Math.PI/180};
+ const from={x:282.71,z:-126.54};
+ assert.equal(routeWalking(map,from,map.restaurants[0].counter,car).reachable,true);
+});
