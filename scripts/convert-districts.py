@@ -274,7 +274,7 @@ def convert_region(region, face_ids, origin_id, prefix):
                 'origin': {'crs': 'EPSG:2263', 'coordinates': origin}, 'boundary': boundary,
                 'bounds': {'minX': min(xs) - 35, 'maxX': max(xs) + 35, 'minZ': min(zs) - 35, 'maxZ': max(zs) + 35},
                 'roads': list(roads.values()), 'buildings': buildings, 'restaurants': [noodles, dumplings], 'deliveries': deliveries,
-                'parkingAreas': areas, 'spawn': {**rounded(spawn), 'yaw': yaw}, 'landmarks': [], 'sources': sources, 'blocks': []}
+                'parkingAreas': areas, 'spawn': {**rounded(spawn), 'yaw': yaw+(180 if region=='chinatown' else 0)}, 'landmarks': [], 'sources': sources, 'blocks': []}
     return district
 
 
