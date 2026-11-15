@@ -1,0 +1,38 @@
+{
+  "district": "flushing",
+  "origin": {
+    "crs": "EPSG:2263",
+    "coordinates": [
+      1031306.95988648,
+      216054.328747238
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://services6.arcgis.com/yG5s3afENB5iO9fj/arcgis/rest/services/Centerline_view/FeatureServer/0/query?f=json&geometryType=esriGeometryEnvelope&geometry=-73.8344%2C40.7572%2C-73.8258%2C40.762&inSR=4326&outSR=2263&spatialRel=esriSpatialRelIntersects&where=1%3D1&outFields=OBJECTID%2CPHYSICALID%2CFULL_STREET_NAME%2CTRAFDIR%2CSTREETWIDTH%2CSTATUS%2CACCESSIBLE%2CNONPED%2CFCC%2CRW_TYPE%2CFROM_LEVEL_CODE%2CTO_LEVEL_CODE%2CSEGMENT_TYPE%2CSEGMENT_TYPE_VALUE&returnGeometry=true&resultRecordCount=2000",
+      "retrieved": "2026-11-15T19:22:40.916162+00:00",
+      "sha256": "900559b30133c98ba82c295b15eeeec6f4acc01361f1de897f5820577adaa09b",
+      "license": "NYC Open Data terms, source/version/modifications retained"
+    },
+    {
+      "url": "https://services6.arcgis.com/yG5s3afENB5iO9fj/arcgis/rest/services/BUILDING_view/FeatureServer/0/query?f=json&geometryType=esriGeometryEnvelope&geometry=-73.8344%2C40.7572%2C-73.8258%2C40.762&inSR=4326&outSR=2263&spatialRel=esriSpatialRelIntersects&where=1%3D1&outFields=OBJECTID%2CBIN%2CHEIGHT_ROOF%2CFEATURE_CODE&returnGeometry=true&resultRecordCount=2000",
+      "retrieved": "2026-11-15T19:22:40.916162+00:00",
+      "sha256": "ecb03954117060b5ebf0fb22a1738c6b7d4fc45cfb33366402636bb9a3f24668",
+      "license": "NYC Open Data terms, source/version/modifications retained"
+    }
+  ],
+  "streetBlocks": 5,
+  "roads": 19,
+  "buildings": 163,
+  "fallbackHeights": 0,
+  "heightSimplifications": 30,
+  "modifications": [
+    "Local EPSG:2263 US survey feet to metres, north is negative Z.",
+    "Only curated constructed at-grade source segments. Original endpoints and direction retained.",
+    "Main busway and Lippmann plaza are foot-only for prototype cars, crossing side streets retained.",
+    "Five complete street blocks plus 45m background footprint context.",
+    "Largest exterior footprint ring, courtyard holes omitted, ground flattened.",
+    "Roof heights are feet above ground, missing height falls back to 12m, visible shell range 4.5–96m.",
+    "Restaurant brands, interiors and temporary curb parking are authored game locations."
+  ]
+}

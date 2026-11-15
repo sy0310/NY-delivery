@@ -1,0 +1,144 @@
+{
+  "ver": "2.3.14",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "762fa650-90a2-4773-991c-f5fa1254e70f",
+  "files": [],
+  "subMetas": {
+    "ff507": {
+      "importer": "gltf-mesh",
+      "uuid": "762fa650-90a2-4773-991c-f5fa1254e70f@ff507",
+      "displayName": "",
+      "id": "ff507",
+      "name": "context--2--1.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 319
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "607ed": {
+      "importer": "gltf-material",
+      "uuid": "762fa650-90a2-4773-991c-f5fa1254e70f@607ed",
+      "displayName": "",
+      "id": "607ed",
+      "name": "NYC wall 0.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "e7872": {
+      "importer": "gltf-material",
+      "uuid": "762fa650-90a2-4773-991c-f5fa1254e70f@e7872",
+      "displayName": "",
+      "id": "e7872",
+      "name": "NYC wall 1.material",
+      "userData": {
+        "gltfIndex": 1
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "a4271": {
+      "importer": "gltf-material",
+      "uuid": "762fa650-90a2-4773-991c-f5fa1254e70f@a4271",
+      "displayName": "",
+      "id": "a4271",
+      "name": "NYC wall 2.material",
+      "userData": {
+        "gltfIndex": 2
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "59bef": {
+      "importer": "gltf-material",
+      "uuid": "762fa650-90a2-4773-991c-f5fa1254e70f@59bef",
+      "displayName": "",
+      "id": "59bef",
+      "name": "NYC roof.material",
+      "userData": {
+        "gltfIndex": 3
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f41cd": {
+      "importer": "gltf-scene",
+      "uuid": "762fa650-90a2-4773-991c-f5fa1254e70f@f41cd",
+      "displayName": "",
+      "id": "f41cd",
+      "name": "context--2--1.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "762fa650-90a2-4773-991c-f5fa1254e70f@ff507"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "762fa650-90a2-4773-991c-f5fa1254e70f@607ed",
+        "762fa650-90a2-4773-991c-f5fa1254e70f@e7872",
+        "762fa650-90a2-4773-991c-f5fa1254e70f@a4271",
+        "762fa650-90a2-4773-991c-f5fa1254e70f@59bef"
+      ],
+      "scenes": [
+        "762fa650-90a2-4773-991c-f5fa1254e70f@f41cd"
+      ]
+    }
+  }
+}

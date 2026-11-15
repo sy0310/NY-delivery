@@ -12,6 +12,7 @@ export interface DistrictBuilding {
 export interface DistrictPlace {
   id: string; name: string; entry: CityPoint; parking: CityPoint; walkway: CityPoint[];
   yaw: number; buildingId?: string;
+  width?: number; depth?: number; frontageEdge?: number;
 }
 export interface DistrictRestaurant extends DistrictPlace {
   counter: CityPoint; queue: CityPoint; menu: string; chineseName: string; width: number; depth: number;
@@ -27,4 +28,5 @@ export interface DistrictDefinition {
   parkingAreas: CityPoint[][]; spawn: CityPoint & {yaw: number};
   landmarks: {id: string; name: string; kind: string; position: CityPoint; yaw: number}[];
   sources: {url: string; retrieved: string; sha256: string; license: string}[];
+  blocks?: {id: string; kind: string; asset: string; bounds: {minX: number;minZ: number;maxX: number;maxZ: number}; buildings: string[]}[];
 }

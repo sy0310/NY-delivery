@@ -138,7 +138,8 @@ function nearbyBuildings(district: DistrictDefinition,point: CityPoint,radius: n
 export function isAccessible(district: DistrictDefinition,point: CityPoint,mode: TravelMode,radius=0): boolean {
   const bounds=district.bounds;
   if (point.x<bounds.minX || point.x>bounds.maxX || point.z<bounds.minZ || point.z>bounds.maxZ) return false;
-  const room=district.restaurants.find(shop=>{
+  const room=(mode==='foot' ? [...district.restaurants,...district.deliveries] : []).find(shop=>{
+    if (!shop.width || !shop.depth) return false;
     const p=roomPoint(shop.entry,shop.yaw,point);
     return Math.abs(p.x)<shop.width/2-radius && p.z>=-3 && p.z<shop.depth-radius
       && (Math.abs(p.z)>radius+.05 || Math.abs(p.x)<1.1-radius);
