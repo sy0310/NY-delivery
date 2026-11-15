@@ -1,6 +1,6 @@
 import {
   _decorator, Component, Node, Camera, Color, Vec3, Vec4, resources,
-  AudioClip, Material, Font, profiler, game, input, Input, EventKeyboard, KeyCode,
+  AudioClip, Material, Font, profiler, game, input, Input, EventKeyboard, KeyCode, director,
 } from 'cc';
 import { EDITOR } from 'cc/env';
 import { OrderState, createOrder } from './OrderState';
@@ -14,6 +14,7 @@ import { MusicPlayer } from './MusicPlayer';
 import { MusicPanel } from './MusicPanel';
 import { orderLocation, planRoute } from './CityLayout';
 import { OrderTiming } from './OrderTiming';
+import { PerformanceRun } from './PerformanceRun';
 
 const { ccclass, property } = _decorator;
 const DEG = 180 / Math.PI;
@@ -70,6 +71,14 @@ export class DeliveryDemo extends Component {
   private viewPitch = -4;
   private peakSeatDrift = 0;
   private peakSeatYawDrift = 0;
+  private performanceRun: PerformanceRun | null = null;
+  private sampling = false;
+  private performanceStart = 0;
+  private performanceNext = 0;
+  private wasBackground = false;
+  private timeToHud = 0;
+  private resourceSamples: object[] = [];
+  private runSummary = '';
 
   async start(): Promise<void> {
     await Promise.all(['DM-Sans', 'InstrumentSerif'].map(name => new Promise<void>(resolve => {
@@ -113,11 +122,12 @@ export class DeliveryDemo extends Component {
     window.addEventListener('blur', this.clearKeys);
     this.updateView();
     this.renderHUD();
+    this.timeToHud = performance.now();
   }
 
   private onKeyDown = (event: EventKeyboard): void => {
     if (event.keyCode === KeyCode.ESCAPE) { this.togglePause(); return; }
-    if (document.activeElement?.matches('input,select')) return;
+    if (document.activeElement?.matches('input,select,textarea')) return;
     const code = KEY_BINDINGS[event.keyCode];
     if (!code || this.keys.has(code)) return;
     this.keys.add(code);
@@ -177,6 +187,7 @@ export class DeliveryDemo extends Component {
 
   update(dt: number): void {
     if (!this.world) return;
+    this.samplePerformance(dt);
     if (!this.paused && this.order.stage !== 'idle' && this.order.stage !== 'delivered') this.elapsed += dt;
     this.noticeAge += dt;
     this.frames.push(dt);
@@ -223,6 +234,49 @@ export class DeliveryDemo extends Component {
     this.music.update(this.inCar, Math.hypot(this.walker.x - this.vehicle.x, this.walker.z - this.vehicle.z), this.vehicle.speed);
     this.refresh += dt;
     if (this.refresh > .1) { this.renderHUD(); this.refresh = 0; }
+  }
+
+  private samplePerformance(dt: number): void {
+    if (!this.sampling || !this.performanceRun) return;
+    const background = document.hidden || !document.hasFocus();
+    const mode = background || this.wasBackground ? 'background' : this.paused ? 'paused'
+      : this.order.stage === 'idle' || this.order.stage === 'delivered' ? 'idle' : 'active';
+    this.wasBackground = background;
+    this.performanceRun.frame(dt, mode);
+    const now = performance.now();
+    if (now < this.performanceNext) return;
+    this.performanceNext = now + 5000;
+    const device = director.root!.device;
+    const memory = (performance as Performance & {memory?: {usedJSHeapSize:number}}).memory;
+    this.resourceSamples.push({seconds:(now-this.performanceStart)/1000, mode,
+      drawCalls:device.numDrawCalls, triangles:device.numTris,
+      textureBytes:device.memoryStatus.textureSize, bufferBytes:device.memoryStatus.bufferSize,
+      jsHeapBytes:memory?.usedJSHeapSize ?? null});
+    const active = this.performanceRun.summary().active;
+    this.runSummary = `Run active ${active.seconds.toFixed(1)}s · ${active.fps.toFixed(1)} FPS · p95 ${active.p95.toFixed(1)} / p99 ${active.p99.toFixed(1)} ms · >50ms ${active.longFrames}`;
+  }
+
+  private startPerformance(): void {
+    this.performanceRun = new PerformanceRun();
+    this.resourceSamples = [];
+    this.performanceStart = performance.now();
+    this.performanceNext = 0;
+    this.wasBackground = document.hidden;
+    this.sampling = true;
+    if (this.paused) this.togglePause();
+    this.notice = '整段性能采样已开始，暂停菜单可停止并查看原始数据。';
+  }
+
+  private finishPerformance(): void {
+    if (!this.performanceRun) return;
+    this.sampling = false;
+    const output = this.hud.querySelector<HTMLTextAreaElement>('#performance-output')!;
+    output.value = JSON.stringify({engine:'3.8.8',time:new Date().toISOString(),
+      viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},
+      timeToHudMs:this.timeToHud,summary:this.performanceRun.summary(),resources:this.resourceSamples,
+      frameColumns:['milliseconds','mode','district'],frames:this.performanceRun.samples,
+      memoryScope:'Cocos estimated texture/buffer bytes and browser-reported JS heap. Native/driver/process memory is not collected.'});
+    this.hud.querySelector<HTMLElement>('#performance-panel')!.hidden = false;
   }
 
   private updateView(): void {
@@ -467,6 +521,9 @@ export class DeliveryDemo extends Component {
       #delivery-hud.music-open #previous { display:inline-block; }
       #delivery-hud #pause-menu { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(420px,90%); padding:24px; background:#183339f5; border:1px solid #8a9d8f; border-radius:12px; pointer-events:auto; }
       #delivery-hud.paused #context-action { display:none; }
+      #delivery-hud #sound-resume { position:absolute; left:50%; top:86px; transform:translateX(-50%); min-height:44px; pointer-events:auto; }
+      #delivery-hud #performance-panel { position:absolute; z-index:20; inset:5%; padding:20px; background:#183339; pointer-events:auto; overflow:auto; }
+      #delivery-hud #performance-output { display:block; width:100%; height:65%; font:12px monospace; }
       #delivery-hud.touch-mode .music { display:block; left:180px; top:auto; bottom:16px; width:260px; }
       #delivery-hud.touch-mode.music-open .music { left:16px; top:74px; bottom:auto; width:340px; }
       #delivery-hud.touch-mode .music-details { top:calc(100% + 6px); bottom:auto; max-height:calc(100vh - 180px); }
@@ -492,7 +549,9 @@ export class DeliveryDemo extends Component {
       <div class="speed"><span id="mph">0</span><span>mph<br><span id="mode">DRIVING</span></span></div>
 
       <button id="context-action">接单</button>
-      <section id="pause-menu" hidden><h2>暂停</h2><p>音乐继续播放，可在音乐面板中暂停。</p><p>W/S 前后移动，A/D 驾驶转向或步行横移。拖动空白处观察，E 执行情境操作。手机左手移动/转向，右侧观察，油门与刹车独立。</p><button id="resume">继续游戏</button><button id="safe-recover">安全复位</button><p>安全复位会将人与车放回起点，保留订单与音乐。</p></section>
+      <button id="sound-resume" hidden>点按恢复声音</button>
+      <section id="pause-menu" hidden><h2>暂停</h2><p>音乐继续播放，可在音乐面板中暂停。</p><p>W/S 前后移动，A/D 驾驶转向或步行横移。拖动空白处观察，E 执行情境操作。手机左手移动/转向，右侧观察，油门与刹车独立。</p><button id="resume">继续游戏</button><button id="safe-recover">安全复位</button><p>安全复位会将人与车放回起点，保留订单与音乐。</p><button id="performance-start">开始性能采样</button><button id="performance-finish">停止并查看性能</button></section>
+      <section id="performance-panel" hidden><h2>整段性能采样</h2><textarea id="performance-output" aria-label="性能原始数据" readonly></textarea><button id="performance-close">关闭数据</button></section>
       <div class="notice" id="notice"></div><pre id="diagnostics" style="display:none;position:absolute;left:28px;top:165px;background:#142b30dd;padding:12px;font:10px monospace;max-width:min(370px,calc(100% - 56px));max-height:calc(100% - 185px);white-space:pre-wrap;overflow:auto"></pre>`;
     this.musicPanel = new MusicPanel(this.music);
     this.hud.appendChild(this.musicPanel.element);
@@ -511,6 +570,10 @@ export class DeliveryDemo extends Component {
     on('pause', () => this.togglePause());
     on('resume', () => this.togglePause());
     on('safe-recover', () => { this.recover(); this.togglePause(); });
+    on('sound-resume', () => { void this.music.resumeSound(); });
+    on('performance-start', () => this.startPerformance());
+    on('performance-finish', () => this.finishPerformance());
+    on('performance-close', () => { this.hud.querySelector<HTMLElement>('#performance-panel')!.hidden = true; });
     on('context-action', () => this.interact());
     on('restart', () => this.interact());
     on('end-work', () => { this.working = false; this.notice = '本次工作结束，累计完成 ' + this.order.completedOrders + ' 单 · $' + this.order.totalEarnings.toFixed(2); });
@@ -547,6 +610,7 @@ export class DeliveryDemo extends Component {
     }
     const text = (id: string, value: string) => { this.hud.querySelector('#' + id)!.textContent = value; };
     const data = this.order.data;
+    this.hud.querySelector<HTMLElement>('#sound-resume')!.hidden = !this.music.needsResume;
     const stage = this.order.stage;
     text('restaurant', data.restaurant);
     text('order-id', data.id + ' · $' + data.pay.toFixed(2));
@@ -622,6 +686,9 @@ export class DeliveryDemo extends Component {
       `Walk eye ${Math.hypot(this.camera.worldPosition.x - this.walker.x, this.camera.worldPosition.z - this.walker.z).toFixed(4)} m`,
       `Audio ${this.music.audio.currentTime.toFixed(2)} s  gain ${this.music.effectiveVolume.toFixed(3)}`,
       `Single player · ${this.music.audio.paused || this.music.audio.error ? 'paused' : 'playing'}`,
+      `Context ${this.music.context?.state ?? 'uninitialized'} · music ${this.music.levels.music} environment ${this.music.levels.environment} effects ${this.music.levels.effects}`,
+      `Draws ${director.root!.device.numDrawCalls} · triangles ${director.root!.device.numTris} · texture ${(director.root!.device.memoryStatus.textureSize/1048576).toFixed(1)} MiB`,
+      this.runSummary,
       `Order ${this.order.data.id} · ${this.order.completedOrders} completed · $${this.order.totalEarnings.toFixed(2)}`,
       `Phases ${JSON.stringify(Object.fromEntries(Object.entries(this.timing.seconds).map(([phase,seconds]) => [phase,Math.round(seconds)])))}`,
       `Driving ${this.timing.driving.toFixed(1)} / ${this.timing.total.toFixed(1)} s · ${(100*this.timing.driving/Math.max(1,this.timing.total)).toFixed(1)}%`,

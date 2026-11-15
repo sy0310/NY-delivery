@@ -1,5 +1,6 @@
 import { Playlist } from './Playlist';
 import type { MusicSource, RepeatMode } from './Playlist';
+import { audioPolicy } from './AudioPolicy';
 
 /** One persistent element. Local files and selections live only in this page. */
 export class MusicPlayer {
@@ -24,14 +25,25 @@ export class MusicPlayer {
   private spatial = 1;
   private duckTimer: ReturnType<typeof setTimeout> | undefined;
   private restore: {source: MusicSource; id: string; time: number} | null = null;
+  private lifecycle = new AbortController();
   continuous = false;
   message = '电台载入中，可静音出发';
   get effectiveVolume(): number { return this.gain?.gain.value ?? this.audio.volume; }
+  get levels() { return {music:this.userVolume, environment:this.ambientVolume, effects:this.effectVolume}; }
+  private get policy() {
+    return audioPolicy({...this.levels, source:this.playlist.source, wantsPlayback:this.playlist.wantsPlayback,
+      contextState:this.context?.state ?? null});
+  }
+  get needsResume(): boolean {
+    return this.policy.recovery || this.policy.channels && Boolean(this.playlist.current && !this.playlist.current.failed
+      && this.playlist.wantsPlayback && this.audio.paused && !this.starting);
+  }
   get state(): string {
     if (this.playlist.source === 'external') return '外部播放器 · 游戏音乐已关闭';
     if (!this.playlist.current) return '歌单为空';
     if (this.playlist.current.failed) return '播放失败';
     if (this.starting && this.playlist.wantsPlayback) return '正在启动';
+    if (this.policy.recovery) return '点按恢复声音';
     if (this.audio.paused && this.playlist.wantsPlayback) return '系统暂停，点击恢复';
     return this.audio.paused ? '已暂停' : '播放中';
   }
@@ -57,6 +69,44 @@ export class MusicPlayer {
       this.message = '已' + (this.replaceOnChoose ? '替换' : '追加') + '本地歌单，选择“我的音乐”收听。刷新后需重新选择文件。';
     });
     this.picker.addEventListener('cancel', () => { this.message = '已取消选曲，当前播放保持'; });
+    document.addEventListener('pointerdown', this.gesture, {capture:true,signal:this.lifecycle.signal});
+    document.addEventListener('keydown', this.gesture, {capture:true,signal:this.lifecycle.signal});
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && this.needsResume) this.message = '声音被系统中断，请点按恢复声音';
+    }, {signal:this.lifecycle.signal});
+  }
+
+  /** First user gesture also enables environment/effects during silent or external orders. */
+  private gesture = (): void => {
+    if (this.context || !this.policy.channels) return;
+    this.unlock();
+    void this.context!.resume().catch(() => { this.message = '请点按恢复声音'; });
+  };
+
+  async resumeSound(): Promise<void> {
+    if (!this.policy.channels) return;
+    this.unlock();
+    try {
+      await this.context!.resume();
+      if (this.policy.bgm) await this.playCurrent(this.revision, true);
+      this.message = this.context!.state === 'running' ? '游戏声音已恢复' : '请点按恢复声音';
+    } catch { this.message = '声音恢复失败，请再次点按'; }
+  }
+
+  muteAll(): void {
+    this.userVolume = this.ambientVolume = this.effectVolume = 0;
+    clearTimeout(this.duckTimer);
+    this.duckTimer = undefined;
+    if (this.context && this.gain) this.gain.gain.cancelScheduledValues(this.context.currentTime);
+    if (this.effects) this.effects.gain.value = 0;
+    if (this.ambient) this.ambient.gain.value = 0;
+    this.mix();
+    this.reconcileContext();
+    this.message = '全部游戏声音已关闭，可在外部 App 中自行播放';
+  }
+
+  private reconcileContext(): void {
+    if (this.context && !this.policy.channels && this.context.state === 'running') void this.context.suspend();
   }
 
   setDemo(url: string, id = 'evening', name = 'Evening on Orchard'): void {
@@ -67,6 +117,9 @@ export class MusicPlayer {
   private unlock(): void {
     if (this.context) return;
     this.context = new AudioContext();
+    this.context.addEventListener('statechange', () => {
+      if (this.policy.recovery) this.message = '声音被系统中断，请点按恢复声音';
+    }, {signal:this.lifecycle.signal});
     this.capture = this.context.createMediaStreamDestination();
     this.gain = this.bus(this.userVolume);
     this.effects = this.bus(this.effectVolume);
@@ -104,14 +157,17 @@ export class MusicPlayer {
     this.playlist.wantsPlayback = false;
     this.sync();
     this.playlist.wantsPlayback = true;
-    await this.playCurrent(this.revision);
+    await this.playCurrent(this.revision, true);
   }
 
-  private async playCurrent(revision: number): Promise<void> {
+  private async playCurrent(revision: number, allowResume = false): Promise<void> {
     this.starting = true;
     try {
-      this.unlock();
-      await this.context!.resume();
+      if (this.policy.channels) this.unlock();
+      if (this.context && this.context.state !== 'running') {
+        if (!allowResume) { this.message = '请点按恢复声音'; return; }
+        await this.context.resume();
+      }
       if (revision !== this.revision || !this.playlist.wantsPlayback) return;
       await this.audio.play();
       if (revision !== this.revision) return;
@@ -128,6 +184,7 @@ export class MusicPlayer {
     if (this.playlist.wantsPlayback && (this.starting || !this.audio.paused)) {
       this.playlist.wantsPlayback = false;
       this.audio.pause();
+      this.reconcileContext();
     } else void this.play();
   }
   choose(replace = false): void {
@@ -139,6 +196,7 @@ export class MusicPlayer {
     if (!this.playlist.setSource(source)) return;
     this.sync();
     if (source === 'external') this.message = '内部 BGM 已关闭。请自行开启外部 App，手机共存需真机验证。';
+    this.reconcileContext();
   }
   next(direction = 1): void { this.playlist.next(direction); this.sync(true); }
   select(id: string): void { if (this.playlist.select(id)) this.sync(true); }
@@ -200,12 +258,17 @@ export class MusicPlayer {
     this.duckTimer = undefined;
     if (this.gain && this.context) this.gain.gain.cancelScheduledValues(this.context.currentTime);
     this.mix();
+    this.reconcileContext();
   }
   effectsVolume(value: number): void {
     this.effectVolume = Math.max(0, Math.min(1, value));
     if (this.effects) this.effects.gain.value = this.effectVolume;
+    this.reconcileContext();
   }
-  environmentVolume(value: number): void { this.ambientVolume = Math.max(0, Math.min(1, value)); }
+  environmentVolume(value: number): void {
+    this.ambientVolume = Math.max(0, Math.min(1, value));
+    this.reconcileContext();
+  }
   update(inCar: boolean, distance: number, speed = 0): void {
     this.spatial = inCar || this.continuous ? 1 : Math.max(.08, 1 / (1 + distance * .35));
     this.mix();
@@ -240,6 +303,7 @@ export class MusicPlayer {
     oscillator.onended = () => { oscillator.disconnect(); envelope.disconnect(); };
   }
   dispose(): void {
+    this.lifecycle.abort();
     this.listeners?.abort();
     ++this.revision;
     clearTimeout(this.duckTimer);
