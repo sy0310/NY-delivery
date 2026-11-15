@@ -57,3 +57,14 @@ test('collision broad phase skips distant polygon work within the same spatial c
  assert.equal(isAccessible(map,point(25,19.8),'car',.35),false);
  assert.equal(isAccessible(map,point(25,19.5),'car',.35),true);
 });
+test('cached navigation surfaces reflect changes in road width as well as access flags',()=>{
+ const street=road('street','a','b',point(0,0),point(100,0));
+ const map=district([street]);
+ assert.equal(isAccessible(map,point(40,3),'car',.35),true);
+ street.width=4;
+ assert.equal(isAccessible(map,point(40,3),'car',.35),false);
+ street.width=8;street.car=false;
+ assert.equal(isAccessible(map,point(40,0),'car',.35),false);
+ street.car=true;
+ assert.equal(isAccessible(map,point(40,3),'car',.35),true);
+});
