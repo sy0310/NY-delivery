@@ -620,6 +620,9 @@ export class DeliveryDemo extends Component {
         #delivery-hud.touch-mode .toolbar button { padding:7px 10px; }
         #delivery-hud.touch-mode .music { left:16px; top:134px; bottom:auto; width:calc(100% - 32px); }
         #delivery-hud.touch-mode.music-open .music { top:134px; width:calc(100% - 32px); }
+        #delivery-hud.touch-mode.phone-open:not(.music-open) .music,
+        #delivery-hud.touch-mode.counter-open:not(.music-open) .music { display:none; }
+        #delivery-hud.touch-mode.music-open .phone { display:none; }
         #delivery-hud.touch-mode .music-details { max-height:calc(100vh - 240px); }
         #delivery-hud.touch-mode .touch-tools { top:auto; bottom:260px; right:24px; }
         #delivery-hud.touch-mode #result { bottom:210px; }
@@ -651,8 +654,8 @@ export class DeliveryDemo extends Component {
       });
     };
     on('touch-toggle', () => { this.clearKeys(); this.touch.toggle(); });
-    on('order-toggle', () => { this.clearKeys(); this.hud.classList.toggle('phone-open'); });
-    on('music-toggle', () => { this.clearKeys(); this.hud.classList.toggle('music-open'); });
+    on('order-toggle', () => { this.clearKeys(); this.hud.classList.remove('music-open'); this.hud.classList.toggle('phone-open'); });
+    on('music-toggle', () => { this.clearKeys(); this.hud.classList.remove('phone-open'); this.hud.classList.toggle('music-open'); });
     on('map-toggle', () => { this.clearKeys(); this.mapOpen=true; this.hud.querySelector<HTMLElement>('#district-map')!.hidden=false; });
     on('map-close', () => { this.clearKeys(); this.mapOpen=false; this.hud.querySelector<HTMLElement>('#district-map')!.hidden=true; });
     on('pause', () => this.togglePause());
