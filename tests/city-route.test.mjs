@@ -37,3 +37,15 @@ test('phase timing separates active driving, parking, walking, waiting and hando
   assert.equal(timing.seconds.wait,6); assert.equal(timing.seconds.handoff,4);
   timing.reset(); assert.equal(timing.total,0);
 });
+
+test('restaurant counter and back wall stay outside the connected asphalt junction', () => {
+  const {pickup} = orderLocation(0);
+  for (const x of [pickup.x-4.7,pickup.x,pickup.x+3.8]) for (const offset of [-6,0,6]) {
+    assert.equal(roadAt(x,pickup.z+offset),false,'restaurant footprint must not occupy the road');
+  }
+});
+
+test('a small parking overshoot guides a short maneuver instead of a complete block loop', () => {
+  const from = {x:300,z:PICKUP_PARKING.z+8};
+  assert.ok(planRoute(from,PICKUP_PARKING).distance < 20);
+});
