@@ -1,0 +1,423 @@
+{
+  "codeCommit": "5c4a4c020b860510d2b633f82c6f9a0735411cb3",
+  "engine": "Cocos Creator 3.8.8 Web Desktop",
+  "device": "Apple M2 Pro / macOS 26.5.2 / Brave / 1512x777 / DPR 2",
+  "capture": "Visible HUD read through CUA. Input used normal keyboard, mouse and DOM controls. No game state injection.",
+  "runs": {
+    "continuous": "NY-1042 calibration, NY-1043, NY-1044 in one instance",
+    "ordinary": "Fresh instance NY-1042, ordinary uninterrupted sample"
+  },
+  "audio": {
+    "continuousOrder2": {
+      "source": "radio",
+      "recordingMode": true,
+      "continuousListening": true,
+      "music": 0.55,
+      "environment": 0.2,
+      "effects": 0.45
+    },
+    "continuousOrder3": {
+      "source": "external",
+      "internalBgm": "paused, no source",
+      "environment": 0.2,
+      "effects": 0
+    },
+    "subsequentSilentAcceptance": {
+      "source": "external",
+      "music": 0,
+      "environment": 0,
+      "effects": 0,
+      "orderId": "NY-1045"
+    },
+    "ordinary": {
+      "source": "radio",
+      "recordingMode": true,
+      "continuousListening": false,
+      "music": 0.55,
+      "environment": 0.2,
+      "effects": 0.45
+    }
+  },
+  "unverified": [
+    "physical phone dual touch and safe areas",
+    "mobile file selection, audio unlock and background return",
+    "external music App and game simultaneous playback",
+    "native editor audio output"
+  ],
+  "events": [
+    {
+      "name": "order1-completed-calibration",
+      "time": "2026-11-15T18:27:25.859Z",
+      "mode": "ON FOOT",
+      "mph": 0,
+      "musicTime": "00:51",
+      "route": "订单完成 · 享受你的傍晚",
+      "text": "x 7.80  z -360.66  yaw -450.0\nFPS 59.8  p95 18.2 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 11.7345 m (peak 0.0000 m)\nSeat yaw 84.4000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 51.37 s  gain 0.085\nSingle player · playing\nOrder NY-1042 · 1 completed · $9.75\nPhases {\"toPickupDrive\":54,\"toPickupWalk\":274,\"parking\":532,\"wait\":0,\"handoff\":0,\"toCar\":37,\"toDropoffDrive\":88,\"toDropoffWalk\":14}\nDriving 142.5 / 1000.2 s · 14.2%",
+      "track": "River Lights · 播放中",
+      "x": 7.8,
+      "z": -360.66,
+      "yaw": -450,
+      "speed": 0
+    },
+    {
+      "name": "order2-before-continue",
+      "time": "2026-11-15T18:27:40.283Z",
+      "mode": "ON FOOT",
+      "mph": 0,
+      "musicTime": "01:05",
+      "route": "订单完成 · 享受你的傍晚",
+      "text": "x 7.80  z -360.66  yaw -450.0\nFPS 60.0  p95 18.0 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 11.7345 m (peak 0.0000 m)\nSeat yaw 84.4000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 65.82 s  gain 0.543\nSingle player · playing\nOrder NY-1042 · 1 completed · $9.75\nPhases {\"toPickupDrive\":54,\"toPickupWalk\":274,\"parking\":532,\"wait\":0,\"handoff\":0,\"toCar\":37,\"toDropoffDrive\":88,\"toDropoffWalk\":14}\nDriving 142.5 / 1000.2 s · 14.2%",
+      "track": "River Lights · 播放中",
+      "x": 7.8,
+      "z": -360.66,
+      "yaw": -450,
+      "speed": 0
+    },
+    {
+      "name": "order2-start",
+      "time": "2026-11-15T18:27:40.645Z",
+      "mode": "ON FOOT",
+      "mph": 0,
+      "musicTime": "01:06",
+      "route": "→ Juniper Kitchen · 428 m",
+      "text": "x 7.80  z -360.66  yaw -450.0\nFPS 60.0  p95 18.0 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 11.7345 m (peak 0.0000 m)\nSeat yaw 84.4000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 66.15 s  gain 0.550\nSingle player · playing\nOrder NY-1043 · 1 completed · $9.75\nPhases {\"toPickupDrive\":0,\"toPickupWalk\":0,\"parking\":0,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 0.0 / 0.0 s · 0.0%",
+      "track": "River Lights · 播放中",
+      "x": 7.8,
+      "z": -360.66,
+      "yaw": -450,
+      "speed": 0
+    },
+    {
+      "name": "order2-pickup-parked",
+      "time": "2026-11-15T18:28:56.621Z",
+      "mode": "DRIVING",
+      "mph": 0,
+      "musicTime": "00:22",
+      "route": "↑ Juniper Kitchen · 2 m · 路边停车",
+      "text": "x 344.76  z -73.47  yaw -542.7\nFPS 57.6  p95 24.5 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 435.8088 m\nAudio 22.12 s  gain 0.550\nSingle player · playing\nOrder NY-1043 · 1 completed · $9.75\nPhases {\"toPickupDrive\":71,\"toPickupWalk\":4,\"parking\":1,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 71.0 / 76.0 s · 93.4%",
+      "track": "Evening on Orchard · 播放中",
+      "x": 344.76,
+      "z": -73.47,
+      "yaw": -542.7,
+      "speed": 0
+    },
+    {
+      "name": "order2-queue-start",
+      "time": "2026-11-15T18:29:05.807Z",
+      "mode": "ON FOOT",
+      "mph": 0,
+      "musicTime": "00:31",
+      "route": "↑ Juniper Kitchen · 2 m",
+      "text": "x 337.54  z -85.20  yaw -630.0\nFPS 58.8  p95 24.5 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 13.9500 m (peak 0.0000 m)\nSeat yaw 87.3000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 31.31 s  gain 0.550\nSingle player · playing\nOrder NY-1043 · 1 completed · $9.75\nPhases {\"toPickupDrive\":71,\"toPickupWalk\":13,\"parking\":1,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 71.0 / 85.2 s · 83.3%",
+      "track": "Evening on Orchard · 播放中",
+      "x": 337.54,
+      "z": -85.2,
+      "yaw": -630,
+      "speed": 0
+    },
+    {
+      "name": "order2-picked-up",
+      "time": "2026-11-15T18:29:15.305Z",
+      "mode": "ON FOOT",
+      "mph": 0,
+      "musicTime": "00:40",
+      "route": "← 回到汽车旁 · 装餐并上车",
+      "text": "x 337.54  z -85.20  yaw -630.0\nFPS 58.9  p95 22.1 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 13.9500 m (peak 0.0000 m)\nSeat yaw 87.3000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 40.79 s  gain 0.432\nSingle player · playing\nOrder NY-1043 · 1 completed · $9.75\nPhases {\"toPickupDrive\":71,\"toPickupWalk\":13,\"parking\":1,\"wait\":6,\"handoff\":4,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 71.0 / 94.7 s · 75.0%",
+      "track": "Evening on Orchard · 播放中",
+      "x": 337.54,
+      "z": -85.2,
+      "yaw": -630,
+      "speed": 0
+    },
+    {
+      "name": "order2-stowed",
+      "time": "2026-11-15T18:29:23.057Z",
+      "mode": "DRIVING",
+      "mph": 0,
+      "musicTime": "00:48",
+      "route": "↑ 42 Orchard Walk · 754 m · 路口按路线转弯",
+      "text": "x 344.76  z -73.47  yaw -542.7\nFPS 58.6  p95 24.2 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 1.4459 m\nAudio 48.48 s  gain 0.446\nSingle player · playing\nOrder NY-1043 · 1 completed · $9.75\nPhases {\"toPickupDrive\":71,\"toPickupWalk\":13,\"parking\":1,\"wait\":6,\"handoff\":4,\"toCar\":8,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 71.0 / 102.4 s · 69.3%",
+      "track": "Evening on Orchard · 播放中",
+      "x": 344.76,
+      "z": -73.47,
+      "yaw": -542.7,
+      "speed": 0
+    },
+    {
+      "name": "order2-door-parked",
+      "time": "2026-11-15T18:30:24.373Z",
+      "mode": "DRIVING",
+      "mph": 0,
+      "musicTime": "00:13",
+      "route": "↶ 42 Orchard Walk · 1 m · 路边停车",
+      "text": "x 5.02  z 68.99  yaw -723.1\nFPS 58.6  p95 22.0 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 370.5533 m\nAudio 13.79 s  gain 0.550\nSingle player · playing\nOrder NY-1043 · 1 completed · $9.75\nPhases {\"toPickupDrive\":71,\"toPickupWalk\":13,\"parking\":2,\"wait\":6,\"handoff\":4,\"toCar\":8,\"toDropoffDrive\":61,\"toDropoffWalk\":0}\nDriving 131.5 / 163.7 s · 80.3%",
+      "track": "River Lights · 播放中",
+      "x": 5.02,
+      "z": 68.99,
+      "yaw": -723.1,
+      "speed": 0
+    },
+    {
+      "name": "order2-completed",
+      "time": "2026-11-15T18:30:30.983Z",
+      "mode": "ON FOOT",
+      "mph": 0,
+      "musicTime": "00:20",
+      "route": "订单完成 · 享受你的傍晚",
+      "text": "x 7.72  z 59.33  yaw -810.0\nFPS 59.7  p95 18.7 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 10.2363 m (peak 0.0000 m)\nSeat yaw 86.9000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 20.41 s  gain 0.432\nSingle player · playing\nOrder NY-1043 · 2 completed · $20.00\nPhases {\"toPickupDrive\":71,\"toPickupWalk\":13,\"parking\":2,\"wait\":6,\"handoff\":4,\"toCar\":8,\"toDropoffDrive\":61,\"toDropoffWalk\":6}\nDriving 131.5 / 170.2 s · 77.3%",
+      "track": "River Lights · 播放中",
+      "x": 7.72,
+      "z": 59.33,
+      "yaw": -810,
+      "speed": 0
+    },
+    {
+      "name": "order3-silent-start",
+      "time": "2026-11-15T18:30:50.496Z",
+      "mode": "ON FOOT",
+      "mph": 0,
+      "musicTime": "00:00",
+      "route": "订单完成 · 享受你的傍晚",
+      "text": "x 7.72  z 59.33  yaw -810.0\nFPS 60.0  p95 18.3 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 10.2363 m (peak 0.0000 m)\nSeat yaw 86.9000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 0.00 s  gain 0.550\nSingle player · paused\nOrder NY-1043 · 2 completed · $20.00\nPhases {\"toPickupDrive\":71,\"toPickupWalk\":13,\"parking\":2,\"wait\":6,\"handoff\":4,\"toCar\":8,\"toDropoffDrive\":61,\"toDropoffWalk\":6}\nDriving 131.5 / 170.2 s · 77.3%",
+      "track": "选择音乐 · 外部播放器 · 游戏音乐已关闭",
+      "x": 7.72,
+      "z": 59.33,
+      "yaw": -810,
+      "speed": 0
+    },
+    {
+      "name": "order3-picked-up",
+      "time": "2026-11-15T18:31:53.577Z",
+      "mode": "ON FOOT",
+      "mph": 0,
+      "musicTime": "00:00",
+      "route": "← 回到汽车旁 · 装餐并上车",
+      "text": "x 337.52  z -85.16  yaw -990.0\nFPS 55.3  p95 25.6 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 15.7467 m (peak 0.0000 m)\nSeat yaw 79.4000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 0.00 s  gain 0.433\nSingle player · paused\nOrder NY-1044 · 2 completed · $20.00\nPhases {\"toPickupDrive\":49,\"toPickupWalk\":13,\"parking\":1,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 48.8 / 63.1 s · 77.3%",
+      "track": "选择音乐 · 外部播放器 · 游戏音乐已关闭",
+      "x": 337.52,
+      "z": -85.16,
+      "yaw": -990,
+      "speed": 0
+    },
+    {
+      "name": "order3-stowed",
+      "time": "2026-11-15T18:32:12.474Z",
+      "mode": "DRIVING",
+      "mph": 0,
+      "musicTime": "00:00",
+      "route": "↑ 76 Orchard Walk · Lobby · 1062 m · 路口按路线转弯",
+      "text": "x 345.04  z -71.56  yaw -910.6\nFPS 56.2  p95 25.8 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 1.4389 m\nAudio 0.00 s  gain 0.431\nSingle player · paused\nOrder NY-1044 · 2 completed · $20.00\nPhases {\"toPickupDrive\":49,\"toPickupWalk\":13,\"parking\":1,\"wait\":0,\"handoff\":0,\"toCar\":19,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 48.8 / 82.0 s · 59.5%",
+      "track": "选择音乐 · 外部播放器 · 游戏音乐已关闭",
+      "x": 345.04,
+      "z": -71.56,
+      "yaw": -910.6,
+      "speed": 0
+    },
+    {
+      "name": "order3-overlap-car",
+      "time": "2026-11-15T18:33:38.479Z",
+      "mode": "DRIVING",
+      "mph": 0,
+      "musicTime": "00:00",
+      "route": "↶ 76 Orchard Walk · Lobby · 10 m · 路边停车",
+      "text": "x 4.53  z -250.43  yaw -1084.7\nFPS 56.3  p95 21.3 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 386.7658 m\nAudio 0.00 s  gain 0.550\nSingle player · paused\nOrder NY-1044 · 2 completed · $20.00\nPhases {\"toPickupDrive\":49,\"toPickupWalk\":13,\"parking\":2,\"wait\":0,\"handoff\":0,\"toCar\":19,\"toDropoffDrive\":85,\"toDropoffWalk\":0}\nDriving 134.0 / 168.0 s · 79.8%",
+      "track": "选择音乐 · 外部播放器 · 游戏音乐已关闭",
+      "x": 4.53,
+      "z": -250.43,
+      "yaw": -1084.7,
+      "speed": 0
+    },
+    {
+      "name": "order3-overlap-foot",
+      "time": "2026-11-15T18:33:44.436Z",
+      "mode": "ON FOOT",
+      "mph": 0,
+      "musicTime": "00:00",
+      "route": "↑ 携带餐袋 · 76 Orchard Walk · Lobby · 2 m",
+      "text": "x 7.60  z -249.88  yaw -1169.7\nFPS 58.4  p95 25.0 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 3.5461 m (peak 0.0000 m)\nSeat yaw 85.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 0.00 s  gain 0.550\nSingle player · paused\nOrder NY-1044 · 2 completed · $20.00\nPhases {\"toPickupDrive\":49,\"toPickupWalk\":13,\"parking\":2,\"wait\":0,\"handoff\":0,\"toCar\":19,\"toDropoffDrive\":85,\"toDropoffWalk\":6}\nDriving 134.0 / 174.0 s · 77.1%",
+      "track": "选择音乐 · 外部播放器 · 游戏音乐已关闭",
+      "x": 7.6,
+      "z": -249.88,
+      "yaw": -1169.7,
+      "speed": 0
+    },
+    {
+      "name": "order3-completed",
+      "time": "2026-11-15T18:33:44.697Z",
+      "mode": "ON FOOT",
+      "mph": 0,
+      "musicTime": "00:00",
+      "route": "订单完成 · 享受你的傍晚",
+      "text": "x 7.60  z -249.88  yaw -1169.7\nFPS 58.6  p95 25.0 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 3.5461 m (peak 0.0000 m)\nSeat yaw 85.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 0.00 s  gain 0.436\nSingle player · paused\nOrder NY-1044 · 3 completed · $31.50\nPhases {\"toPickupDrive\":49,\"toPickupWalk\":13,\"parking\":2,\"wait\":0,\"handoff\":0,\"toCar\":19,\"toDropoffDrive\":85,\"toDropoffWalk\":6}\nDriving 134.0 / 174.1 s · 77.0%",
+      "track": "选择音乐 · 外部播放器 · 游戏音乐已关闭",
+      "x": 7.6,
+      "z": -249.88,
+      "yaw": -1169.7,
+      "speed": 0
+    },
+    {
+      "name": "all-muted-new-order",
+      "time": "2026-11-15T18:36:09.613Z",
+      "mode": "ON FOOT",
+      "mph": 0,
+      "musicTime": "00:00",
+      "route": "→ Juniper Kitchen · 367 m",
+      "text": "x 7.60  z -249.88  yaw -1169.7\nFPS 60.0  p95 18.3 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 3.5461 m (peak 0.0000 m)\nSeat yaw 85.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 0.00 s  gain 0.000\nSingle player · paused\nOrder NY-1045 · 3 completed · $31.50\nPhases {\"toPickupDrive\":0,\"toPickupWalk\":0,\"parking\":0,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 0.0 / 0.0 s · 0.0%",
+      "track": "选择音乐 · 外部播放器 · 游戏音乐已关闭",
+      "x": 7.6,
+      "z": -249.88,
+      "yaw": -1169.7,
+      "speed": 0
+    },
+    {
+      "name": "ordinary-before-accept",
+      "time": "2026-11-15T18:38:39.705Z",
+      "mode": "DRIVING",
+      "mph": 0,
+      "musicTime": "00:21",
+      "route": "自由选歌或静音 · 接单出发",
+      "text": "x 2.50  z 23.00  yaw 0.0\nFPS 60.0  p95 17.6 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 23.1926 m\nAudio 21.29 s  gain 0.550\nSingle player · playing\nOrder NY-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":0,\"toPickupWalk\":0,\"parking\":0,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 0.0 / 0.0 s · 0.0%",
+      "track": "Evening on Orchard · 播放中",
+      "x": 2.5,
+      "z": 23,
+      "yaw": 0,
+      "speed": 0
+    },
+    {
+      "name": "ordinary-accepted",
+      "time": "2026-11-15T18:38:39.891Z",
+      "mode": "DRIVING",
+      "mph": 0,
+      "musicTime": "00:21",
+      "route": "↑ Juniper Kitchen · 542 m · 路口按路线转弯",
+      "text": "x 2.50  z 23.00  yaw 0.0\nFPS 60.0  p95 17.6 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 23.1926 m\nAudio 21.51 s  gain 0.432\nSingle player · playing\nOrder NY-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":0,\"toPickupWalk\":0,\"parking\":0,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 0.0 / 0.1 s · 0.0%",
+      "track": "Evening on Orchard · 播放中",
+      "x": 2.5,
+      "z": 23,
+      "yaw": 0,
+      "speed": 0
+    },
+    {
+      "name": "ordinary-pickup-parked",
+      "time": "2026-11-15T18:39:23.904Z",
+      "mode": "DRIVING",
+      "mph": 0,
+      "musicTime": "01:05",
+      "route": "↶ Juniper Kitchen · 2 m · 路边停车",
+      "text": "x 345.49  z -68.90  yaw -186.7\nFPS 60.0  p95 24.6 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 352.7355 m\nAudio 65.48 s  gain 0.550\nSingle player · playing\nOrder NY-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":43,\"toPickupWalk\":0,\"parking\":1,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 43.3 / 44.1 s · 98.1%",
+      "track": "Evening on Orchard · 播放中",
+      "x": 345.49,
+      "z": -68.9,
+      "yaw": -186.7,
+      "speed": 0
+    },
+    {
+      "name": "ordinary-counter",
+      "time": "2026-11-15T18:39:34.242Z",
+      "mode": "ON FOOT",
+      "mph": 0,
+      "musicTime": "01:15",
+      "route": "↑ Juniper Kitchen · 2 m",
+      "text": "x 337.51  z -85.16  yaw -270.0\nFPS 60.0  p95 17.5 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 18.2772 m (peak 0.0000 m)\nSeat yaw 83.3000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 75.85 s  gain 0.075\nSingle player · playing\nOrder NY-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":43,\"toPickupWalk\":10,\"parking\":1,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 43.3 / 54.5 s · 79.4%",
+      "track": "Evening on Orchard · 播放中",
+      "x": 337.51,
+      "z": -85.16,
+      "yaw": -270,
+      "speed": 0
+    },
+    {
+      "name": "ordinary-stowed",
+      "time": "2026-11-15T18:39:44.190Z",
+      "mode": "DRIVING",
+      "mph": 0,
+      "musicTime": "01:25",
+      "route": "↑ 18 Orchard Walk · 1169 m · 路口按路线转弯",
+      "text": "x 345.49  z -68.90  yaw -186.7\nFPS 59.6  p95 26.3 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 1.4358 m\nAudio 85.77 s  gain 0.265\nSingle player · playing\nOrder NY-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":43,\"toPickupWalk\":10,\"parking\":1,\"wait\":0,\"handoff\":0,\"toCar\":10,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 43.3 / 64.4 s · 67.2%",
+      "track": "Evening on Orchard · 播放中",
+      "x": 345.49,
+      "z": -68.9,
+      "yaw": -186.7,
+      "speed": 0
+    },
+    {
+      "name": "ordinary-door-parked",
+      "time": "2026-11-15T18:41:17.496Z",
+      "mode": "DRIVING",
+      "mph": 0,
+      "musicTime": "01:23",
+      "route": "→ 18 Orchard Walk · 1 m · 路边停车",
+      "text": "x 5.04  z -350.56  yaw -363.6\nFPS 60.0  p95 18.6 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 443.7031 m\nAudio 83.07 s  gain 0.550\nSingle player · playing\nOrder NY-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":43,\"toPickupWalk\":10,\"parking\":2,\"wait\":0,\"handoff\":0,\"toCar\":10,\"toDropoffDrive\":93,\"toDropoffWalk\":0}\nDriving 135.8 / 157.7 s · 86.1%",
+      "track": "River Lights · 播放中",
+      "x": 5.04,
+      "z": -350.56,
+      "yaw": -363.6,
+      "speed": 0
+    },
+    {
+      "name": "ordinary-completed",
+      "time": "2026-11-15T18:41:24.159Z",
+      "mode": "ON FOOT",
+      "mph": 0,
+      "musicTime": "01:29",
+      "route": "订单完成 · 享受你的傍晚",
+      "text": "x 7.81  z -360.69  yaw -450.0\nFPS 60.0  p95 18.6 ms\n1512 × 777  DPR 2\nView aspect 1.9459 canvas 1.9459\nSeat drift 10.6945 m (peak 0.0000 m)\nSeat yaw 86.4000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 89.65 s  gain 0.094\nSingle player · playing\nOrder NY-1042 · 1 completed · $9.75\nPhases {\"toPickupDrive\":43,\"toPickupWalk\":10,\"parking\":2,\"wait\":0,\"handoff\":0,\"toCar\":10,\"toDropoffDrive\":93,\"toDropoffWalk\":6}\nDriving 135.8 / 164.2 s · 82.7%",
+      "track": "River Lights · 播放中",
+      "x": 7.81,
+      "z": -360.69,
+      "yaw": -450,
+      "speed": 0
+    }
+  ],
+  "audioChecks": {
+    "implementationCommit": "5d7d88e",
+    "fixtureOrigin": "Project-original audio copies only. The fixture files stay in ignored .local.",
+    "music-append-final": {
+      "message": "已追加本地歌单，选择“我的音乐”收听。刷新后需重新选择文件。",
+      "playlist": "Orchard-5s.wav移除River-7s.wav移除▶ Orchard-long.mp3移除River-7s.wav移除",
+      "time": "00:35",
+      "track": "Orchard-long.mp3 · 播放中"
+    },
+    "music-restore-final": {
+      "playlist": "▶ Orchard-5s.wav移除River-7s.wav移除",
+      "recording": false,
+      "source": "local",
+      "time": "00:00",
+      "track": "Orchard-5s.wav · 已暂停"
+    },
+    "ended-list": {
+      "before": {
+        "time": "00:03",
+        "track": "A-5s.wav · 已暂停"
+      },
+      "after": {
+        "time": "00:00",
+        "track": "B-7s.wav · 播放中"
+      }
+    },
+    "ended-one": {
+      "time": "00:00",
+      "track": "A-5s.wav · 播放中"
+    },
+    "ended-once": {
+      "time": "00:07",
+      "track": "B-7s.wav · 已暂停"
+    },
+    "bad-list-final": {
+      "message": "曲目无法播放，已标记。可切换电台或重新选择 MP3 / WAV。",
+      "playlist": "▶ Invalid.wav · 无法播放移除",
+      "track": "Invalid.wav · 播放失败"
+    },
+    "audio-intent-green": {
+      "before": {
+        "time": "00:06",
+        "track": "Orchard-long.mp3 · 播放中"
+      },
+      "after": {
+        "recording": false,
+        "source": "local",
+        "time": "00:06",
+        "track": "Orchard-long.mp3 · 已暂停"
+      }
+    }
+  }
+}

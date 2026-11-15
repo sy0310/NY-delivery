@@ -29,7 +29,7 @@
 
 ## 运行证据
 
-docs/media 保存 Cocos 发布构建及编辑器预览的实机截图。录屏保留在本机 .local/media，完成情况与声音轨检查结果见 VALIDATION.md。
+docs/media 保存 Cocos 发布构建及编辑器预览的实机截图。本轮完整170秒有声送单视频为 docs/media/review-20261115/ordinary-delivery.mp4，只使用下表两首原创曲目与项目合成声音，随该目录保存拍摄条件、代码SHA和文件校验值。原始录屏保留在本机 .local/media，声音轨检查结果见 VALIDATION.md。
 
 ## Review 默认音乐权利记录
 
