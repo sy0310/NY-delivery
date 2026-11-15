@@ -1,4 +1,5 @@
 import { Node, Vec3, MeshRenderer, utils, primitives, Camera, RenderTexture, Color, SphereLight } from 'cc';
+import { QUALITY_PRESETS } from './QualityPreset';
 import { ModelGeometry, PaintedPanel } from './ModelGeometry';
 import { planRoute } from './CityLayout';
 import { LEGACY_DISTRICT } from './LegacyDistrict';
@@ -52,8 +53,9 @@ export class CarModel {
   }
 
   setQuality(quality:'low'|'standard'):void {
-    this.rearInterval=quality==='low'?1/15:1/30;
-    this.rearTexture.reset({width:quality==='low'?128:256,height:quality==='low'?48:96});
+    const preset=QUALITY_PRESETS[quality];
+    this.rearInterval=1/preset.mirrorFps;
+    this.rearTexture.reset({width:preset.mirrorWidth,height:preset.mirrorHeight});
   }
   dispose():void {this.rearCamera.targetTexture=null;this.rearTexture.destroy();}
 

@@ -1,4 +1,5 @@
-import { Node, Material, Color, DirectionalLight, Vec3, Prefab, resources, instantiate, MeshRenderer, view, SphereLight } from 'cc';
+import { Node, Material, Color, DirectionalLight, Vec3, Prefab, resources, instantiate, MeshRenderer, director, SphereLight } from 'cc';
+import { QUALITY_PRESETS } from './QualityPreset';
 import { ModelGeometry } from './ModelGeometry';
 import type { PaintedPanel } from './ModelGeometry';
 import { CarModel, CarTelemetry } from './CarModel';
@@ -109,10 +110,13 @@ export class World {
   }
   dispose():void {this.generation++;this.unloadDistrict();this.sedan.dispose();this.geometry.dispose();}
   setQuality(quality:'low'|'standard'):void {
-    this.quality=quality;this.light.shadowDistance=quality==='low'?30:55;
-    this.root.scene.globals.shadows.shadowMapSize=quality==='low'?1024:2048;
-    this.lamps.forEach(light=>light.enabled=quality==='standard');
-    view.enableRetina(quality==='standard');this.sedan.setQuality(quality);
+    this.quality=quality;
+    const preset=QUALITY_PRESETS[quality];
+    this.light.shadowDistance=preset.shadowDistance;
+    this.root.scene.globals.shadows.shadowMapSize=preset.shadowSize;
+    this.lamps.forEach(light=>light.enabled=preset.dynamicLights);
+    director.root!.pipeline.shadingScale=preset.renderScale;
+    this.sedan.setQuality(quality);
   }
   get resourceState():string {return `${this.district?.id} generation ${this.generation} · ${this.prefabs.length} prefabs · ${this.chunks.filter(chunk=>chunk.node.active).length}/${this.chunks.length} blocks · ${this.quality}`;}
   get bagLabel():BagLabel {return {orderId:this.order.id,code:this.order.code,count:this.order.bagCount??1};}
@@ -140,8 +144,8 @@ export class World {
   handoff():void {this.handoffTime=1.2;}
   update(dt:number,telemetry:CarTelemetry):void {
     this.sedan.update(dt,telemetry);
-    for(const chunk of this.chunks) chunk.node.active=distanceToBounds(telemetry,chunk.bounds)<(this.quality==='low'?210:340);
-    for(const detail of this.details) detail.node.active=Math.hypot(telemetry.x-detail.position.x,telemetry.z-detail.position.z)<(this.quality==='low'?100:170);
+    for(const chunk of this.chunks) chunk.node.active=distanceToBounds(telemetry,chunk.bounds)<QUALITY_PRESETS[this.quality].blockDistance;
+    for(const detail of this.details) detail.node.active=Math.hypot(telemetry.x-detail.position.x,telemetry.z-detail.position.z)<QUALITY_PRESETS[this.quality].detailDistance;
   }
   updateActors(dt:number,stage:OrderStage,joined:boolean,remaining:number,player:CityPoint):void {
     this.actorTime+=dt;this.handoffTime=Math.max(0,this.handoffTime-dt);

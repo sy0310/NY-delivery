@@ -312,7 +312,7 @@ export class DeliveryDemo extends Component {
     const device = director.root!.device;
     const memory = (performance as Performance & {memory?: {usedJSHeapSize:number}}).memory;
     this.resourceSamples.push({seconds:(now-this.performanceStart)/1000, mode,
-      district:this.district.id,quality:this.quality,generation:this.world.generation,completed:this.order.completedOrders,
+      district:this.district.id,quality:this.quality,renderScale:director.root!.pipeline.shadingScale,generation:this.world.generation,completed:this.order.completedOrders,
       drawCalls:device.numDrawCalls, triangles:device.numTris,
       textureBytes:device.memoryStatus.textureSize, bufferBytes:device.memoryStatus.bufferSize,
       jsHeapBytes:memory?.usedJSHeapSize ?? null});
@@ -788,6 +788,7 @@ export class DeliveryDemo extends Component {
       `Audio ${this.music.audio.currentTime.toFixed(2)} s  gain ${this.music.effectiveVolume.toFixed(3)}`,
       `Single player · ${this.music.audio.paused || this.music.audio.error ? 'paused' : 'playing'}`,
       `Context ${this.music.context?.state ?? 'uninitialized'} · music ${this.music.levels.music} environment ${this.music.levels.environment} effects ${this.music.levels.effects}`,
+      `Render scale ${director.root!.pipeline.shadingScale.toFixed(2)}`,
       `Draws ${director.root!.device.numDrawCalls} · triangles ${director.root!.device.numTris} · texture ${(director.root!.device.memoryStatus.textureSize/1048576).toFixed(1)} MiB`,
       this.runSummary,
       `District ${this.world.resourceState} · swaps ${this.swaps}`,
