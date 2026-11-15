@@ -5,7 +5,7 @@ interface ParkedCar extends CityPoint {yaw:number}
 
 export function outsideParkedCar(point:CityPoint,car:ParkedCar):boolean {
   const p=roomPoint(car,car.yaw*180/Math.PI,point);
-  return Math.abs(p.x)>=1.45 || Math.abs(p.z)>=2.55;
+  return Math.abs(p.x)>=1.4 || Math.abs(p.z)>=2.5;
 }
 
 /** Retain the district route, adding a local pedestrian detour around the physical parked car. */
