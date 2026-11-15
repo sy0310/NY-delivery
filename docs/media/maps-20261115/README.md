@@ -4,6 +4,7 @@
 | --- | --- | --- |
 | 手机入口与性能基线 | 1b2189e | [基线截图](stage-a-baseline.jpg)、[性能概要](stage-a-performance.json)、[完整原始帧](stage-a-frames.json.gz) |
 | 音频暂停与恢复 | 2632ee8 | [恢复截图](stage-a-audio-recovery.jpg)，真实Web Desktop运行验证 |
+| 旧图配置迁移与共用地图 | 4e554a0 | [实际发布版共用地图](stage-b-shared-map.jpg)，原30项与13项新增测试通过 |
 
 音频修复在提交前完成构建与GREEN检查，构建戳保留父提交0198d1c与dirty标记，所测代码随后提交为2632ee8。基线视口1512×777，早期音频操作也使用1512×833。后续视觉对比统一1512×777与标准画质。
 
