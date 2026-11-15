@@ -328,14 +328,36 @@ export class World {
 
   private person(x: number, z: number, color: string, parent: Node): void {
     const g = this.geometry;
-    g.sphere('Jacket torso', x, 1.03, z, .49, .79, .34, color, parent);
-    g.sphere('Head', x, 1.66, z, .32, .39, .31, '#bd9274', parent);
-    g.sphere('Hair', x, 1.81, z - .015, .34, .17, .32, '#493f36', parent);
+    const person = new Node(parent === this.npc ? 'Customer figure' : 'Kitchen staff figure');
+    parent.addChild(person);
+    person.setPosition(x, 0, z);
+    person.setRotationFromEuler(0, parent === this.npc ? -90 : 90, 0);
+    const skin = '#bf9679';
+    const fabric = g.material(color, 0, .87, 'grain');
+    g.roundedBox('Tailored jacket', 0, 1.11, 0, .48, .62, .30, .095, fabric, person);
+    g.sphere('Trouser hips', 0, .79, -.015, .43, .29, .29, '#35434a', person);
+    g.cylinder('Neck', 0, 1.47, .015, .066, .14, skin, person);
+    g.sphere('Face and jaw', 0, 1.66, .018, .285, .355, .275, skin, person);
+    g.sphere('Continuous hair cap', 0, 1.755, -.02, .315, .27, .315, '#493f36', person);
+    g.sphere('Nose', 0, 1.665, .158, .045, .065, .06, skin, person);
+    g.roundedBox('Mouth', 0, 1.586, .151, .065, .012, .009, .004, '#875f4e', person);
+    g.roundedBox('Shirt neckline', 0, 1.39, .147, .115, .09, .025, .012, '#e3dcc8', person);
+    g.roundedBox('Jacket zip', 0, 1.10, .153, .012, .47, .012, .004, '#b4b7a2', person);
+    g.roundedBox('Chest pocket', -.13, 1.24, .156, .10, .10, .015, .012, color, person);
     for (const side of [-1, 1]) {
-      g.cylinder('Trouser leg', x + side * .14, .4, z, .087, .67, '#35434a', parent);
-      g.box('Shoe', x + side * .14, .09, z + .045, .19, .15, .31, '#28373c', parent);
-      g.cylinder('Sleeve', x + side * .29, 1.03, z, .075, .61, color, parent);
+      g.sphere('Ear', side * .145, 1.665, .006, .045, .075, .052, skin, person);
+      g.sphere('Eye white', side * .062, 1.70, .142, .043, .022, .017, '#e8e1d0', person);
+      g.sphere('Iris', side * .060, 1.70, .152, .016, .019, .008, '#344443', person);
+      g.roundedBox('Eyebrow', side * .063, 1.733, .144, .048, .011, .01, .003, '#493f36', person);
+      g.roundedBox('Trouser leg', side * .115, .45, -.015, .185, .65, .21, .065, '#35434a', person);
+      g.roundedBox('Shoe sole', side * .115, .065, .041, .20, .055, .32, .022, '#202e32', person);
+      g.roundedBox('Leather shoe', side * .115, .115, .05, .19, .10, .30, .04, '#39433e', person);
+      const sleeve = g.roundedBox('Jacket sleeve', side * .285, 1.15, .004, .16, .42, .19, .065, fabric, person);
+      sleeve.setRotationFromEuler(0, 0, side * 8);
+      g.roundedBox('Jacket cuff', side * .304, .923, .025, .145, .055, .16, .02, '#52615b', person);
+      g.sphere('Hand', side * .304, .85, .04, .108, .15, .105, skin, person);
     }
+    this.geometry.batchStatic(person);
   }
 
   private destination(): void {

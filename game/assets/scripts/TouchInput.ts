@@ -8,11 +8,11 @@ export class TouchInput {
   private pedals = new Map<number, Pedal>();
 
   get throttle(): number {
-    const held = [...this.pedals.values()];
+    const held = Array.from(this.pedals.values());
     return Number(held.includes('gas')) - Number(held.includes('reverse'));
   }
 
-  get braking(): boolean { return [...this.pedals.values()].includes('brake'); }
+  get braking(): boolean { return Array.from(this.pedals.values()).includes('brake'); }
 
   beginStick(pointer: number): boolean {
     if (this.stick !== null) return false;
