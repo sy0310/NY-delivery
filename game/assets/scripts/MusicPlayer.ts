@@ -13,6 +13,7 @@ export class MusicPlayer {
   private ambient: GainNode | null = null;
   private noise: AudioBufferSourceNode | null = null;
   private loaded = '';
+  private starting = false;
   private revision = 0;
   private listeners: AbortController | null = null;
   private fileSequence = 0;
@@ -30,6 +31,8 @@ export class MusicPlayer {
     if (this.playlist.source === 'external') return '外部播放器 · 游戏音乐已关闭';
     if (!this.playlist.current) return '歌单为空';
     if (this.playlist.current.failed) return '播放失败';
+    if (this.starting && this.playlist.wantsPlayback) return '正在启动';
+    if (this.audio.paused && this.playlist.wantsPlayback) return '系统暂停，点击恢复';
     return this.audio.paused ? '已暂停' : '播放中';
   }
 
@@ -105,6 +108,7 @@ export class MusicPlayer {
   }
 
   private async playCurrent(revision: number): Promise<void> {
+    this.starting = true;
     try {
       this.unlock();
       await this.context!.resume();
@@ -115,12 +119,16 @@ export class MusicPlayer {
       else this.message = this.playlist.current?.name ?? '正在播放';
     } catch {
       if (revision === this.revision) this.message = '播放尚未开始，请点击播放重试或切换曲目';
+    } finally {
+      if (revision === this.revision) this.starting = false;
     }
   }
 
   toggle(): void {
-    if (this.audio.paused) void this.play();
-    else { this.playlist.wantsPlayback = false; this.audio.pause(); }
+    if (this.playlist.wantsPlayback && (this.starting || !this.audio.paused)) {
+      this.playlist.wantsPlayback = false;
+      this.audio.pause();
+    } else void this.play();
   }
   choose(replace = false): void {
     if (this.playlist.recording) { this.message = '录屏模式使用已确认电台曲目，本地歌单已保留'; return; }
@@ -154,6 +162,7 @@ export class MusicPlayer {
     this.listeners = new AbortController();
     const signal = this.listeners.signal;
     const revision = ++this.revision;
+    this.starting = false;
     this.audio.pause();
     this.audio.removeAttribute('src');
     this.audio.load();

@@ -440,7 +440,7 @@ export class DeliveryDemo extends Component {
         #delivery-hud.touch-mode .look-hint { top:140px; right:16px; }
         #delivery-hud.touch-mode .touch-tools { bottom:174px; left:24px; transform:none; }
       }
-      #delivery-hud .music-details { display:none; margin-top:10px; max-height:55vh; overflow:auto; }
+      #delivery-hud .music-details { display:none; position:absolute; bottom:calc(100% + 8px); left:-1px; width:calc(100% + 2px); padding:12px; border:1px solid #6b8179; border-radius:10px; background:#162e34f5; max-height:55vh; overflow:auto; }
       #delivery-hud.music-open .music-details { display:block; }
       #delivery-hud .music-details select { background:#243e43; color:#f0e8d4; min-height:36px; max-width:170px; }
       #delivery-hud .music-note { font-size:11px; line-height:1.5; color:#c7d2c9; }
@@ -464,6 +464,7 @@ export class DeliveryDemo extends Component {
       #delivery-hud.paused #context-action { display:none; }
       #delivery-hud.touch-mode .music { display:block; left:180px; top:auto; bottom:16px; width:260px; }
       #delivery-hud.touch-mode.music-open .music { left:16px; top:74px; bottom:auto; width:340px; }
+      #delivery-hud.touch-mode .music-details { top:calc(100% + 6px); bottom:auto; max-height:calc(100vh - 180px); }
       #delivery-hud.touch-mode .touch-tools { left:auto; right:24px; top:68px; bottom:auto; transform:none; }
       #delivery-hud.touch-mode .look-hint { display:none; }
       #delivery-hud.touch-mode .notice { bottom:185px; max-width:350px; }
@@ -472,6 +473,7 @@ export class DeliveryDemo extends Component {
         #delivery-hud.touch-mode .toolbar button { padding:7px 10px; }
         #delivery-hud.touch-mode .music { left:16px; top:134px; bottom:auto; width:calc(100% - 32px); }
         #delivery-hud.touch-mode.music-open .music { top:134px; width:calc(100% - 32px); }
+        #delivery-hud.touch-mode .music-details { max-height:calc(100vh - 240px); }
         #delivery-hud.touch-mode .touch-tools { top:auto; bottom:210px; right:24px; }
         #delivery-hud.touch-mode #result { bottom:210px; }
       }
