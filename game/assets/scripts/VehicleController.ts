@@ -1,3 +1,7 @@
+export const WHEELBASE = 2.76;
+export const MAX_ROAD_WHEEL_ANGLE = 35;
+const TURN_CURVATURE = Math.tan(MAX_ROAD_WHEEL_ANGLE * Math.PI / 180) / WHEELBASE;
+
 export interface Position { x: number; z: number }
 export type CanMove = (x: number, z: number, radius: number) => boolean;
 
@@ -12,7 +16,7 @@ export class VehicleController {
     const drag = Math.sign(this.speed) * Math.min(Math.abs(this.speed), dt * 0.9);
     this.speed = Math.max(-3, Math.min(13, this.speed + throttle * dt * 4.2 - drag));
     if (brake) this.speed = Math.sign(this.speed) * Math.max(0, Math.abs(this.speed) - dt * 10);
-    this.yaw += steer * this.speed * dt * 0.16;
+    this.yaw += steer * this.speed * dt * TURN_CURVATURE;
     const x = this.x - Math.sin(this.yaw) * this.speed * dt;
     const z = this.z - Math.cos(this.yaw) * this.speed * dt;
     if (canMove(x, z, 1.25)) {

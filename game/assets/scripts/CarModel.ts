@@ -1,4 +1,5 @@
 import { Node, Vec3, MeshRenderer, utils, primitives, Camera, RenderTexture, Color, SphereLight } from 'cc';
+import { WHEELBASE, MAX_ROAD_WHEEL_ANGLE } from './VehicleController';
 import { QUALITY_PRESETS } from './QualityPreset';
 import { ModelGeometry, PaintedPanel } from './ModelGeometry';
 import { planRoute } from './CityLayout';
@@ -78,7 +79,7 @@ export class CarModel {
       g.box('Door handle', side * .956, .98, .65, .025, .045, .19, '#b6bfc0', this.node);
       g.roundedBox('Painted outer door', side * .97, .85, .15, .08, .6, 2.5, .035, paint, this.node);
       g.box('Rocker trim', side * .957, .47, 0, .04, .075, 3.45, '#27383e', this.node);
-      for (const z of [-1.38, 1.38]) this.wheel(side, z);
+      for (const z of [-WHEELBASE/2, WHEELBASE/2]) this.wheel(side, z);
     }
   }
 
@@ -256,7 +257,7 @@ export class CarModel {
     this.steering.setRotationFromEuler(0, this.steeringAngle, 0);
     this.wheelSpin = (this.wheelSpin - telemetry.speed * dt / .345 * 180 / Math.PI) % 360;
     for (const wheel of this.wheels) {
-      wheel.node.setRotationFromEuler(this.wheelSpin, wheel.front ? this.steeringAngle / 90 * 22 : 0, 0);
+      wheel.node.setRotationFromEuler(this.wheelSpin, wheel.front ? this.steeringAngle / 90 * MAX_ROAD_WHEEL_ANGLE : 0, 0);
     }
     this.rearTick+=dt;this.rearCamera.enabled=this.rearTick>=this.rearInterval;
     if(this.rearCamera.enabled)this.rearTick=0;
