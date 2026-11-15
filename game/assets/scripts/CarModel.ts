@@ -1,6 +1,9 @@
 import { Node, Vec3, MeshRenderer, utils, primitives, Camera, RenderTexture, Color, SphereLight } from 'cc';
 import { ModelGeometry, PaintedPanel } from './ModelGeometry';
-import { AVENUES, CROSS_STREETS, planRoute, EAST_AVENUE, NORTH_STREET, SOUTH_STREET } from './CityLayout';
+import { planRoute } from './CityLayout';
+import { LEGACY_DISTRICT } from './LegacyDistrict';
+import { drawDistrictMap } from './DistrictMap';
+import type { DistrictDefinition } from './DistrictDefinition';
 import type { CityPoint } from './CityLayout';
 
 export interface CarTelemetry {
@@ -29,7 +32,7 @@ export class CarModel {
   private steeringAngle = 0;
   private wheels: { node: Node; front: boolean }[] = [];
 
-  constructor(private geometry: ModelGeometry) {
+  constructor(private geometry: ModelGeometry, private district: DistrictDefinition = LEGACY_DISTRICT) {
     geometry.root.addChild(this.node);
     this.node.addChild(this.interior);
     this.interior.setPosition(0, -.2, 0);
@@ -293,42 +296,15 @@ export class CarModel {
     texture.uploadData(canvas);
   }
 
+  setDistrict(district: DistrictDefinition): void { this.district=district; }
+
   private drawNavigation(telemetry: CarTelemetry): void {
-    const { context: c, texture, canvas } = this.navigation;
-    c.fillStyle = '#233c43';
-    c.fillRect(0, 0, 512, 352);
-    const mapX = (x: number) => 40 + x * (432 / EAST_AVENUE);
-    const mapY = (z: number) => 20 + (z - NORTH_STREET) * (254 / (SOUTH_STREET - NORTH_STREET));
-    c.strokeStyle = '#8fa9a8';
-    c.lineWidth = 15;
-    c.beginPath();
-    for (const x of AVENUES) { c.moveTo(mapX(x),mapY(NORTH_STREET)); c.lineTo(mapX(x),mapY(SOUTH_STREET)); }
-    for (const z of CROSS_STREETS) { c.moveTo(mapX(0),mapY(z)); c.lineTo(mapX(EAST_AVENUE),mapY(z)); }
-    c.stroke();
-    c.strokeStyle = '#e5be79';
-    c.lineWidth = 6;
-    c.lineJoin = 'round';
-    c.beginPath();
-    c.moveTo(mapX(telemetry.x),mapY(telemetry.z));
-    for (const point of planRoute(telemetry,telemetry.target).points) c.lineTo(mapX(point.x),mapY(point.z));
-    c.stroke();
-    c.fillStyle = '#ffd28a';
-    c.beginPath(); c.arc(mapX(telemetry.target.x),mapY(telemetry.target.z),7,0,Math.PI*2); c.fill();
-    c.save();
-    c.translate(mapX(telemetry.x),mapY(telemetry.z));
-    c.rotate(-telemetry.yaw);
-    c.fillStyle = '#f5e7bd';
-    c.beginPath(); c.moveTo(0,-12); c.lineTo(8,9); c.lineTo(0,5); c.lineTo(-8,9); c.closePath(); c.fill();
-    c.restore();
-    c.fillStyle = '#c7d7cf';
-    c.font = '16px DM-Sans';
-    c.fillText('ORCHARD ↑',55,283);
-    c.fillText('MERCER ↓',335,283);
-    c.fillStyle = '#18363b';
-    c.fillRect(0,302,512,50);
-    c.fillStyle = '#f5e8cd';
-    c.font = '21px DM-Sans';
-    c.fillText(telemetry.address.toUpperCase(),22,334,468);
+    const {context:c,texture,canvas}=this.navigation;
+    const route=planRoute(telemetry,telemetry.target,this.district);
+    drawDistrictMap(c,512,302,this.district,{player:telemetry,target:telemetry.target,route:route.points});
+    c.fillStyle='#18363b';c.fillRect(0,302,512,50);
+    c.fillStyle=route.reachable?'#f5e8cd':'#e6ac91';c.font='21px DM-Sans, NYDistrictSans, sans-serif';
+    c.fillText(route.reachable?telemetry.address.toUpperCase():'No legal car route',22,334,468);
     texture.uploadData(canvas);
   }
 }

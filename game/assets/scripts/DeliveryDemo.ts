@@ -3,7 +3,7 @@ import {
   AudioClip, Material, Font, profiler, game, input, Input, EventKeyboard, KeyCode, director,
 } from 'cc';
 import { EDITOR } from 'cc/env';
-import { OrderState, createOrder } from './OrderState';
+import { OrderState } from './OrderState';
 import { VehicleController } from './VehicleController';
 import { WalkingController } from './WalkingController';
 import { TouchControls } from './TouchControls';
@@ -12,7 +12,10 @@ import { resolveInteraction, directionTo } from './Interaction';
 import type { Interaction } from './Interaction';
 import { MusicPlayer } from './MusicPlayer';
 import { MusicPanel } from './MusicPanel';
-import { orderLocation, planRoute } from './CityLayout';
+import { planRoute } from './CityLayout';
+import { LEGACY_DISTRICT } from './LegacyDistrict';
+import { createDistrictOrder } from './DistrictOrders';
+import { drawDistrictMap } from './DistrictMap';
 import { OrderTiming } from './OrderTiming';
 import { PerformanceRun } from './PerformanceRun';
 
@@ -23,7 +26,6 @@ const FORWARD_KEYS = EDITOR ? ['KeyW'] : ['KeyW', 'ArrowUp'];
 const BACKWARD_KEYS = EDITOR ? ['KeyS'] : ['KeyS', 'ArrowDown'];
 const LEFT_KEYS = EDITOR ? ['KeyA'] : ['KeyA', 'ArrowLeft'];
 const RIGHT_KEYS = EDITOR ? ['KeyD'] : ['KeyD', 'ArrowRight'];
-const deliveryOrder = (sequence: number) => ({...createOrder(sequence), ...orderLocation(sequence)});
 const LOOK_HINT = EDITOR ? '方向键调整视角' : '拖动空白处转视角';
 const KEY_BINDINGS: Partial<Record<KeyCode, string>> = {
   [KeyCode.KEY_W]: 'KeyW',
@@ -44,7 +46,8 @@ const KEY_BINDINGS: Partial<Record<KeyCode, string>> = {
 export class DeliveryDemo extends Component {
   @property(Material) surfaceMaterial: Material = null!;
   @property(Material) signMaterial: Material = null!;
-  private order = new OrderState(deliveryOrder(0));
+  private district = LEGACY_DISTRICT;
+  private order = new OrderState(createDistrictOrder(this.district,0));
   private orderSequence = 0;
   private timing = new OrderTiming();
   private orderStartDistance = 0;
@@ -79,6 +82,8 @@ export class DeliveryDemo extends Component {
   private timeToHud = 0;
   private resourceSamples: object[] = [];
   private runSummary = '';
+  private mapOpen = false;
+  private lastExit = {x:.6,z:23};
 
   async start(): Promise<void> {
     await Promise.all(['DM-Sans', 'InstrumentSerif'].map(name => new Promise<void>(resolve => {
@@ -93,6 +98,9 @@ export class DeliveryDemo extends Component {
       });
     })));
     if (!this.isValid) return;
+    this.vehicle.x=this.district.spawn.x;
+    this.vehicle.z=this.district.spawn.z;
+    this.vehicle.yaw=this.district.spawn.yaw*Math.PI/180;
     this.world = new World(this.node, this.surfaceMaterial, this.signMaterial, this.order.data);
     this.world.car.setPosition(this.vehicle.x, 0, this.vehicle.z);
     const scene = this.node.scene;
@@ -193,7 +201,7 @@ export class DeliveryDemo extends Component {
     this.frames.push(dt);
     if (this.frames.length > 600) this.frames.shift();
     const step = this.paused ? 0 : Math.min(dt, .05);
-    const blocked = this.paused || this.hud.classList.contains('music-open')
+    const blocked = this.paused || this.mapOpen || this.hud.classList.contains('music-open')
       || this.touch.enabled && (this.hud.classList.contains('phone-open'));
     this.touch.suspend(blocked);
     const controls = this.touch.input;
@@ -242,7 +250,7 @@ export class DeliveryDemo extends Component {
     const mode = background || this.wasBackground ? 'background' : this.paused ? 'paused'
       : this.order.stage === 'idle' || this.order.stage === 'delivered' ? 'idle' : 'active';
     this.wasBackground = background;
-    this.performanceRun.frame(dt, mode);
+    this.performanceRun.frame(dt, mode,this.district.id);
     const now = performance.now();
     if (now < this.performanceNext) return;
     this.performanceNext = now + 5000;
@@ -332,7 +340,7 @@ export class DeliveryDemo extends Component {
         this.music.chime();
         break;
       case 'continue':
-        if (!this.order.next(deliveryOrder(this.orderSequence + 1))) return;
+        if (!this.order.next(createDistrictOrder(this.district,this.orderSequence + 1))) return;
         this.orderSequence += 1;
         this.order.accept();
         this.hud.classList.remove('phone-open');
@@ -349,6 +357,7 @@ export class DeliveryDemo extends Component {
         const exit = this.vehicle.exitPosition(this.world.canMove);
         if (!exit) { this.notice = '两侧受阻，请挪到安全位置再下车。'; return; }
         this.walker.place(exit, this.vehicle.yaw + this.driverLookYaw);
+        this.lastExit = {...exit};
         this.driverLookYaw = 0;
         this.inCar = false;
         this.clearKeys();
@@ -524,6 +533,9 @@ export class DeliveryDemo extends Component {
       #delivery-hud #sound-resume { position:absolute; left:50%; top:86px; transform:translateX(-50%); min-height:44px; pointer-events:auto; }
       #delivery-hud #performance-panel { position:absolute; z-index:20; inset:5%; padding:20px; background:#183339; pointer-events:auto; overflow:auto; }
       #delivery-hud #performance-output { display:block; width:100%; height:65%; font:12px monospace; }
+      #delivery-hud #district-map { position:absolute; z-index:15; inset:4%; padding:16px; background:#193239; border:1px solid #82968b; border-radius:10px; pointer-events:auto; overflow:auto; }
+      #delivery-hud #map-legend { font-size:12px; padding:8px; }
+      #delivery-hud #map-canvas { width:100%; display:block; }
       #delivery-hud.touch-mode .music { display:block; left:180px; top:auto; bottom:16px; width:260px; }
       #delivery-hud.touch-mode.music-open .music { left:16px; top:74px; bottom:auto; width:340px; }
       #delivery-hud.touch-mode .music-details { top:calc(100% + 6px); bottom:auto; max-height:calc(100vh - 180px); }
@@ -540,7 +552,7 @@ export class DeliveryDemo extends Component {
         #delivery-hud.touch-mode #result { bottom:210px; }
       }
       </style>
-      <nav class="toolbar"><button id="touch-toggle">触屏操作</button><button id="order-toggle">订单</button><button id="music-toggle">音乐</button><button id="pause">暂停</button></nav>
+      <nav class="toolbar"><button id="touch-toggle">触屏操作</button><button id="order-toggle">订单</button><button id="music-toggle">音乐</button><button id="map-toggle">地图</button><button id="pause">暂停</button></nav>
       <div class="top"><div class="sub">NEW YORK · 6:42 PM</div><div class="wordmark">我在纽约送外卖</div><div class="route" id="route"></div></div>
       <section class="phone"><div class="phone-header"><span>ORCHARD / DELIVERY</span><span>● 4G</span></div><h2 id="restaurant"></h2><div class="muted" id="order-id"></div><div class="order-detail" id="items"></div><div class="muted">交接码</div><div class="code" id="order-code"></div><div class="muted" id="customer"></div><div class="status" id="status"></div>
       <details id="code-panel"><summary>手动核验与等餐快进</summary><input id="handoff-code" inputmode="numeric" maxlength="4" placeholder="输入交接码" aria-label="交接码"><button id="verify">核对并取餐</button><button id="skip">等餐快进</button></details>
@@ -552,6 +564,7 @@ export class DeliveryDemo extends Component {
       <button id="sound-resume" hidden>点按恢复声音</button>
       <section id="pause-menu" hidden><h2>暂停</h2><p>音乐继续播放，可在音乐面板中暂停。</p><p>W/S 前后移动，A/D 驾驶转向或步行横移。拖动空白处观察，E 执行情境操作。手机左手移动/转向，右侧观察，油门与刹车独立。</p><button id="resume">继续游戏</button><button id="safe-recover">安全复位</button><p>安全复位会将人与车放回起点，保留订单与音乐。</p><button id="performance-start">开始性能采样</button><button id="performance-finish">停止并查看性能</button></section>
       <section id="performance-panel" hidden><h2>整段性能采样</h2><textarea id="performance-output" aria-label="性能原始数据" readonly></textarea><button id="performance-close">关闭数据</button></section>
+      <section id="district-map" hidden><button id="map-close">返回街道</button><canvas id="map-canvas" aria-label="工作区域地图"></canvas><div id="map-legend"></div></section>
       <div class="notice" id="notice"></div><pre id="diagnostics" style="display:none;position:absolute;left:28px;top:165px;background:#142b30dd;padding:12px;font:10px monospace;max-width:min(370px,calc(100% - 56px));max-height:calc(100% - 185px);white-space:pre-wrap;overflow:auto"></pre>`;
     this.musicPanel = new MusicPanel(this.music);
     this.hud.appendChild(this.musicPanel.element);
@@ -567,6 +580,8 @@ export class DeliveryDemo extends Component {
     on('touch-toggle', () => { this.clearKeys(); this.touch.toggle(); });
     on('order-toggle', () => { this.clearKeys(); this.hud.classList.toggle('phone-open'); });
     on('music-toggle', () => { this.clearKeys(); this.hud.classList.toggle('music-open'); });
+    on('map-toggle', () => { this.clearKeys(); this.mapOpen=true; this.hud.querySelector<HTMLElement>('#district-map')!.hidden=false; });
+    on('map-close', () => { this.clearKeys(); this.mapOpen=false; this.hud.querySelector<HTMLElement>('#district-map')!.hidden=true; });
     on('pause', () => this.togglePause());
     on('resume', () => this.togglePause());
     on('safe-recover', () => { this.recover(); this.togglePause(); });
@@ -623,11 +638,12 @@ export class DeliveryDemo extends Component {
     text('notice', this.notice);
     this.hud.querySelector<HTMLElement>('#notice')!.hidden = this.noticeAge > 5;
     this.musicPanel.render();
-    const target = stage === 'carrying' ? this.vehicle : ['stowed','delivering'].includes(stage) ? this.dropoff : this.pickup;
+    const target = stage === 'carrying' ? this.lastExit : ['stowed','delivering'].includes(stage) ? this.dropoff : this.pickup;
     const playerHeading = this.inCar ? this.vehicle : this.walker;
-    const parking = stage === 'accepted' ? data.pickupParking! : data.dropoffParking!;
-    const route = this.inCar ? planRoute(this.vehicle, parking) : {points:[target],distance:this.distance(target.x,target.z)};
-    const navigation = directionTo(playerHeading, route.points[0]);
+    const parking = stage === 'accepted' || stage === 'idle' ? data.pickupParking! : data.dropoffParking!;
+    const route = planRoute(playerHeading,this.inCar?parking:target,this.district,this.inCar?'car':'foot');
+    const next = route.points.find(point=>this.distance(point.x,point.z)>(this.inCar?8:.7)) ?? target;
+    const navigation = directionTo(playerHeading, next);
     const routeDistance = Math.round(route.distance);
     const nextTurn = this.inCar && route.points.length > 1 ? ' · 路口按路线转弯' : this.inCar ? ' · 路边停车' : '';
     const routes = {
@@ -638,7 +654,16 @@ export class DeliveryDemo extends Component {
       delivering: `${navigation.symbol} 携带餐袋 · ${data.address} · ${routeDistance} m${nextTurn}`,
       delivered: '订单完成 · 享受你的傍晚',
     };
-    text('route', routes[stage]);
+    text('route', route.reachable || stage==='idle' || stage==='delivered' ? routes[stage] : '当前点无合法'+(this.inCar?'车行':'步行')+'路线，请查看地图');
+    if (this.mapOpen) {
+      const canvas=this.hud.querySelector<HTMLCanvasElement>('#map-canvas')!;
+      const width=Math.floor(this.hud.clientWidth*.92-32), height=Math.floor(this.hud.clientHeight*.75-70);
+      if (canvas.width!==width || canvas.height!==height) {canvas.width=width;canvas.height=height;}
+      drawDistrictMap(canvas.getContext('2d')!,width,height,this.district,
+        {player:playerHeading,target:this.inCar?parking:target,route:route.points,labels:true});
+      text('map-legend',this.district.restaurants.map((place,index)=>'R'+(index+1)+' '+place.name).concat(
+        this.district.deliveries.map((place,index)=>'D'+(index+1)+' '+place.name)).join('　')+' · P 停车点');
+    }
     const statuses = {
       idle: '音乐可自由选择，静音也能接单。',
       accepted: `队列 ${this.order.queueJoined ? Math.ceil(this.order.queueRemaining) + ' s' : '尚未加入'} · 厨房 ${Math.ceil(this.order.kitchenRemaining)} s`,

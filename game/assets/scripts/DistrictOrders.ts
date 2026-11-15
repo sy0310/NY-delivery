@@ -8,7 +8,7 @@ export function createDistrictOrder(district: DistrictDefinition, sequence: numb
   const delivery = district.deliveries[sequence % district.deliveries.length];
   return Object.freeze({...base,id:district.orderPrefix+'-'+(1042+sequence),
     districtId:district.id,restaurantId:restaurant.id,deliveryPointId:delivery.id,
-    restaurant:restaurant.name,items:restaurant.menu,address:delivery.name,
+    restaurant:restaurant.name,items:district.id==='legacy' ? base.items : restaurant.menu+(base.bagCount>1?' · 2 × Iced tea':''),address:delivery.name,
     pickup:restaurant.counter,pickupParking:restaurant.parking,dropoff:delivery.target,dropoffParking:delivery.parking});
 }
 

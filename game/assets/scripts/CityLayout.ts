@@ -1,69 +1,37 @@
-export interface CityPoint { x: number; z: number }
-export const EAST_AVENUE = 350;
-export const NORTH_STREET = -480;
-export const SOUTH_STREET = 200;
-export const AVENUES = [0, EAST_AVENUE];
-export const CROSS_STREETS = [NORTH_STREET, -120, SOUTH_STREET];
-export const RESTAURANT_ORIGIN = {x:EAST_AVENUE, z:-85};
-export const COUNTER = {x:RESTAURANT_ORIGIN.x-14.3, z:RESTAURANT_ORIGIN.z};
-export const PICKUP_PARKING = {x:RESTAURANT_ORIGIN.x-5.5, z:RESTAURANT_ORIGIN.z+14};
-export const SPAWN = {x:2.5, z:23};
-const nodes: CityPoint[] = [{x:0,z:SOUTH_STREET},{x:0,z:-120},{x:0,z:NORTH_STREET},
-  {x:EAST_AVENUE,z:NORTH_STREET},{x:EAST_AVENUE,z:-120},{x:EAST_AVENUE,z:SOUTH_STREET}];
-// Orchard northbound, Mercer southbound, Juniper eastbound, River westbound.
-const edges = [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[1,4]];
-const distance = (a: CityPoint, b: CityPoint) => Math.hypot(a.x-b.x,a.z-b.z);
+import { LEGACY_DISTRICT, LEGACY_RESTAURANT_ORIGIN } from './LegacyDistrict';
+import { routeInDistrict, isAccessible, pointDistance } from './DistrictNavigation';
+import type { CityPoint, DistrictDefinition, TravelMode } from './DistrictDefinition';
+export type { CityPoint } from './DistrictDefinition';
+
+// Compatibility exports for the original procedural scene. Current districts pass their definition explicitly.
+const positions=LEGACY_DISTRICT.roads.flatMap(road=>road.points);
+export const EAST_AVENUE=Math.max(...positions.map(point=>point.x));
+export const NORTH_STREET=Math.min(...positions.map(point=>point.z));
+export const SOUTH_STREET=Math.max(...positions.map(point=>point.z));
+export const AVENUES=[0,EAST_AVENUE];
+export const CROSS_STREETS=Array.from(new Set(positions.map(point=>point.z))).sort((a,b)=>a-b);
+export const RESTAURANT_ORIGIN=LEGACY_RESTAURANT_ORIGIN;
+export const COUNTER=LEGACY_DISTRICT.restaurants[0].counter;
+export const PICKUP_PARKING=LEGACY_DISTRICT.restaurants[0].parking;
+export const SPAWN=LEGACY_DISTRICT.spawn;
 
 export function orderLocation(sequence: number) {
-  const destinations = [{z:-360,address:'18 Orchard Walk'}, {z:60,address:'42 Orchard Walk'},
-    {z:-250,address:'76 Orchard Walk · Lobby'}];
-  const destination = destinations[sequence % destinations.length];
-  return {pickup:COUNTER, pickupParking:PICKUP_PARKING,
-    dropoff:{x:9.4,z:destination.z}, dropoffParking:{x:5.5,z:destination.z+10}, address:destination.address};
+  const destination=LEGACY_DISTRICT.deliveries[sequence%LEGACY_DISTRICT.deliveries.length];
+  return {pickup:COUNTER,pickupParking:PICKUP_PARKING,
+    dropoff:destination.target,dropoffParking:destination.parking,address:destination.name};
 }
 
-export function roadAt(x: number, z: number): boolean {
-  return AVENUES.some(center => Math.abs(x-center) <= 6.8 && z >= NORTH_STREET-6.8 && z <= SOUTH_STREET+6.8)
-    || CROSS_STREETS.some(center => Math.abs(z-center) <= 6.8 && x >= -6.8 && x <= EAST_AVENUE+6.8);
+export function roadAt(x: number,z: number): boolean {
+  return isAccessible(LEGACY_DISTRICT,{x,z},'car');
 }
 
-function project(point: CityPoint, a: CityPoint, b: CityPoint) {
-  const length = distance(a,b);
-  const progress = Math.max(0,Math.min(1,((point.x-a.x)*(b.x-a.x)+(point.z-a.z)*(b.z-a.z))/(length*length)));
-  const position = {x:a.x+(b.x-a.x)*progress,z:a.z+(b.z-a.z)*progress};
-  return {position,progress,length,distance:distance(point,position)};
-}
-function nearest(point: CityPoint) {
-  return edges.map(([a,b]) => ({a,b,...project(point,nodes[a],nodes[b])}))
-    .sort((a,b) => a.distance-b.distance)[0];
-}
-
-/** Project onto the directed road graph, then find the shortest connected route. */
-export function planRoute(from: CityPoint, to: CityPoint): {points: CityPoint[]; distance:number} {
-  if (distance(from,to) < 24) return {points:[to],distance:distance(from,to)};
-  const start = nearest(from);
-  const end = nearest(to);
-  if (start.a === end.a && start.b === end.b && end.progress >= start.progress) {
-    return {points:[to],distance:distance(from,to)};
+export function planRoute(from: CityPoint,to: CityPoint,district: DistrictDefinition=LEGACY_DISTRICT,mode: TravelMode='car') {
+  const route=routeInDistrict(district,from,to,mode);
+  if (district.id==='legacy' && mode==='car') {
+    if (route.points.length>1 && pointDistance(from,route.points[0])<12) route.points.shift();
+    const last=route.points.length-1;
+    if (last>0 && pointDistance(route.points[last],route.points[last-1])<12) route.points.splice(last-1,1);
+    if (route.reachable) route.distance=route.points.reduce((sum,point,index)=>sum+pointDistance(index?route.points[index-1]:from,point),0);
   }
-  const costs = nodes.map(() => Infinity);
-  const previous = nodes.map(() => -1);
-  const pending = new Set(nodes.map((_,index) => index));
-  costs[start.b] = 0;
-  while (pending.size) {
-    const current = Array.from(pending).sort((a,b) => costs[a]-costs[b])[0];
-    pending.delete(current);
-    if (current === end.a) break;
-    for (const [a,b] of edges.filter(([a]) => a === current)) {
-      const cost = costs[a]+distance(nodes[a],nodes[b]);
-      if (cost < costs[b]) { costs[b]=cost; previous[b]=a; }
-    }
-  }
-  const path = [end.a];
-  while (path[0] !== start.b && previous[path[0]] >= 0) path.unshift(previous[path[0]]);
-  const points = path.map(index => ({...nodes[index]}));
-  points.push({...to});
-  // Junction guidance switches before the center so the driver has room to turn.
-  while (points.length > 1 && distance(from,points[0]) < 12) points.shift();
-  return {points,distance:points.reduce((sum,point,index) => sum+distance(index ? points[index-1] : from,point),0)};
+  return route;
 }
