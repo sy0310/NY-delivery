@@ -1,11 +1,11 @@
-import { Node, Material, Color, DirectionalLight, Vec3, Prefab, resources, instantiate, MeshRenderer, view } from 'cc';
+import { Node, Material, Color, DirectionalLight, Vec3, Prefab, resources, instantiate, MeshRenderer, view, SphereLight } from 'cc';
 import { ModelGeometry } from './ModelGeometry';
 import type { PaintedPanel } from './ModelGeometry';
 import { CarModel, CarTelemetry } from './CarModel';
 import type { OrderData, BagLabel, OrderStage } from './OrderState';
 import { Person } from './Person';
 import type { DistrictDefinition, DistrictPlace, DistrictRestaurant, CityPoint } from './DistrictDefinition';
-import { isAccessible, roomPoint } from './DistrictNavigation';
+import { isAccessible, roomPoint, projectPoint, insidePolygon } from './DistrictNavigation';
 import { roadSegments, placePose, distanceToBounds } from './DistrictPresentation';
 
 /** District meshes are replaceable. The car, bag and audio owner survive work-area changes. */
@@ -27,6 +27,7 @@ export class World {
   private riderTime = 0;
   private handoffTime = 0;
   private light: DirectionalLight;
+  private lamps:SphereLight[]=[];
   private quality: 'low'|'standard' = 'standard';
   generation = 0;
   loading = false;
@@ -84,6 +85,7 @@ export class World {
     });
     for(const place of district.restaurants) this.restaurant(g,place);
     for(const place of district.deliveries) this.destination(g,place);
+    this.shopfronts(g,district);
     for(const landmark of district.landmarks) {
       const sign=this.sign(g,landmark.name,2.8,.65,'#243f46');
       sign.setPosition(landmark.position.x,2.4,landmark.position.z);sign.setRotationFromEuler(0,landmark.yaw,0);
@@ -93,7 +95,7 @@ export class World {
 
   private unloadDistrict():void {
     if(this.districtRoot) {this.districtRoot.active=false;this.districtRoot.destroy();}
-    this.districtRoot=null;this.actors=[];this.chunks=[];this.details=[];
+    this.districtRoot=null;this.actors=[];this.lamps=[];this.chunks=[];this.details=[];
     this.districtGeometry?.dispose();this.districtGeometry=null;
     this.prefabs.forEach(prefab=>prefab.decRef());this.prefabs=[];
   }
@@ -101,6 +103,7 @@ export class World {
   setQuality(quality:'low'|'standard'):void {
     this.quality=quality;this.light.shadowDistance=quality==='low'?30:55;
     this.root.scene.globals.shadows.shadowMapSize=quality==='low'?1024:2048;
+    this.lamps.forEach(light=>light.enabled=quality==='standard');
     view.enableRetina(quality==='standard');this.sedan.setQuality(quality);
   }
   get resourceState():string {return `${this.district?.id} generation ${this.generation} · ${this.prefabs.length} prefabs · ${this.chunks.filter(chunk=>chunk.node.active).length}/${this.chunks.length} blocks · ${this.quality}`;}
@@ -122,7 +125,7 @@ export class World {
     if(radius>1) return true;
     return this.district.restaurants.every(place=>{
       const point=roomPoint(place.entry,place.yaw,{x,z});
-      return Math.abs(point.x)>2.5+radius || Math.abs(point.z-5.6)>.45+radius;
+      return Math.abs(point.x)>(place.width-1.6)/2+radius || Math.abs(point.z-5.6)>.45+radius;
     });
   };
   groundHeight(x:number,z:number):number {return this.district.restaurants.some(place=>{const p=roomPoint(place.entry,place.yaw,{x,z});return Math.abs(p.x)<place.width/2 && p.z>0 && p.z<place.depth;})?.08:0;}
@@ -148,7 +151,7 @@ export class World {
   }
   private facade(g:ModelGeometry,style:number):Material {
     const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const c=canvas.getContext('2d')!;
-    c.fillStyle=['#ac8067','#b7ae95','#8c7368'][style];c.fillRect(0,0,256,256);
+    c.fillStyle=(this.district.id==='chinatown'?['#99725b','#ad8d71','#805f54']:['#ac8067','#b7ae95','#8c7368'])[style];c.fillRect(0,0,256,256);
     c.strokeStyle='#756f6455';c.lineWidth=1;
     for(let y=0;y<256;y+=8) {c.beginPath();c.moveTo(0,y);c.lineTo(256,y);c.stroke();for(let x=(y%16?0:12);x<256;x+=24){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+8);c.stroke();}}
     for(const x of [24,152])for(const y of [24,152]) {
@@ -178,8 +181,10 @@ export class World {
       const segment=roadSegments(road.points)[0];
       if(segment.length>25) {
         const name=this.sign(g,road.name,3.5,.5,'#31574b');
-        name.setPosition(segment.center.x+road.width/2+1,3,segment.center.z);name.setRotationFromEuler(0,segment.yaw+90,0);
-        g.cylinder('Street sign pole',segment.center.x+road.width/2+1,1.5,segment.center.z,.055,3,'#69766c');
+        const angle=segment.yaw*Math.PI/180,offset=road.width/2+1;
+        const pole={x:segment.center.x+Math.cos(angle)*offset,z:segment.center.z-Math.sin(angle)*offset};
+        name.setPosition(pole.x,3,pole.z);name.setRotationFromEuler(0,segment.yaw+90,0);
+        g.cylinder('Street sign pole',pole.x,1.5,pole.z,.055,3,'#69766c');
       }
       if(!road.car && road.direction!=='NV') {
         const bus=this.sign(g,'BUS ONLY · 6 AM–7 PM',4,.7,'#81524b');bus.setPosition(segment.center.x,.085,segment.center.z);bus.setRotationFromEuler(-90,segment.yaw,0);
@@ -206,12 +211,16 @@ export class World {
       g.box('Door jamb',side*1.1,1.5,-.06,.1,3,.15,'#c4b48b',node);
     }
     g.box('Back kitchen wall',0,1.55,d-.08,w,3.1,.16,'#839487',node);
-    g.roundedBox('Service counter',0,.58,5.6,5,1.16,.9,.05,'#556d63',node);
-    g.box('Stone counter top',0,1.19,5.6,5.15,.1,1.05,'#d4c6a6',node);
+    g.roundedBox('Service counter',0,.58,5.6,w-1.6,1.16,.9,.05,'#556d63',node);
+    g.box('Stone counter top',0,1.19,5.6,w-1.45,.1,1.05,'#d4c6a6',node);
     g.box('Frontage sign backing',0,2.94,-.12,w,.62,.25,'#324f44',node);
     const sign=this.sign(g,place.chineseName+' · '+place.name,w-.15,.58,'#324f44',node);sign.setPosition(0,2.95,-.26);sign.setRotationFromEuler(0,180,0);
     const menu=this.sign(g,place.menu,4,.65,'#263f3d',node);menu.setPosition(0,2.38,d-.18);menu.setRotationFromEuler(0,180,0);
-    for(const x of [-2,0,2]) {
+    g.box('Preparation shelf',0,1.2,6.4,w-.3,.12,.8,'#9eaa90',node);
+    const lamp=new Node('Warm counter light');node.addChild(lamp);lamp.setPosition(0,2.75,4.3);
+    const light=lamp.addComponent(SphereLight);light.color=new Color(255,220,165);light.range=7;light.luminousFlux=480;
+    this.lamps.push(light);
+    for(const x of [-w*.28,0,w*.28]) {
       g.cylinder('Pendant lamp shade',x,2.82,3.4,.22,.12,'#e6c78a',node);
       g.cylinder('Bowl on preparation shelf',x,1.35,6.4,.18,.14,'#e9d8b3',node);
       g.cylinder('Chopstick holder',x+.4,1.4,6.4,.07,.25,'#6d7966',node);
@@ -221,6 +230,39 @@ export class World {
     const parcel=new Node('Other customer bag');rider.parcelAnchor.addChild(parcel);g.box('Small takeaway bag',0,0,0,.22,.32,.18,'#bd965d',parcel);parcel.active=false;
     this.actors.push({place,clerk,rider,parcel});g.batchStatic(node);
   }
+  private shopfronts(g:ModelGeometry,district:DistrictDefinition):void {
+    const occupied=new Set([...district.restaurants,...district.deliveries].map(place=>place.buildingId));
+    let count=0;
+    for(const building of district.buildings) {
+      if(building.block.startsWith('context') || occupied.has(building.id) || count>=38)continue;
+      const candidates=building.footprint.map((a,index)=>{
+        const b=building.footprint[(index+1)%building.footprint.length],mid={x:(a.x+b.x)/2,z:(a.z+b.z)/2};
+        const near=Math.min(...district.roads.flatMap(road=>road.points.slice(1).map((end,i)=>projectPoint(mid,road.points[i],end).distance-road.width/2)));
+        return {a,b,mid,near,length:Math.hypot(a.x-b.x,a.z-b.z)};
+      }).filter(edge=>edge.length>5 && edge.near>0 && edge.near<7).sort((a,b)=>a.near-b.near);
+      if(!candidates.length)continue;
+      const edge=candidates[0],width=Math.min(7.5,edge.length-.4);
+      let yaw=Math.atan2(-(edge.b.z-edge.a.z),edge.b.x-edge.a.x)*180/Math.PI;
+      const place={entry:edge.mid,yaw};
+      if(!insidePolygon(placePose(place,0,.4),building.footprint))place.yaw+=180;
+      const node=this.placeRoot({...place,id:'front-'+building.id,name:'Commercial frontage',parking:place.entry,walkway:[]},g);
+      const names=district.id==='flushing'?['亚洲超市 · MARKET','烘焙 · BAKERY','茶铺 · TEA','美食广场 · FOOD HALL']:['GROCER · 食品','TEA & BAKERY · 茶点','PRINT & POST','NEIGHBORHOOD MARKET'];
+      g.box('Lower storefront glazing',0,1.35,-.04,width,2.7,.12,'#2d4e55',node);
+      for(const x of [-width/2,0,width/2])g.box('Storefront frame',x,1.35,-.14,.08,2.7,.1,'#b2a383',node);
+      const sign=this.sign(g,names[count%names.length],width,.65,district.id==='flushing'?'#455e49':'#743d32',node);sign.setPosition(0,2.95,-.14);sign.setRotationFromEuler(0,180,0);
+      g.box('Canvas awning',0,2.5,-.45,width,.12,.9,district.id==='flushing'?'#7b9275':'#a6785b',node);
+      if(district.id==='chinatown' && count%3===0 && building.height>10) {
+        for(const y of [4.5,7.5]) {
+          g.box('Fire escape landing',0,y,-.6,3,.1,1.2,'#48514c',node);
+          g.box('Fire escape top rail',0,y+.9,-1.12,3,.045,.045,'#48514c',node);
+          for(const x of [-1.4,-.7,0,.7,1.4])g.box('Fire escape baluster',x,y+.45,-1.12,.04,.9,.04,'#48514c',node);
+          g.beam('Fire escape stair',new Vec3(-1.3,y,-.6),new Vec3(1.3,y+3,-.6),.065,'#48514c',node);
+        }
+      }
+      g.batchStatic(node);count++;
+    }
+  }
+
   private destination(g:ModelGeometry,place:DistrictDefinition['deliveries'][number]):void {
     const node=this.placeRoot(place,g);
     g.box('Entrance lintel',0,2.6,0,2.4,.2,.25,'#c4b99e',node);

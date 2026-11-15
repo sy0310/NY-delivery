@@ -19,6 +19,24 @@
       "retrieved": "2026-11-15T19:22:40.916162+00:00",
       "sha256": "ecb03954117060b5ebf0fb22a1738c6b7d4fc45cfb33366402636bb9a3f24668",
       "license": "NYC Open Data terms, source/version/modifications retained"
+    },
+    {
+      "url": "https://data.ny.gov/resource/i9wp-a4ja.json?%24where=entrance_latitude+between+40.7572+and+40.762+AND+entrance_longitude+between+-73.8344+and+-73.8258&%24limit=5000",
+      "retrieved": "2026-11-15T20:48:16.099120+00:00",
+      "sha256": "5b5fcfd140819972373bf32a4c66f2a8d6c36588a3c67c072160b79b47af79ba",
+      "license": "MTA via New York State Open Data, provider terms and dataset date retained; ArcGIS projection for coordinates."
+    },
+    {
+      "url": "https://data.ny.gov/resource/2ucp-7wg5.json?%24where=in_effect+%3D+%27true%27+AND+latitude+between+40.7572+and+40.762+AND+longitude+between+-73.8344+and+-73.8258&%24limit=5000",
+      "retrieved": "2026-11-15T20:48:16.099120+00:00",
+      "sha256": "518a9990b99b67df90518974febffbb8660a0a4deb66f9e53ececc172799f4e3",
+      "license": "MTA via New York State Open Data, provider terms and dataset date retained; ArcGIS projection for coordinates."
+    },
+    {
+      "url": "https://utility.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer/project?f=json&inSR=4326&outSR=2263&geometries=%7B%22geometryType%22%3A%22esriGeometryMultipoint%22%2C%22geometries%22%3A%5B%7B%22points%22%3A%5B%5B-73.8304171%2C40.7595971%5D%2C%5B-73.8303054%2C40.7594201%5D%2C%5B-73.8299523%2C40.7597211%5D%2C%5B-73.8299149%2C40.7594606%5D%2C%5B-73.8298645%2C40.7595554%5D%2C%5B-73.828416%2C40.7599602%5D%2C%5B-73.8303311%2C40.7597388%5D%2C%5B-73.8301544%2C40.7593778%5D%2C%5B-73.8306493%2C40.7594937%5D%2C%5B-73.8305917%2C40.7593515%5D%2C%5B-73.830891%2C40.760927%5D%2C%5B-73.828266%2C40.760668%5D%2C%5B-73.828956%2C40.759821%5D%2C%5B-73.830112%2C40.759259%5D%2C%5B-73.829978%2C40.759549%5D%2C%5B-73.830801%2C40.760255%5D%2C%5B-73.830299%2C40.759443%5D%2C%5B-73.830966%2C40.761025%5D%2C%5B-73.830902%2C40.760244%5D%2C%5B-73.827197%2C40.757333%5D%2C%5B-73.826593%2C40.760413%5D%2C%5B-73.831384%2C40.759201%5D%2C%5B-73.830749%2C40.759307%5D%2C%5B-73.831809%2C40.759052%5D%2C%5B-73.829956%2C40.76024%5D%2C%5B-73.834399%2C40.758256%5D%2C%5B-73.830625%2C40.760332%5D%2C%5B-73.829474%2C40.757314%5D%2C%5B-73.830897%2C40.760886%5D%2C%5B-73.82974%2C40.760329%5D%2C%5B-73.829892%2C40.759377%5D%2C%5B-73.829348%2C40.75812%5D%2C%5B-73.829938%2C40.759655%5D%2C%5B-73.833814%2C40.758201%5D%2C%5B-73.828629%2C40.757921%5D%2C%5B-73.828601%2C40.759982%5D%2C%5B-73.830836%2C40.760848%5D%2C%5B-73.827488%2C40.760879%5D%2C%5B-73.830278%2C40.759729%5D%2C%5B-73.830351%2C40.759526%5D%2C%5B-73.830701%2C40.760517%5D%2C%5B-73.827944%2C40.760769%5D%2C%5B-73.829419%2C40.757824%5D%2C%5B-73.830658%2C40.760423%5D%2C%5B-73.829182%2C40.759766%5D%2C%5B-73.83062%2C40.760782%5D%2C%5B-73.830017%2C40.759003%5D%2C%5B-73.830147%2C40.75925%5D%2C%5B-73.827008%2C40.76101%5D%2C%5B-73.830886%2C40.760883%5D%2C%5B-73.828602%2C40.759979%5D%5D%7D%5D%7D",
+      "retrieved": "2026-11-15T20:48:16.099120+00:00",
+      "sha256": "d9470095f7175feee55720c42fa7256f5f8b22d028074adfa8d171cd72db08f0",
+      "license": "MTA via New York State Open Data, provider terms and dataset date retained; ArcGIS projection for coordinates."
     }
   ],
   "streetBlocks": 5,
@@ -29,8 +47,8 @@
   "modifications": [
     "Local EPSG:2263 US survey feet to metres, north is negative Z.",
     "Only curated constructed at-grade source segments. Original endpoints and direction retained.",
-    "Main busway and Lippmann plaza are foot-only for prototype cars, crossing side streets retained.",
-    "Five complete street blocks plus 45m background footprint context.",
+    "Main/Lippmann (Flushing) and Doyers (Chinatown) remain foot-only, crossing side streets retained.",
+    "Curated complete source street faces plus 45m background footprint context. Chinatown ends at Market Street to keep the slice compact.",
     "Largest exterior footprint ring, courtyard holes omitted, ground flattened.",
     "Roof heights are feet above ground, missing height falls back to 12m, visible shell range 4.5–96m.",
     "Restaurant brands, interiors and temporary curb parking are authored game locations."

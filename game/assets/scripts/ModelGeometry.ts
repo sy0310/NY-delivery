@@ -227,8 +227,8 @@ export class ModelGeometry {
     const context = canvas.getContext('2d')!;
     const gradient = context.createLinearGradient(0, 0, 0, 512);
     gradient.addColorStop(0, '#6e8390');
-    gradient.addColorStop(.46, '#d9e4e5');
-    gradient.addColorStop(.56, '#b7d1e2');
+    gradient.addColorStop(.46, '#9fbfd4');
+    gradient.addColorStop(.56, '#83acc9');
     gradient.addColorStop(1, '#497ba9');
     context.fillStyle = gradient;
     context.fillRect(0, 0, 512, 512);
