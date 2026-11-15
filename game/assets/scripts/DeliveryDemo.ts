@@ -1,7 +1,8 @@
 import {
   _decorator, Component, Node, Camera, Color, Vec3, Vec4, resources,
-  AudioClip, Material, Font, profiler, game, input, Input, EventKeyboard, KeyCode,
+  AudioClip, Material, Font, profiler, game, input, Input, EventKeyboard, EventMouse, KeyCode,
 } from 'cc';
+import { EDITOR } from 'cc/env';
 import { OrderState } from './OrderState';
 import { VehicleController } from './VehicleController';
 import { WalkingController } from './WalkingController';
@@ -49,6 +50,17 @@ export class DeliveryDemo extends Component {
   private touch!: TouchControls;
   private driverLookYaw = 0;
   private viewPitch = -4;
+  private onEditorMouse = (event: EventMouse): void => {
+    if (event.type === Input.EventType.MOUSE_DOWN && event.getButton() !== 0) return;
+    if (event.type === Input.EventType.MOUSE_MOVE && event.getButton() !== 0) {
+      this.touch.editorMouse('mouse-up', 0, 0);
+      return;
+    }
+    const bounds = game.canvas.getBoundingClientRect();
+    this.touch.editorMouse(event.type,
+      bounds.left + event.getLocationX() / game.canvas.width * bounds.width,
+      bounds.bottom - event.getLocationY() / game.canvas.height * bounds.height);
+  };
   private peakSeatDrift = 0;
   private peakSeatYawDrift = 0;
 
@@ -88,6 +100,9 @@ export class DeliveryDemo extends Component {
     });
     input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
     input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
+    if (EDITOR) for (const type of [Input.EventType.MOUSE_DOWN, Input.EventType.MOUSE_MOVE, Input.EventType.MOUSE_UP] as const) {
+      input.on(type, this.onEditorMouse, this);
+    }
     window.addEventListener('blur', this.clearKeys);
     this.updateView();
     this.renderHUD();
@@ -162,6 +177,12 @@ export class DeliveryDemo extends Component {
   }
 
   private updateView(): void {
+    const renderCamera = this.camera.getComponent(Camera)!.camera;
+    const { width, height } = game.canvas.getBoundingClientRect();
+    // Runtime-created cameras can retain the old projection after a viewport resize.
+    if (renderCamera && height > 0 && Math.abs(renderCamera.aspect - width / height) > .0001) {
+      renderCamera.resize(width, height);
+    }
     if (this.inCar) {
       if (this.camera.parent !== this.world.car) this.camera.setParent(this.world.car);
       this.camera.setPosition(DRIVER_EYE);
@@ -369,7 +390,7 @@ export class DeliveryDemo extends Component {
       <div class="notice" id="notice"></div><pre id="diagnostics" style="display:none;position:absolute;left:28px;top:165px;background:#142b30dd;padding:12px;font:11px monospace"></pre>`;
     document.body.appendChild(this.hud);
     this.touch = new TouchControls(this.hud, game.canvas, this.look,
-      () => this.orderAction(), this.recenterView, () => this.recover());
+      () => this.orderAction(), this.recenterView, () => this.recover(), EDITOR);
     const on = (id: string, action: () => void) => {
       this.hud.querySelector('#' + id)!.addEventListener('click', () => {
         action();
@@ -484,6 +505,7 @@ export class DeliveryDemo extends Component {
       `x ${player.x.toFixed(2)}  z ${player.z.toFixed(2)}  yaw ${(player.yaw * DEG).toFixed(1)}`,
       `FPS ${(1 / average).toFixed(1)}  p95 ${((sorted[Math.floor(sorted.length * .95)] || 0) * 1000).toFixed(1)} ms`,
       `${innerWidth} × ${innerHeight}  DPR ${devicePixelRatio}`,
+      `View aspect ${this.camera.getComponent(Camera)!.camera.aspect.toFixed(4)} canvas ${(viewport.width / viewport.height).toFixed(4)}`,
       `Seat drift ${seatDrift.toFixed(4)} m (peak ${this.peakSeatDrift.toFixed(4)} m)`,
       `Seat yaw ${seatYawDrift.toFixed(4)} deg (peak ${this.peakSeatYawDrift.toFixed(4)} deg)`,
       `Touch throttle ${this.touch.input.throttle} brake ${Number(this.touch.input.braking)} horizontal ${this.touch.input.horizontal.toFixed(2)}`,
@@ -497,6 +519,9 @@ export class DeliveryDemo extends Component {
     input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
     input.off(Input.EventType.KEY_UP, this.onKeyUp, this);
     window.removeEventListener('blur', this.clearKeys);
+    if (EDITOR) for (const type of [Input.EventType.MOUSE_DOWN, Input.EventType.MOUSE_MOVE, Input.EventType.MOUSE_UP] as const) {
+      input.off(type, this.onEditorMouse, this);
+    }
     this.touch?.dispose();
     this.music?.dispose();
     this.hud?.remove();

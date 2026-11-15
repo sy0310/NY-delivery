@@ -9,14 +9,17 @@ const read = name => {
   const values = state.text.match(/x ([-\d.]+)\s+z ([-\d.]+)\s+yaw ([-\d.]+)/);
   assert.ok(values, 'F3 coordinates must be present');
   assert.match(state.text, /Touch throttle 0 brake 0 horizontal 0.00/, 'released pointers must be neutral');
-  return { x: Number(values[1]), z: Number(values[2]), yaw: Number(values[3]), text: state.text };
+  return { x: Number(values[1]), z: Number(values[2]), yaw: Number(values[3]), mph: state.mph, text: state.text };
 };
 const start = read('start');
 const gas = read('gas');
 const brake = read('brake');
 const reverse = read('reverse');
 assert.ok(gas.z < start.z - 1, 'holding gas must move the actual car forward');
-assert.ok(brake.z < gas.z, 'braking must stop the moving car');
+assert.ok(gas.mph > 0, 'gas must produce a nonzero actual speed');
+assert.equal(brake.mph, 0, 'holding the brake must stop the actual car');
+assert.ok(brake.z < gas.z, 'the car must advance during braking');
+assert.ok(reverse.mph > 0, 'reverse must produce a nonzero actual speed');
 assert.ok(reverse.z > brake.z + 1, 'reverse gear and gas must move the actual car backward');
 for (const state of [start, gas, brake, reverse]) {
   assert.match(state.text, /Seat drift 0.0000 m/);

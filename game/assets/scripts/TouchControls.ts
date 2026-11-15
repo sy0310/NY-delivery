@@ -8,13 +8,14 @@ export class TouchControls {
   private abort = new AbortController();
   private inCar = true;
   private gear = 1;
+  private editorTarget: HTMLElement | null = null;
   private lookPointer: number | null = null;
   private lookX = 0;
   private lookY = 0;
 
   constructor(private hud: HTMLElement, private canvas: HTMLCanvasElement,
     private look: (x: number, y: number) => void, interact: () => void,
-    recenter: () => void, recover: () => void) {
+    recenter: () => void, recover: () => void, private editor = false) {
     this.root = document.createElement('div');
     this.root.className = 'touch-controls';
     this.root.innerHTML = `
@@ -45,6 +46,10 @@ export class TouchControls {
     hud.appendChild(this.root);
     const options = { signal: this.abort.signal };
     this.root.addEventListener('click', () => canvas.focus(), options);
+    if (editor) {
+      this.enabled = false;
+      hud.querySelector<HTMLElement>('#touch-toggle')!.hidden = true;
+    }
     const stick = this.root.querySelector<HTMLElement>('.stick')!;
     const moveStick = (event: PointerEvent) => {
       const bounds = stick.getBoundingClientRect();
@@ -54,6 +59,7 @@ export class TouchControls {
       this.drawStick();
     };
     stick.addEventListener('pointerdown', event => {
+      if (this.editor) return;
       event.preventDefault();
       if (!this.input.beginStick(event.pointerId)) return;
       stick.setPointerCapture(event.pointerId);
@@ -72,6 +78,7 @@ export class TouchControls {
     }
     for (const id of ['touch-gas', 'touch-brake']) {
       this.button(id).addEventListener('pointerdown', event => {
+        if (this.editor) return;
         event.preventDefault();
         this.button(id).setPointerCapture(event.pointerId);
         this.button(id).classList.add('held');
@@ -91,6 +98,7 @@ export class TouchControls {
     this.button('touch-recover').addEventListener('click', recover, options);
     canvas.style.touchAction = 'none';
     canvas.addEventListener('pointerdown', event => {
+      if (this.editor) return;
       if (this.lookPointer !== null || event.button !== 0) return;
       const bounds = canvas.getBoundingClientRect();
       if (event.pointerType !== 'mouse' && event.clientX < bounds.left + bounds.width * .4) return;
@@ -117,6 +125,21 @@ export class TouchControls {
     this.applyMode();
   }
 
+  /** Creator forwards native canvas dragging through Cocos mouse events. */
+  editorMouse(type: string, x: number, y: number): void {
+    if (type === 'mouse-up') { this.editorTarget = null; return; }
+    if (type === 'mouse-down' && document.elementFromPoint(x, y) === this.canvas) {
+      this.editorTarget = this.canvas;
+      this.lookX = x;
+      this.lookY = y;
+    }
+    if (this.editorTarget !== this.canvas) return;
+    const width = this.canvas.getBoundingClientRect().width;
+    this.look((x - this.lookX) / width * 2.8, (y - this.lookY) / width * 2.8);
+    this.lookX = x;
+    this.lookY = y;
+  }
+
   private button(id: string): HTMLButtonElement { return this.root.querySelector<HTMLButtonElement>('#' + id)!; }
   private drawStick(): void {
     const knob = this.root.querySelector<HTMLElement>('.stick-knob')!;
@@ -126,6 +149,7 @@ export class TouchControls {
   toggle(): void { this.enabled = !this.enabled; this.clear(); this.applyMode(); }
   clear(): void {
     this.input.clear();
+    this.editorTarget = null;
     this.lookPointer = null;
     this.root.querySelectorAll('.held').forEach(button => button.classList.remove('held'));
     this.drawStick();
