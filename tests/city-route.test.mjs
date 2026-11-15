@@ -49,3 +49,8 @@ test('a small parking overshoot guides a short maneuver instead of a complete bl
   const from = {x:300,z:PICKUP_PARKING.z+8};
   assert.ok(planRoute(from,PICKUP_PARKING).distance < 20);
 });
+
+test('the ordinary delivery leg has enough road length for a relaxed 90–120 second drive', () => {
+  const route = planRoute(PICKUP_PARKING,orderLocation(0).dropoffParking);
+  assert.ok(route.distance>=1150 && route.distance<=1300);
+});
