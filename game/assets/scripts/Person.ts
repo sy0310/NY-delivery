@@ -4,6 +4,7 @@ import type { ModelGeometry } from './ModelGeometry';
 /** Rigid low-poly joints remain independent from the static city batches. */
 export class Person {
   readonly node = new Node('Animated person');
+  readonly parcelAnchor = new Node('Right hand parcel anchor');
   private body = new Node('Breathing torso');
   private head = new Node('Head joint');
   private arms: Node[] = [];
@@ -52,6 +53,8 @@ export class Person {
       g.batchStatic(leg);
       this.legs.push(leg);
     }
+    this.arms[1].addChild(this.parcelAnchor);
+    this.parcelAnchor.setPosition(0,-.64,.025);
     g.batchStatic(this.body);
     g.batchStatic(this.head);
   }

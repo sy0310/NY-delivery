@@ -257,7 +257,7 @@ export class DeliveryDemo extends Component {
       this.world.bag.setPosition(.45, 1.06, .35);
       this.world.bag.setRotationFromEuler(0,180,0);
     } else {
-      this.world.bag.setPosition(this.pickup.x - 1.2, 1.55, this.pickup.z - .6);
+      this.world.bag.setPosition(this.pickup.x - 1.6, 1.55, this.pickup.z - .6);
       this.world.bag.setRotationFromEuler(0,90,0);
     }
   }

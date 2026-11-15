@@ -8,6 +8,8 @@ import { AVENUES, CROSS_STREETS, roadAt, RESTAURANT_ORIGIN, PICKUP_PARKING, EAST
 import { Person } from './Person';
 import type { OrderStage } from './OrderState';
 
+const STAFF_X = -16.4;
+
 interface Obstacle { x: number; z: number; width: number; depth: number }
 
 /** A detailed foreground street backed by several blocks of original city scenery. */
@@ -23,6 +25,8 @@ export class World {
   private rider!: Person;
   private actorTime = 0;
   private riderTime = 0;
+  private riderYaw = 0;
+  private riderBag = new Node('Other rider takeaway');
   private handoffTime = 0;
   private extraBag = new Node('Second bag and drink carrier');
   private facades = new Map<string, Material>();
@@ -66,6 +70,8 @@ export class World {
     this.order = order;
     this.extraBag.active = (order.bagCount ?? 1) > 1;
     this.riderTime = 0;
+    this.riderYaw = 0;
+    this.riderBag.active = false;
     this.npc.active = (order.queueSeconds ?? 8) > 0;
     this.npc.setPosition(-14.2,0,.2);
     this.npc.setRotationFromEuler(0,0,0);
@@ -99,12 +105,13 @@ export class World {
   updateActors(dt: number, stage: OrderStage, joined: boolean, remaining: number, player: {x:number;z:number}): void {
     this.actorTime += dt;
     this.handoffTime = Math.max(0,this.handoffTime-dt);
-    const lookYaw = Math.atan2(player.x-(RESTAURANT_ORIGIN.x-17.8),player.z-RESTAURANT_ORIGIN.z)*180/Math.PI-90;
+    const lookYaw = Math.atan2(player.x-(RESTAURANT_ORIGIN.x+STAFF_X),player.z-RESTAURANT_ORIGIN.z)*180/Math.PI-90;
     this.clerk.animate(this.actorTime,Math.sin(Math.min(1,this.handoffTime)*Math.PI/2),false,lookYaw);
     if (!this.npc.active) return;
     if (joined && remaining===0 || stage!=='accepted' && stage!=='idle') this.riderTime += dt;
     const time = this.riderTime;
-    const points = [{x:-15.2,z:.2},{x:-11,z:0},{x:-8,z:0},{x:-8,z:-14}];
+    const points = [{x:-15.2,z:.2},{x:-13.9,z:1.4},{x:-11,z:1.4},{x:-8,z:1.4},{x:-8,z:-14}];
+    this.riderBag.active = time > .65;
     const progress = Math.max(0,time-1.2)*1.6;
     let travel = progress;
     let walking = false;
@@ -116,7 +123,10 @@ export class World {
         if (travel<=length) {
           const fraction=travel/length;
           this.npc.setPosition(a.x+(b.x-a.x)*fraction,0,a.z+(b.z-a.z)*fraction);
-          this.npc.setRotationFromEuler(0,Math.atan2(b.x-a.x,b.z-a.z)*180/Math.PI+90,0);
+          const desiredYaw=Math.atan2(b.x-a.x,b.z-a.z)*180/Math.PI+90;
+          const difference=(desiredYaw-this.riderYaw)*Math.PI/180;
+          this.riderYaw+=Math.atan2(Math.sin(difference),Math.cos(difference))*180/Math.PI*Math.min(1,dt*6);
+          this.npc.setRotationFromEuler(0,this.riderYaw,0);
           walking=progress>0;
           break;
         }
@@ -361,10 +371,10 @@ export class World {
     g.box('Canvas awning', -9.22, 3.3, 0, 1.7, .14, 11.5, '#315d51');
     for (let z = -5.25; z < 5.5; z += .85) g.box('Awning stripe', -9.22, 3.38, z, 1.7, .012, .25, '#cfccae');
     this.sign(this.order.restaurant.toUpperCase(), -9.71, 3.92, 0, 10.5);
-    this.sign('PICKUP · THANK YOU', -18.77, 2.9, 0, 5);
-    this.wall('Pickup counter base', -16.5, .6, 0, 1.2, 1.2, 7, '#4d6255');
-    g.box('Stone countertop', -16.5, 1.25, 0, 1.5, .12, 7.3, '#d8c9aa');
-    g.box('Counter brass trim', -15.71, 1.12, 0, .04, .035, 7.2, '#b5a16f');
+    this.sign('PICKUP · THANK YOU', -18.77, 3.2, 1.3, 4);
+    this.wall('Pickup counter base', -15.9, .6, 0, .75, 1.2, 5.4, '#4d6255');
+    g.box('Stone countertop', -15.9, 1.25, 0, 1.0, .12, 5.7, '#d8c9aa');
+    g.box('Counter brass trim', -15.38, 1.12, 0, .04, .035, 5.6, '#b5a16f');
     for (const z of [-3.5, 0, 3.5]) {
       g.beam('Pendant cable', new Vec3(-14, 4.05, z), new Vec3(-14, 3.15, z), .018, '#384241');
       g.cylinder('Lamp shade', -14, 3.12, z, .32, .16, '#57645b');
@@ -382,11 +392,15 @@ export class World {
       g.cylinder('Cup lid', -16.05, 1.55, z, .09, .022, '#465653');
     }
     this.clerk = new Person(g,g.root,'#b7a67e',true);
-    this.clerk.node.setPosition(-17.8,.25,0);
+    this.clerk.node.setPosition(STAFF_X,.25,0);
     this.clerk.node.setRotationFromEuler(0,90,0);
     g.root.addChild(this.npc);
     this.rider = new Person(g,this.npc,'#6b8391');
     this.rider.node.setRotationFromEuler(0,-90,0);
+    this.rider.parcelAnchor.addChild(this.riderBag);
+    g.box('Rider sealed bag',0,0,0,.28,.34,.20,'#b58a58',this.riderBag);
+    g.box('Rider folded bag top',0,.18,0,.29,.025,.21,'#c39c6a',this.riderBag);
+    g.batchStatic(this.riderBag);
     this.npc.setPosition(-14.2, 0, .2);
     g.box('Queue mat', -12.8, .27, 0, 1.4, .02, 1.5, '#8b9c7c');
     g.box('Pickup rack uprights',-18.45,1.1,-4.5,.10,1.75,.10,'#52655a');
@@ -401,7 +415,7 @@ export class World {
     g.box('Printed pickup receipt',-15.68,1.33,1.4,.28,.012,.45,'#f1e8ce');
     g.box('Counter card reader',-15.68,1.41,2.5,.24,.16,.25,'#284746');
     const menu=g.panel('Kitchen menu',2.8,1.55,640,352);
-    menu.node.setPosition(-18.76,2.62,-2.8);
+    menu.node.setPosition(-18.76,2.62,-3.8);
     menu.node.setRotationFromEuler(0,90,0);
     menu.context.fillStyle='#294c45'; menu.context.fillRect(0,0,640,352);
     menu.context.fillStyle='#e5d9b9'; menu.context.font='36px InstrumentSerif';
