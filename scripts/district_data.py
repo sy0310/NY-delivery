@@ -92,6 +92,14 @@ def clean_ring(points):
     return clean
 
 
+def polygon_distance(first,second):
+    if any(inside(point,second) for point in first) or any(inside(point,first) for point in second):
+        return 0
+    return min(project(point,a,ring[(index+1)%len(ring)])[2]
+               for points,ring in [(first,second),(second,first)]
+               for point in points for index,a in enumerate(ring))
+
+
 def roof_triangles(points):
     indices = list(range(len(points)))
     if polygon_area(points) < 0:

@@ -11,7 +11,7 @@ from pathlib import Path
 import urllib.parse
 import urllib.request
 from transit_data import fetch_transit, add_transit
-from district_data import access_flags, clean_ring, distance, inside, local_point, polygon_area, project, roof_height, transform, write_building_gltf
+from district_data import access_flags, clean_ring, distance, inside, local_point, polygon_area, polygon_distance, project, roof_height, transform, write_building_gltf
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / '.local/map-source'
@@ -225,7 +225,7 @@ def convert_region(region, face_ids, origin_id, prefix):
         if block is None and region=='chinatown' and inside(centre,boundary):
             block='C-infill'
         if block is None:
-            nearest = min(project(centre, a, boundary[(index + 1) % len(boundary)])[2] for index, a in enumerate(boundary))
+            nearest = polygon_distance(ring,boundary)
             if nearest > 45:
                 continue
             block = 'context-' + str(math.floor(centre['x'] / 128)) + '-' + str(math.floor(centre['z'] / 128))
