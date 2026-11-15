@@ -36,10 +36,10 @@ export class CarModel {
     this.body();
     this.cabin();
     this.dashboard();
-    this.instruments = geometry.panel('Live instrument cluster', .59, .235, 640, 256, this.interior);
-    this.instruments.node.setPosition(-.43, 1.315, -.655);
-    this.navigation = geometry.panel('Live center navigation', .51, .345, 512, 352, this.interior);
-    this.navigation.node.setPosition(.34, 1.28, -.645);
+    this.instruments = geometry.panel('Live instrument cluster', .52, .205, 640, 256, this.interior);
+    this.instruments.node.setPosition(-.43, 1.315, -.78);
+    this.navigation = geometry.panel('Live center navigation', .44, .30, 512, 352, this.interior);
+    this.navigation.node.setPosition(.20, 1.35, -.87);
     this.rearView();
     geometry.batchStatic(this.steering);
     geometry.batchStatic(this.interior);
@@ -102,7 +102,7 @@ export class CarModel {
       for (const z of [.1, .21]) g.roundedBox('Window control', side * .82, 1.192, z,
         .065, .015, .065, .006, '#adb5ae', this.interior);
       g.beam('Slender windshield pillar', new Vec3(side * .91, 1.1, -1.1),
-        new Vec3(side * .82, 2.03, -.59), .035, '#c2bdb0', this.interior);
+        new Vec3(side * .82, 2.03, -.59), .03, '#8b928b', this.interior);
       g.beam('Rear window pillar', new Vec3(side * .92, 1.05, 1.65),
         new Vec3(side * .82, 2.03, 1.19), .055, '#4b6870', this.interior);
       g.roundedBox('Sculpted seat cushion', side * .46, .86, .6, .67, .23, .71, .095, fabric, this.interior);
@@ -128,7 +128,7 @@ export class CarModel {
       g.roundedBox('Window rubber sill', side * .9, 1.325, .29, .05, .035, 1.76,
         .012, '#25383b', this.interior);
     }
-    g.roundedBox('Soft headliner', 0, 2.045, .3, 1.76, .065, 1.85, .025, '#c7c2b5', this.interior);
+    g.roundedBox('Soft headliner', 0, 2.045, .3, 1.76, .065, 1.85, .025, '#7f8988', this.interior);
     g.roundedBox('Painted roof', 0, 2.09, .3, 1.8, .1, 1.95, .045, '#527a83', this.interior);
     g.roundedBox('Rear seat', 0, 1.03, 1.55, 1.55, .45, .42, .12, fabric, this.interior);
     g.roundedBox('Rear seat back', 0, 1.38, 1.37, 1.5, .57, .17, .07, fabric, this.interior);
@@ -160,10 +160,10 @@ export class CarModel {
     g.roundedBox('Curved padded dashboard', 0, 1.15, -.91, 1.77, .19, .46, .075, softTouch, this.interior);
     g.roundedBox('Contoured lower fascia', 0, 1.02, -.68, 1.76, .18, .19, .06, leather, this.interior);
     g.roundedBox('Satin dashboard edge', 0, 1.205, -.69, 1.75, .022, .025, .01, satin, this.interior);
-    g.roundedBox('Instrument hood', -.43, 1.34, -.755, .71, .32, .17, .055, softTouch, this.interior);
-    g.roundedBox('Instrument binnacle', -.43, 1.318, -.7, .67, .29, .075, .025, '#17252b', this.interior);
-    g.roundedBox('Center screen surround', .34, 1.28, -.71, .59, .42, .1, .035, satin, this.interior);
-    g.roundedBox('Center screen frame', .34, 1.28, -.685, .56, .39, .065, .025, '#101d23', this.interior);
+    g.roundedBox('Instrument hood', -.43, 1.34, -.88, .64, .29, .17, .055, softTouch, this.interior);
+    g.roundedBox('Instrument binnacle', -.43, 1.318, -.825, .60, .26, .075, .025, '#17252b', this.interior);
+    g.roundedBox('Center screen surround', .20, 1.35, -.935, .52, .37, .1, .035, satin, this.interior);
+    g.roundedBox('Center screen frame', .20, 1.35, -.91, .49, .345, .065, .025, '#101d23', this.interior);
     for (let x = -.8; x < .8; x += .022) {
       g.box('Dashboard stitching', x, 1.245, -.82, .009, .003, .006, '#a4a99b', this.interior);
     }
@@ -190,7 +190,7 @@ export class CarModel {
     }
     const column = new Node('Tilted steering column');
     this.interior.addChild(column);
-    column.setPosition(-.43, 1.11, -.46);
+    column.setPosition(-.43, 1.11, -.6);
     column.setRotationFromEuler(67, 0, 0);
     column.addChild(this.steering);
     g.mesh('Leather steering rim', utils.createMesh(primitives.torus(.192, .022,
@@ -295,32 +295,32 @@ export class CarModel {
 
   private drawNavigation(telemetry: CarTelemetry): void {
     const { context: c, texture, canvas } = this.navigation;
-    c.fillStyle = '#d9e1d0';
+    c.fillStyle = '#233c43';
     c.fillRect(0, 0, 512, 352);
     const mapX = (x: number) => 40 + x * 1.44;
     const mapY = (z: number) => 20 + (z + 480) * .41;
-    c.strokeStyle = '#f0f0dc';
+    c.strokeStyle = '#8fa9a8';
     c.lineWidth = 15;
     c.beginPath();
     for (const x of AVENUES) { c.moveTo(mapX(x),mapY(-480)); c.lineTo(mapX(x),mapY(140)); }
     for (const z of CROSS_STREETS) { c.moveTo(mapX(0),mapY(z)); c.lineTo(mapX(300),mapY(z)); }
     c.stroke();
-    c.strokeStyle = '#42766e';
+    c.strokeStyle = '#e5be79';
     c.lineWidth = 6;
     c.lineJoin = 'round';
     c.beginPath();
     c.moveTo(mapX(telemetry.x),mapY(telemetry.z));
     for (const point of planRoute(telemetry,telemetry.target).points) c.lineTo(mapX(point.x),mapY(point.z));
     c.stroke();
-    c.fillStyle = '#b17c3f';
+    c.fillStyle = '#ffd28a';
     c.beginPath(); c.arc(mapX(telemetry.target.x),mapY(telemetry.target.z),7,0,Math.PI*2); c.fill();
     c.save();
     c.translate(mapX(telemetry.x),mapY(telemetry.z));
     c.rotate(-telemetry.yaw);
-    c.fillStyle = '#1c4e51';
+    c.fillStyle = '#f5e7bd';
     c.beginPath(); c.moveTo(0,-12); c.lineTo(8,9); c.lineTo(0,5); c.lineTo(-8,9); c.closePath(); c.fill();
     c.restore();
-    c.fillStyle = '#26484b';
+    c.fillStyle = '#c7d7cf';
     c.font = '16px DM-Sans';
     c.fillText('ORCHARD ↑',55,283);
     c.fillText('MERCER ↓',335,283);

@@ -5,6 +5,8 @@ import type { BagLabel } from './OrderState';
 import { CarModel, CarTelemetry } from './CarModel';
 import { OrderData } from './OrderState';
 import { AVENUES, CROSS_STREETS, roadAt } from './CityLayout';
+import { Person } from './Person';
+import type { OrderStage } from './OrderState';
 
 interface Obstacle { x: number; z: number; width: number; depth: number }
 
@@ -17,6 +19,12 @@ export class World {
   private geometry: ModelGeometry;
   private sedan: CarModel;
   private bagPanel!: PaintedPanel;
+  private clerk!: Person;
+  private rider!: Person;
+  private actorTime = 0;
+  private riderTime = 0;
+  private handoffTime = 0;
+  private extraBag = new Node('Second bag and drink carrier');
   private facades = new Map<string, Material>();
 
   constructor(private root: Node, private surface: Material, private unlit: Material, private order: Readonly<OrderData>) {
@@ -39,6 +47,14 @@ export class World {
     const tag = this.geometry.panel('Shared order bag label', .27, .22, 256, 192, this.bag);
     tag.node.setPosition(0, .04, .126);
     this.bagPanel = tag;
+    this.bag.addChild(this.extraBag);
+    this.extraBag.setPosition(.35,0,0);
+    this.geometry.box('Second sealed bag',0,0,0,.30,.44,.23,'#bb8c52',this.extraBag);
+    this.geometry.box('Drink tray',0,.25,0,.30,.045,.23,'#8c7659',this.extraBag);
+    for (const z of [-.06,.06]) {
+      this.geometry.cylinder('Iced tea cup',0,.36,z,.065,.20,'#c9ac7b',this.extraBag);
+      this.geometry.cylinder('Sealed drink lid',0,.465,z,.07,.02,'#e5dfcc',this.extraBag);
+    }
     this.setOrder(order);
   }
 
@@ -48,6 +64,11 @@ export class World {
 
   setOrder(order: Readonly<OrderData>): void {
     this.order = order;
+    this.extraBag.active = (order.bagCount ?? 1) > 1;
+    this.riderTime = 0;
+    this.npc.active = (order.queueSeconds ?? 8) > 0;
+    this.npc.setPosition(-14.2,0,.2);
+    this.npc.setRotationFromEuler(0,0,0);
     const tag = this.bagPanel;
     tag.context.fillStyle = '#f2e7cd';
     tag.context.fillRect(0, 0, 256, 192);
@@ -70,6 +91,39 @@ export class World {
   };
 
   update(dt: number, telemetry: CarTelemetry): void { this.sedan.update(dt, telemetry); }
+  handoff(): void { this.handoffTime = 1.2; }
+  groundHeight(x: number, z: number): number {
+    return x > 281 && x < 290 && Math.abs(z+120) < 6 ? .25 : 0;
+  }
+  updateActors(dt: number, stage: OrderStage, joined: boolean, remaining: number, player: {x:number;z:number}): void {
+    this.actorTime += dt;
+    this.handoffTime = Math.max(0,this.handoffTime-dt);
+    const lookYaw = Math.atan2(player.x-282.2,player.z+120)*180/Math.PI-90;
+    this.clerk.animate(this.actorTime,Math.sin(Math.min(1,this.handoffTime)*Math.PI/2),false,lookYaw);
+    if (!this.npc.active) return;
+    if (joined && remaining===0 || stage!=='accepted' && stage!=='idle') this.riderTime += dt;
+    const time = this.riderTime;
+    const points = [{x:-15.2,z:.2},{x:-11,z:0},{x:-8,z:0},{x:-8,z:-14}];
+    const progress = Math.max(0,time-1.2)*1.6;
+    let travel = progress;
+    let walking = false;
+    if (time>0 && time<1.2) this.npc.setPosition(-14.2-Math.min(1,time/.6),0,.2);
+    if (time>=1.2) {
+      for (let index=1;index<points.length;index++) {
+        const a=points[index-1], b=points[index];
+        const length=Math.hypot(b.x-a.x,b.z-a.z);
+        if (travel<=length) {
+          const fraction=travel/length;
+          this.npc.setPosition(a.x+(b.x-a.x)*fraction,0,a.z+(b.z-a.z)*fraction);
+          this.npc.setRotationFromEuler(0,Math.atan2(b.x-a.x,b.z-a.z)*180/Math.PI+90,0);
+          walking=progress>0;
+          break;
+        }
+        travel-=length;
+      }
+    }
+    this.rider.animate(this.actorTime,time>0 && time<1.2 ? .85 : 0,walking);
+  }
 
   private buildAt(name: string, x: number, z: number, build: () => void): void {
     const previous = this.geometry;
@@ -326,45 +380,35 @@ export class World {
       g.cylinder('Counter paper cup', -16.05, 1.43, z, .085, .22, '#e2d9be');
       g.cylinder('Cup lid', -16.05, 1.55, z, .09, .022, '#465653');
     }
-    this.person(-17.8, 0, '#b7a67e', g.root);
+    this.clerk = new Person(g,g.root,'#b7a67e',true);
+    this.clerk.node.setPosition(-17.8,.25,0);
+    this.clerk.node.setRotationFromEuler(0,90,0);
     g.root.addChild(this.npc);
-    this.person(0, 0, '#6b8391', this.npc);
+    this.rider = new Person(g,this.npc,'#6b8391');
+    this.rider.node.setRotationFromEuler(0,-90,0);
     this.npc.setPosition(-14.2, 0, .2);
     g.box('Queue mat', -12.8, .27, 0, 1.4, .02, 1.5, '#8b9c7c');
-  }
-
-  private person(x: number, z: number, color: string, parent: Node): void {
-    const g = this.geometry;
-    const person = new Node(parent === this.npc ? 'Customer figure' : 'Kitchen staff figure');
-    parent.addChild(person);
-    person.setPosition(x, 0, z);
-    person.setRotationFromEuler(0, parent === this.npc ? -90 : 90, 0);
-    const skin = '#bf9679';
-    const fabric = g.material(color, 0, .87, 'grain');
-    g.roundedBox('Tailored jacket', 0, 1.11, 0, .48, .62, .30, .095, fabric, person);
-    g.sphere('Trouser hips', 0, .79, -.015, .43, .29, .29, '#35434a', person);
-    g.cylinder('Neck', 0, 1.47, .015, .066, .14, skin, person);
-    g.sphere('Face and jaw', 0, 1.66, .018, .285, .355, .275, skin, person);
-    g.sphere('Continuous hair cap', 0, 1.755, -.02, .315, .27, .315, '#493f36', person);
-    g.sphere('Nose', 0, 1.665, .158, .045, .065, .06, skin, person);
-    g.roundedBox('Mouth', 0, 1.586, .151, .065, .012, .009, .004, '#875f4e', person);
-    g.roundedBox('Shirt neckline', 0, 1.39, .147, .115, .09, .025, .012, '#e3dcc8', person);
-    g.roundedBox('Jacket zip', 0, 1.10, .153, .012, .47, .012, .004, '#b4b7a2', person);
-    g.roundedBox('Chest pocket', -.13, 1.24, .156, .10, .10, .015, .012, color, person);
-    for (const side of [-1, 1]) {
-      g.sphere('Ear', side * .145, 1.665, .006, .045, .075, .052, skin, person);
-      g.sphere('Eye white', side * .062, 1.70, .142, .043, .022, .017, '#e8e1d0', person);
-      g.sphere('Iris', side * .060, 1.70, .152, .016, .019, .008, '#344443', person);
-      g.roundedBox('Eyebrow', side * .063, 1.733, .144, .048, .011, .01, .003, '#493f36', person);
-      g.roundedBox('Trouser leg', side * .115, .45, -.015, .185, .65, .21, .065, '#35434a', person);
-      g.roundedBox('Shoe sole', side * .115, .065, .041, .20, .055, .32, .022, '#202e32', person);
-      g.roundedBox('Leather shoe', side * .115, .115, .05, .19, .10, .30, .04, '#39433e', person);
-      const sleeve = g.roundedBox('Jacket sleeve', side * .285, 1.15, .004, .16, .42, .19, .065, fabric, person);
-      sleeve.setRotationFromEuler(0, 0, side * 8);
-      g.roundedBox('Jacket cuff', side * .304, .923, .025, .145, .055, .16, .02, '#52615b', person);
-      g.sphere('Hand', side * .304, .85, .04, .108, .15, .105, skin, person);
+    g.box('Pickup rack uprights',-18.45,1.1,-4.5,.10,1.75,.10,'#52655a');
+    for (const y of [.55,1.15,1.75]) {
+      g.box('Pickup rack shelf',-17.7,y,-4.5,1.6,.07,.7,'#647568');
+      g.box('Prepared paper bag',-17.7,y+.25,-4.5,.34,.45,.25,'#bd925e');
     }
-    this.geometry.batchStatic(person);
+    g.box('Kitchen doorway frame',-18.76,1.48,3.75,.08,2.65,1.65,'#34564f');
+    g.box('Kitchen swing door',-18.69,1.48,3.75,.06,2.4,1.35,'#65786c');
+    g.box('Kitchen door window',-18.64,1.9,3.75,.025,.50,.65,'#b1c4b5');
+    g.cylinder('Receipt roll',-15.98,1.42,1.4,.10,.19,'#ece4cb');
+    g.box('Printed pickup receipt',-15.68,1.33,1.4,.28,.012,.45,'#f1e8ce');
+    g.box('Counter card reader',-15.68,1.41,2.5,.24,.16,.25,'#284746');
+    const menu=g.panel('Kitchen menu',2.8,1.55,640,352);
+    menu.node.setPosition(-18.76,2.62,-2.8);
+    menu.node.setRotationFromEuler(0,90,0);
+    menu.context.fillStyle='#294c45'; menu.context.fillRect(0,0,640,352);
+    menu.context.fillStyle='#e5d9b9'; menu.context.font='36px InstrumentSerif';
+    menu.context.fillText('Juniper · Evening Kitchen',35,60);
+    menu.context.font='25px DM-Sans';
+    ['Mushroom rice     $12','Sesame noodles    $11','Ginger / iced tea   $4','PICKUP  ·  SHOW YOUR CODE'].forEach((line,index)=>menu.context.fillText(line,35,120+index*58));
+    menu.texture.uploadData(menu.canvas);
+
   }
 
   private destination(address: string): void {
@@ -378,6 +422,23 @@ export class World {
     g.sphere('Brass handle', 9.5, 1.25, -29.45, .08, .08, .08, '#bbab7a');
     g.box('Door canopy', 9.31, 3.15, -30, 1.4, .12, 2.8, '#3d5650');
     this.sign(address, 8.59, 3.19, -30, 2.6, -90);
+    g.box('Entry lower step',8.65,.10,-30,1.55,.20,2.7,'#bab8a4');
+    g.box('Entry upper step',9.18,.23,-30,.65,.24,2.4,'#cbc3a9');
+    g.box('Welcome mat',8.74,.215,-30,.85,.02,1.6,'#53645a');
+    g.box('Doorbell plate',9.48,1.38,-28.72,.055,.30,.17,'#b4a378');
+    g.sphere('Doorbell button',9.43,1.38,-28.72,.055,.055,.055,'#d5c99c');
+    g.box('Letter slot',9.54,.64,-30,.04,.08,.58,'#b4a378');
+    g.box('Stone transom',9.58,2.72,-30,.08,.26,1.65,'#6b8b84');
+    for (const z of [-31.55,-28.45]) {
+      g.box('Entry lamp bracket',9.48,2.36,z,.18,.08,.12,'#394f4b');
+      g.box('Entry lamp lantern',9.36,2.25,z,.20,.31,.20,'#d4c79f');
+    }
+    const number=g.panel('Readable building number',.7,.32,256,128);
+    number.node.setPosition(9.45,1.98,-31.4); number.node.setRotationFromEuler(0,-90,0);
+    number.context.fillStyle='#334e49'; number.context.fillRect(0,0,256,128);
+    number.context.fillStyle='#eadbb3'; number.context.font='bold 82px DM-Sans'; number.context.textAlign='center';
+    number.context.fillText(address.split(' ')[0],128,96); number.texture.uploadData(number.canvas);
+
   }
 
   private streetFurniture(): void {

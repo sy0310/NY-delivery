@@ -17,7 +17,7 @@ import { OrderTiming } from './OrderTiming';
 
 const { ccclass, property } = _decorator;
 const DEG = 180 / Math.PI;
-const DRIVER_EYE = new Vec3(-.43, 1.48, .3);
+const DRIVER_EYE = new Vec3(-.43, 1.48, .10);
 const FORWARD_KEYS = EDITOR ? ['KeyW'] : ['KeyW', 'ArrowUp'];
 const BACKWARD_KEYS = EDITOR ? ['KeyS'] : ['KeyS', 'ArrowDown'];
 const LEFT_KEYS = EDITOR ? ['KeyA'] : ['KeyA', 'ArrowLeft'];
@@ -30,7 +30,6 @@ const KEY_BINDINGS: Partial<Record<KeyCode, string>> = {
   [KeyCode.KEY_A]: 'KeyA',
   [KeyCode.KEY_D]: 'KeyD',
   [KeyCode.KEY_E]: 'KeyE',
-  [KeyCode.KEY_R]: 'KeyR',
   [KeyCode.KEY_M]: 'KeyM',
   [KeyCode.SPACE]: 'Space',
   [KeyCode.ARROW_UP]: 'ArrowUp',
@@ -49,6 +48,7 @@ export class DeliveryDemo extends Component {
   private timing = new OrderTiming();
   private orderStartDistance = 0;
   private working = true;
+  private paused = false;
   private vehicle = new VehicleController();
   private walker = new WalkingController();
   private world!: World;
@@ -60,6 +60,8 @@ export class DeliveryDemo extends Component {
   private inCar = true;
   private notice = '傍晚的第一单已就绪。音乐可自由选择，也可静音出发。';
   private elapsed = 0;
+  private noticeAge = 0;
+  private lastNotice = '';
   private refresh = 0;
   private frames: number[] = [];
   private diagnostics = false;
@@ -114,12 +116,12 @@ export class DeliveryDemo extends Component {
   }
 
   private onKeyDown = (event: EventKeyboard): void => {
+    if (event.keyCode === KeyCode.ESCAPE) { this.togglePause(); return; }
     if (document.activeElement?.matches('input,select')) return;
     const code = KEY_BINDINGS[event.keyCode];
     if (!code || this.keys.has(code)) return;
     this.keys.add(code);
     if (code === 'KeyE') this.interact();
-    if (code === 'KeyR') this.recover();
     if (code === 'KeyM') this.music.toggle();
     if (code === 'F3') this.diagnostics = !this.diagnostics;
   };
@@ -161,6 +163,9 @@ export class DeliveryDemo extends Component {
     button.textContent = action.label;
     button.disabled = !action.enabled;
     this.touch.update(this.inCar, action.label, action.enabled);
+    const compact = this.hud.querySelector<HTMLButtonElement>('#context-action')!;
+    compact.textContent = action.label;
+    compact.disabled = !action.enabled;
   }
 
   private enterCar(): void {
@@ -172,19 +177,23 @@ export class DeliveryDemo extends Component {
 
   update(dt: number): void {
     if (!this.world) return;
-    if (this.order.stage !== 'idle' && this.order.stage !== 'delivered') this.elapsed += dt;
+    if (!this.paused && this.order.stage !== 'idle' && this.order.stage !== 'delivered') this.elapsed += dt;
+    this.noticeAge += dt;
     this.frames.push(dt);
     if (this.frames.length > 600) this.frames.shift();
-    const step = Math.min(dt, .05);
+    const step = this.paused ? 0 : Math.min(dt, .05);
+    const blocked = this.paused || this.hud.classList.contains('music-open')
+      || this.touch.enabled && (this.hud.classList.contains('phone-open'));
+    this.touch.suspend(blocked);
     const controls = this.touch.input;
-    const horizontal = Math.max(-1, Math.min(1, this.axis(RIGHT_KEYS, LEFT_KEYS) + controls.horizontal));
-    const keyboardForward = this.axis(FORWARD_KEYS, BACKWARD_KEYS);
+    const horizontal = blocked ? 0 : Math.max(-1, Math.min(1, this.axis(RIGHT_KEYS, LEFT_KEYS) + controls.horizontal));
+    const keyboardForward = blocked ? 0 : this.axis(FORWARD_KEYS, BACKWARD_KEYS);
     if (EDITOR) {
       this.look(this.axis(['ArrowRight'], ['ArrowLeft']) * step * 1.8,
         this.axis(['ArrowDown'], ['ArrowUp']) * step * 1.2);
     }
     const forward = Math.max(-1, Math.min(1, keyboardForward + (this.inCar ? controls.throttle : controls.forward)));
-    if (this.inCar) this.vehicle.update(step, forward, -horizontal, this.keys.has('Space') || controls.braking, this.world.canMove);
+    if (this.inCar) this.vehicle.update(step, forward, -horizontal, blocked || this.keys.has('Space') || controls.braking, this.world.canMove);
     else this.walker.update(step, forward, horizontal, (x, z, radius) => {
       const dx = x - this.vehicle.x;
       const dz = z - this.vehicle.z;
@@ -192,10 +201,10 @@ export class DeliveryDemo extends Component {
       const localZ = dx * Math.sin(this.vehicle.yaw) + dz * Math.cos(this.vehicle.yaw);
       return this.world.canMove(x, z, radius) && (Math.abs(localX) > 1.05 + radius || Math.abs(localZ) > 2.15 + radius);
     });
-    this.timing.tick(dt, this.order.stage, this.inCar, this.vehicle.speed,
+    this.timing.tick(this.paused ? 0 : dt, this.order.stage, this.inCar, this.vehicle.speed,
       this.order.queueJoined && this.atCounter(), this.order.queueRemaining > 0 || this.order.kitchenRemaining > 0);
-    this.order.tick(Math.min(dt, .25), this.atCounter());
-    this.world.npc.active = this.order.queueRemaining > 0;
+    this.order.tick(this.paused ? 0 : Math.min(dt, .25), this.atCounter());
+    this.world.updateActors(step, this.order.stage, this.order.queueJoined, this.order.queueRemaining, this.inCar ? this.vehicle : this.walker);
     this.world.car.setPosition(this.vehicle.x, 0, this.vehicle.z);
     this.world.car.setRotationFromEuler(0, this.vehicle.yaw * DEG, 0);
     this.world.update(dt, {
@@ -230,7 +239,7 @@ export class DeliveryDemo extends Component {
       return;
     }
     if (this.camera.parent !== this.node) this.camera.setParent(this.node);
-    this.camera.setPosition(this.walker.x, 1.7, this.walker.z);
+    this.camera.setPosition(this.walker.x, 1.7 + this.world.groundHeight(this.walker.x,this.walker.z), this.walker.z);
     this.camera.setRotationFromEuler(this.viewPitch, this.walker.yaw * DEG, 0);
   }
 
@@ -242,7 +251,7 @@ export class DeliveryDemo extends Component {
     if (stage === 'carrying' || stage === 'delivering') {
       const yaw = this.walker.yaw;
       this.world.bag.setPosition(this.walker.x + .45 * Math.cos(yaw) - .65 * Math.sin(yaw),
-        1.05, this.walker.z - .45 * Math.sin(yaw) - .65 * Math.cos(yaw));
+        1.05 + this.world.groundHeight(this.walker.x,this.walker.z), this.walker.z - .45 * Math.sin(yaw) - .65 * Math.cos(yaw));
     } else if (stage === 'stowed') {
       this.world.bag.setPosition(.45, 1.06, .35);
     } else this.world.bag.setPosition(this.pickup.x - 1.2, 1.55, this.pickup.z - .6);
@@ -255,6 +264,7 @@ export class DeliveryDemo extends Component {
     switch (action.kind) {
       case 'accept':
         this.order.accept();
+        this.hud.classList.remove('phone-open');
         this.working = true;
         this.elapsed = 0;
         this.timing.reset();
@@ -266,6 +276,7 @@ export class DeliveryDemo extends Component {
         if (!this.order.next(deliveryOrder(this.orderSequence + 1))) return;
         this.orderSequence += 1;
         this.order.accept();
+        this.hud.classList.remove('phone-open');
         this.world.setOrder(this.order.data);
         this.working = true;
         this.elapsed = 0;
@@ -288,10 +299,12 @@ export class DeliveryDemo extends Component {
       }
       case 'queue':
         this.order.joinQueue();
+        this.world.handoff();
         this.notice = this.order.data.note || '已加入取餐队列，请在柜台前等候。';
         break;
       case 'pickup':
         if (this.order.take(this.order.data.code, this.world.bagLabel)) {
+          this.world.handoff();
           this.notice = `取餐码 ${this.order.data.code} 与 ${this.world.bagLabel.count} 袋餐品已核对，回车旁装餐。`;
           this.music.chime();
         } else this.notice = '餐袋编号、取餐码或袋数不匹配，请在柜台重新核对。';
@@ -315,6 +328,14 @@ export class DeliveryDemo extends Component {
     }
   }
 
+  private togglePause(): void {
+    this.paused = !this.paused;
+    this.clearKeys();
+    if (this.paused) this.vehicle.speed = 0;
+    this.hud.classList.toggle('paused',this.paused);
+    this.hud.querySelector<HTMLElement>('#pause-menu')!.hidden = !this.paused;
+  }
+
   private recover(): void {
     this.vehicle.reset();
     this.recenterView();
@@ -328,6 +349,7 @@ export class DeliveryDemo extends Component {
   private createHUD(): void {
     this.hud = document.createElement('div');
     this.hud.id = 'delivery-hud';
+    this.hud.classList.add('phone-open');
     this.hud.innerHTML = `
       <style>
       #delivery-hud {
@@ -425,21 +447,51 @@ export class DeliveryDemo extends Component {
       #delivery-hud .playlist-row { display:flex; gap:6px; margin:6px 0; }
       #delivery-hud .playlist-row button:first-child { flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; }
       #delivery-hud #music-toggle { display:block; }
+      #delivery-hud .phone { display:none; }
+      #delivery-hud.touch-mode .phone #action { display:none; }
+      #delivery-hud.phone-open .phone, #delivery-hud.counter-open .phone { display:block; }
+      #delivery-hud #context-action { position:absolute; right:26px; bottom:26px; min-width:160px; min-height:48px; pointer-events:auto; }
+      #delivery-hud.phone-open #context-action, #delivery-hud.counter-open #context-action, #delivery-hud.touch-mode #context-action { display:none; }
+      #delivery-hud #result { position:absolute; bottom:28px; left:50%; transform:translateX(-50%); background:#183339f2; border:1px solid #91a492; border-radius:10px; padding:12px 18px; pointer-events:auto; min-width:290px; }
+      #delivery-hud #pay { font-size:24px; }
+      #delivery-hud .controls { display:none; }
+      #delivery-hud .notice { bottom:112px; font-size:12px; max-width:440px; }
+      #delivery-hud .music { padding:8px 12px; bottom:22px; width:350px; }
+      #delivery-hud #track { margin:4px 0; font-size:12px; }
+      #delivery-hud #previous { display:none; }
+      #delivery-hud.music-open #previous { display:inline-block; }
+      #delivery-hud #pause-menu { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(420px,90%); padding:24px; background:#183339f5; border:1px solid #8a9d8f; border-radius:12px; pointer-events:auto; }
+      #delivery-hud.paused #context-action { display:none; }
+      #delivery-hud.touch-mode .music { display:block; left:180px; top:auto; bottom:16px; width:260px; }
+      #delivery-hud.touch-mode.music-open .music { left:16px; top:74px; bottom:auto; width:340px; }
+      #delivery-hud.touch-mode .touch-tools { left:auto; right:24px; top:68px; bottom:auto; transform:none; }
+      #delivery-hud.touch-mode .look-hint { display:none; }
+      #delivery-hud.touch-mode .notice { bottom:185px; max-width:350px; }
+      @media (max-width:600px) {
+        #delivery-hud.touch-mode .toolbar { left:16px; right:16px; top:78px; justify-content:flex-end; }
+        #delivery-hud.touch-mode .toolbar button { padding:7px 10px; }
+        #delivery-hud.touch-mode .music { left:16px; top:134px; bottom:auto; width:calc(100% - 32px); }
+        #delivery-hud.touch-mode.music-open .music { top:134px; width:calc(100% - 32px); }
+        #delivery-hud.touch-mode .touch-tools { top:auto; bottom:210px; right:24px; }
+        #delivery-hud.touch-mode #result { bottom:210px; }
+      }
       </style>
-      <nav class="toolbar"><button id="touch-toggle">触屏操作</button><button id="order-toggle">订单</button><button id="music-toggle">音乐</button></nav>
+      <nav class="toolbar"><button id="touch-toggle">触屏操作</button><button id="order-toggle">订单</button><button id="music-toggle">音乐</button><button id="pause">暂停</button></nav>
       <div class="top"><div class="sub">NEW YORK · 6:42 PM</div><div class="wordmark">我在纽约送外卖</div><div class="route" id="route"></div></div>
       <section class="phone"><div class="phone-header"><span>ORCHARD / DELIVERY</span><span>● 4G</span></div><h2 id="restaurant"></h2><div class="muted" id="order-id"></div><div class="order-detail" id="items"></div><div class="muted">交接码</div><div class="code" id="order-code"></div><div class="muted" id="customer"></div><div class="status" id="status"></div>
-      <div id="code-panel"><input id="handoff-code" inputmode="numeric" maxlength="4" placeholder="输入交接码" aria-label="交接码"><button id="verify">核对并取餐</button><button id="skip">等餐快进</button></div>
-      <button id="action">接单</button><div id="result"><div class="muted">DELIVERED · 本单收入</div><div id="pay"></div><div id="summary" class="muted"></div><button id="restart">继续接单</button><button id="end-work">结束本次工作</button></div></section>
-      <div class="controls"><kbd>W / S</kbd> 前进 / 后退　<kbd>A / D</kbd> 驾驶转向 / 步行横移<br>${LOOK_HINT} · 自由观察　<kbd>SPACE</kbd> 刹车<br><kbd>E</kbd> 上下车 / 交互　<kbd>R</kbd> 卡住恢复<br><kbd>M</kbd> 音乐播放 / 暂停</div>
+      <details id="code-panel"><summary>手动核验与等餐快进</summary><input id="handoff-code" inputmode="numeric" maxlength="4" placeholder="输入交接码" aria-label="交接码"><button id="verify">核对并取餐</button><button id="skip">等餐快进</button></details>
+      <button id="action">接单</button></section><section id="result"><div class="muted">DELIVERED · 本单收入</div><div id="pay"></div><div id="summary" class="muted"></div><button id="restart">继续接单</button><button id="end-work">结束本次工作</button></section>
+      <div class="controls"><kbd>W / S</kbd> 前进 / 后退　<kbd>A / D</kbd> 驾驶转向 / 步行横移<br>${LOOK_HINT} · 自由观察　<kbd>SPACE</kbd> 刹车<br><kbd>E</kbd> 上下车 / 交互　<kbd>ESC</kbd> 暂停 / 安全复位<br><kbd>M</kbd> 音乐播放 / 暂停</div>
       <div class="speed"><span id="mph">0</span><span>mph<br><span id="mode">DRIVING</span></span></div>
 
+      <button id="context-action">接单</button>
+      <section id="pause-menu" hidden><h2>暂停</h2><p>音乐继续播放，可在音乐面板中暂停。</p><p>W/S 前后移动，A/D 驾驶转向或步行横移。拖动空白处观察，E 执行情境操作。手机左手移动/转向，右侧观察，油门与刹车独立。</p><button id="resume">继续游戏</button><button id="safe-recover">安全复位</button><p>安全复位会将人与车放回起点，保留订单与音乐。</p></section>
       <div class="notice" id="notice"></div><pre id="diagnostics" style="display:none;position:absolute;left:28px;top:165px;background:#142b30dd;padding:12px;font:11px monospace"></pre>`;
     this.musicPanel = new MusicPanel(this.music);
     this.hud.appendChild(this.musicPanel.element);
     document.body.appendChild(this.hud);
     this.touch = new TouchControls(this.hud, game.canvas, this.look,
-      () => this.orderAction(), this.recenterView, () => this.recover(), EDITOR);
+      () => this.orderAction(), this.recenterView, EDITOR);
     const on = (id: string, action: () => void) => {
       this.hud.querySelector('#' + id)!.addEventListener('click', () => {
         action();
@@ -447,8 +499,12 @@ export class DeliveryDemo extends Component {
       });
     };
     on('touch-toggle', () => { this.clearKeys(); this.touch.toggle(); });
-    on('order-toggle', () => this.hud.classList.toggle('phone-open'));
-    on('music-toggle', () => this.hud.classList.toggle('music-open'));
+    on('order-toggle', () => { this.clearKeys(); this.hud.classList.toggle('phone-open'); });
+    on('music-toggle', () => { this.clearKeys(); this.hud.classList.toggle('music-open'); });
+    on('pause', () => this.togglePause());
+    on('resume', () => this.togglePause());
+    on('safe-recover', () => { this.recover(); this.togglePause(); });
+    on('context-action', () => this.interact());
     on('restart', () => this.interact());
     on('end-work', () => { this.working = false; this.notice = '本次工作结束，累计完成 ' + this.order.completedOrders + ' 单 · $' + this.order.totalEarnings.toFixed(2); });
     on('action', () => this.orderAction());
@@ -457,7 +513,7 @@ export class DeliveryDemo extends Component {
       if (!this.atCounter()) { this.notice = '请回到柜台旁核验取餐。'; return; }
       const taken = this.order.take(code, this.world.bagLabel);
       this.notice = taken ? '核验成功，回车旁装餐并上车。' : '暂时无法取餐。核对交接码，并等待排队与厨房状态完成。';
-      if (taken) this.music.chime();
+      if (taken) { this.world.handoff(); this.music.chime(); }
     });
     on('skip', () => {
       if (this.atCounter() && this.order.queueJoined) {
@@ -492,7 +548,9 @@ export class DeliveryDemo extends Component {
     text('customer', data.customer + ' · ' + data.address);
     text('mph', String(Math.round(Math.abs(this.vehicle.speed) * 2.23694)));
     text('mode', this.inCar ? 'DRIVING' : 'ON FOOT');
+    if (this.notice !== this.lastNotice) { this.lastNotice = this.notice; this.noticeAge = 0; }
     text('notice', this.notice);
+    this.hud.querySelector<HTMLElement>('#notice')!.hidden = this.noticeAge > 5;
     this.musicPanel.render();
     const target = stage === 'carrying' ? this.vehicle : ['stowed','delivering'].includes(stage) ? this.dropoff : this.pickup;
     const playerHeading = this.inCar ? this.vehicle : this.walker;
@@ -519,8 +577,10 @@ export class DeliveryDemo extends Component {
       delivered: '已交付 · 本单只结算一次',
     };
     text('status', statuses[stage]);
+    this.hud.classList.toggle('counter-open',stage === 'accepted' && this.atCounter());
     this.hud.querySelector<HTMLElement>('#code-panel')!.style.display = stage === 'accepted' && this.order.queueJoined && this.atCounter() ? 'block' : 'none';
     this.hud.querySelector<HTMLElement>('#result')!.style.display = stage === 'delivered' ? 'block' : 'none';
+    this.hud.querySelector<HTMLButtonElement>('#context-action')!.hidden = stage === 'delivered';
     this.hud.querySelector<HTMLElement>('#action')!.style.display = stage === 'delivered' ? 'none' : 'block';
     const action = this.getInteraction();
     this.showInteraction(action);

@@ -8,13 +8,14 @@ export class TouchControls {
   private abort = new AbortController();
   private inCar = true;
   private gear = 1;
+  private blocked = false;
   private lookPointer: number | null = null;
   private lookX = 0;
   private lookY = 0;
 
   constructor(private hud: HTMLElement, private canvas: HTMLCanvasElement,
     private look: (x: number, y: number) => void, interact: () => void,
-    recenter: () => void, recover: () => void, private editor = false) {
+    recenter: () => void, private editor = false) {
     this.root = document.createElement('div');
     this.root.className = 'touch-controls';
     this.root.innerHTML = `
@@ -37,11 +38,12 @@ export class TouchControls {
       #delivery-hud .look-hint { position:absolute; top:100px; right:24px; font-size:10px; color:#ecedd9; background:#183339b0; padding:3px 7px; border-radius:4px; }
       #delivery-hud .touch-controls[data-mode=walk] .pedals { display:none; }
       #delivery-hud .touch-controls[data-mode=walk] #touch-action { bottom:44px; }
+      #delivery-hud .touch-controls.blocked { visibility:hidden; }
       </style>
       <div class="stick" role="application" aria-label="移动摇杆"><span class="stick-label">转向</span><span class="stick-knob"></span></div>
       <div class="look-hint">右侧空白处拖动视角</div>
       <div class="pedals"><button id="gear-drive" class="selected" aria-label="前进档">D 前进</button><button id="gear-reverse" aria-label="倒车档">R 倒车</button><button id="touch-brake">刹车</button><button id="touch-gas">油门</button></div>
-      <button id="touch-action">下车</button><div class="touch-tools"><button id="touch-center">视角回正</button><button id="touch-recover">安全复位</button></div>`;
+      <button id="touch-action">下车</button><div class="touch-tools"><button id="touch-center">视角回正</button></div>`;
     hud.appendChild(this.root);
     const options = { signal: this.abort.signal };
     this.root.addEventListener('click', () => canvas.focus(), options);
@@ -58,7 +60,7 @@ export class TouchControls {
       this.drawStick();
     };
     stick.addEventListener('pointerdown', event => {
-      if (this.editor) return;
+      if (this.editor || this.blocked) return;
       event.preventDefault();
       if (!this.input.beginStick(event.pointerId)) return;
       stick.setPointerCapture(event.pointerId);
@@ -77,7 +79,7 @@ export class TouchControls {
     }
     for (const id of ['touch-gas', 'touch-brake']) {
       this.button(id).addEventListener('pointerdown', event => {
-        if (this.editor) return;
+        if (this.editor || this.blocked) return;
         event.preventDefault();
         this.button(id).setPointerCapture(event.pointerId);
         this.button(id).classList.add('held');
@@ -94,10 +96,9 @@ export class TouchControls {
     }
     this.button('touch-action').addEventListener('click', interact, options);
     this.button('touch-center').addEventListener('click', recenter, options);
-    this.button('touch-recover').addEventListener('click', recover, options);
     canvas.style.touchAction = 'none';
     canvas.addEventListener('pointerdown', event => {
-      if (this.editor) return;
+      if (this.editor || this.blocked) return;
       if (this.lookPointer !== null || event.button !== 0) return;
       const bounds = canvas.getBoundingClientRect();
       if (event.pointerType !== 'mouse' && event.clientX < bounds.left + bounds.width * .4) return;
@@ -136,6 +137,11 @@ export class TouchControls {
     this.lookPointer = null;
     this.root.querySelectorAll('.held').forEach(button => button.classList.remove('held'));
     this.drawStick();
+  }
+  suspend(blocked: boolean): void {
+    if (blocked !== this.blocked) this.clear();
+    this.blocked = blocked;
+    this.root.classList.toggle('blocked',blocked);
   }
   update(inCar: boolean, action: string, enabled = true): void {
     if (inCar !== this.inCar) this.clear();

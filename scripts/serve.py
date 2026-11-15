@@ -11,7 +11,13 @@ arguments = parser.parse_args()
 directory = arguments.directory.resolve()
 if not (directory / 'index.html').is_file():
     raise SystemExit('发布构建不存在，请先运行 npm run build。')
-handler = partial(SimpleHTTPRequestHandler, directory=str(directory))
+class PreviewHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-store')
+        super().end_headers()
+
+
+handler = partial(PreviewHandler, directory=str(directory))
 with ThreadingHTTPServer(('127.0.0.1', arguments.port), handler) as server:
     print(f'仅供本机访问 http://127.0.0.1:{arguments.port}/', flush=True)
     print('按 Ctrl+C 停止。', flush=True)
