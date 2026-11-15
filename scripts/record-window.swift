@@ -8,7 +8,7 @@ import AppKit
 final class RecordingDelegate: NSObject, SCRecordingOutputDelegate {
     var finished = false
     func recordingOutputDidStartRecording(_ recordingOutput: SCRecordingOutput) {
-        print("Recording started")
+        print("Recording started at \(Date().timeIntervalSince1970)")
         fflush(stdout)
     }
     func recordingOutput(_ recordingOutput: SCRecordingOutput, didFailWithError error: Error) {

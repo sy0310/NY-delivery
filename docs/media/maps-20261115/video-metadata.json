@@ -1,0 +1,58 @@
+{
+  "flushing": {
+    "sourceCommit": "360d278a291db559edffdabc2141beae72f7be4f",
+    "file": "flushing-delivery.mp4",
+    "sha256": "25508592ef76d8f3abe142f8f63bca1aefc89c5eb91b8c5ba272135a442f6393",
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 1280,
+          "height": 658
+        },
+        {
+          "codec_name": "aac",
+          "sample_rate": "22050"
+        }
+      ],
+      "format": {
+        "duration": "170.133333",
+        "size": "12352913"
+      }
+    },
+    "audioMeanDb": -30.4,
+    "audioPeakDb": -14.0,
+    "capture": "Actual Cocos browser screenshots, median interval 0.136s, real timestamps preserved with held frames between input batches, exported at 30fps",
+    "audio": "Evening on Orchard and River Lights, original CC0 tracks added in post. System live-audio recording failed while the Mac was locked."
+  },
+  "chinatown": {
+    "sourceCommit": "360d278a291db559edffdabc2141beae72f7be4f",
+    "file": "chinatown-delivery.mp4",
+    "sha256": "9ceeac44cb379aea499c4ea41065c4520499385268c07efbb3fd290db665fc99",
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 1280,
+          "height": 658
+        },
+        {
+          "codec_name": "aac",
+          "sample_rate": "22050"
+        }
+      ],
+      "format": {
+        "duration": "366.900000",
+        "size": "25426385"
+      }
+    },
+    "audioMeanDb": -30.4,
+    "audioPeakDb": -14.0,
+    "capture": "Actual Cocos browser screenshots, median interval 0.136s, real timestamps preserved with held frames between input batches, exported at 30fps",
+    "audio": "Evening on Orchard and River Lights, original CC0 tracks added in post. System live-audio recording failed while the Mac was locked."
+  }
+}

@@ -1,0 +1,20 @@
+x 248.28  z 131.97  yaw 96.2
+FPS 59.3  p95 19.2 ms
+1512 × 777  DPR 2
+View aspect 1.9459 canvas 1.9459
+Seat drift 0.0000 m (peak 0.0000 m)
+Seat yaw 0.0000 deg (peak 0.0000 deg)
+Touch throttle 0 brake 0 horizontal 0.00
+Walk eye 0.4415 m
+Audio 0.00 s  gain 0.550
+Single player · paused
+Context running · music 0.55 environment 0.2 effects 0.45
+Render scale 1.00
+Draws 505 · triangles 314396 · texture 47.1 MiB
+
+District chinatown generation 2 · 19 prefabs · 17/19 blocks · standard · swaps 1
+Route [{"x":61.522,"z":152.218},{"x":30.364,"z":155.211},{"x":25.079,"z":151.397},{"x":20.082,"z":147.214},{"x":15.398,"z":142.682},{"x":11.052,"z":137.826},{"x":7.066,"z":132.67},{"x":3.46,"z":127.241},{"x":1.328,"z":123.188},{"x":-0.054,"z":118.569},{"x":-38.016,"z":140.697},{"x":-50.27,"z":146.34},{"x":-119.666,"z":105.358},{"x":-128.561,"z":99.872},{"x":-131.592,"z":41.478},{"x":-136.663,"z":-38.012},{"x":-108.589,"z":-121.39},{"x":-38.554,"z":-89.75},{"x":26.711,"z":-59.111},{"x":98.834,"z":-25.905},{"x":73.57,"z":21.135},{"x":40.46386502590302,"z":11.624354863700699},{"x":40.26,"z":12.334}]
+Goal {"x":40.26,"z":12.334}
+Order CT-1043 · 1 completed · $9.75
+Phases {"toPickupDrive":70,"toPickupWalk":7,"parking":32,"wait":0,"handoff":0,"toCar":6,"toDropoffDrive":31,"toDropoffWalk":7}
+Driving 100.9 / 152.4 s · 66.2%

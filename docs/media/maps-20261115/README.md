@@ -8,7 +8,7 @@
 
 音频修复在提交前完成构建与GREEN检查，构建戳保留父提交0198d1c与dirty标记，所测代码随后提交为2632ee8。基线视口1512×777，早期音频操作也使用1512×833。后续视觉对比统一1512×777与标准画质。
 
-局域网地址仅在同一Wi-Fi和本机服务运行时使用。实体手机双指、安全区、文件选择、音频启动/锁屏/后台、外部音乐App共存均未测。桌面采样包含停留观察，15分钟完整送单验证将另行记录。
+局域网地址仅在同一Wi-Fi和本机服务运行时使用。实体手机双指、安全区、文件选择、音频启动/锁屏/后台、外部音乐App共存均未测。早期基线包含停留观察，最终六单整段验证记录如下。
 
 ## 法拉盛首轮运行
 
@@ -32,3 +32,38 @@
 `verified-chinatown-*` 与 `verified-four-swaps.png` 同样来自 `c0294c2` 的同一个运行实例。CT-1045 / CT-1046 / CT-1047 为1515m / 363s、1289m / 310s、1574m / 408s，累计六单 $63.00。覆盖珍巷面馆、莫街蒸馆和 East Broadway / Henry / Mulberry 三个入口。
 
 Doyers 为实际下车步行通路，汽车走 Pell 与周边单行路。四次换区记录保留播放中与主动暂停状态，地区独有 prefab 数在18与19之间切换。完整整段采样与视频状态见最终集成验证。
+
+## 最终构建与集成证据
+
+最终功能代码 `71c33fd`，Creator 3.8.8独立干净导入构建成功，正常发布目录game/build/web-desktop，构建戳dirty=false，65项测试通过、0跳过。原始日志留在本机.local/maps-evidence。
+
+| 实际媒体 | 源码SHA与条件 |
+| --- | --- |
+| latest-flushing-map.png、final-ready.png | 71c33fd，1512×777、标准，正常试玩入口 |
+| final-silent-delivery.png、final-camera-switch.png、camera-switch.txt | 71c33fd，静音完整送达后从步行结束态换区，驾驶位当前与峰值均为零 |
+| latest-chinatown-map.png、latest-*-result.png | 360d278，两区各一单完整补录过程 |
+| latest-touch-landscape.png、latest-touch-portrait.png、portrait-*-layout.json | 360d278，桌面844×390与390×844，面板边界检查通过 |
+| quality-low.png、quality-standard.png、quality-*-latest.json | 23a9fa8，完全相同出生机位、画幅和视角，后视镜两档均可见，原始帧导出截断已注明 |
+| whole-run.json、whole-run-frames.json.gz、startup.json | c0294c2，六单与四次换区的完整统计、所有原始帧及独立启动180帧 |
+
+活跃送单1809.597秒、108290帧，平均59.84FPS，p95 18.6ms、p99 22.7ms，超过50ms共46帧，超过100ms为0。暂停、空闲、启动和后台单列。资源及内存取得范围见VALIDATION。
+
+### 两区完整有声视频
+
+- [法拉盛完整订单](flushing-delivery.mp4)，FL-1042，829米、167秒，视频170.13秒。
+- [唐人街完整订单](chinatown-delivery.mp4)，CT-1043，1511米、363秒，视频366.90秒。
+
+源码360d278，实际Cocos Web Desktop / M2 Pro / Brave / 1512×777 / DPR2 / 标准画质。视频覆盖接单、合法路网驾驶、步行入店、核码、装餐、送达与结算。原始画面由CUA按约7.35帧/秒中位采样，真实时间戳保留批次间停留，最长采集空档26.693秒以最近画面延续。最终缩放至1280×658，30FPS编码含重复帧，流程时长保持真实。
+
+Mac锁屏导致系统视频或音轨录制失败，因此交付视频后期混入项目原创 Evening on Orchard、River Lights，CC0 1.0，可分发和公开宣传使用。视频中的环境和提示声未实际录得。实时音频恢复的独立阶段A记录继续保留。完整视频元数据、音量及SHA-256见video-metadata.json，采样时间索引为capture-index.json.gz。原始画面、转换中间文件与失败录屏保留于本机.local/media。
+
+本轮实体手机连接、双指、锁屏恢复、手机文件选择、外部音乐App同时播放与手机15分钟性能全部未测。当前同一Wi-Fi入口为电脑192.168.0.193:7476，服务保持运行，地址随电脑网络变化。
+
+可在仓库根目录重跑实际观测检查。
+
+```bash
+node tests/map-run.integration.mjs docs/media/maps-20261115/whole-run.json
+node tests/startup-telemetry.integration.mjs docs/media/maps-20261115/startup.json
+node tests/touch-panels.integration.mjs docs/media/maps-20261115/portrait-order-layout.json
+node tests/driver-camera.integration.mjs docs/media/maps-20261115/camera-switch.txt
+```
