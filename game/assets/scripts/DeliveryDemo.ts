@@ -474,7 +474,7 @@ export class DeliveryDemo extends Component {
         #delivery-hud.touch-mode .music { left:16px; top:134px; bottom:auto; width:calc(100% - 32px); }
         #delivery-hud.touch-mode.music-open .music { top:134px; width:calc(100% - 32px); }
         #delivery-hud.touch-mode .music-details { max-height:calc(100vh - 240px); }
-        #delivery-hud.touch-mode .touch-tools { top:auto; bottom:210px; right:24px; }
+        #delivery-hud.touch-mode .touch-tools { top:auto; bottom:260px; right:24px; }
         #delivery-hud.touch-mode #result { bottom:210px; }
       }
       </style>
