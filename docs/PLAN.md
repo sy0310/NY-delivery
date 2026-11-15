@@ -18,7 +18,8 @@
 | --- | --- | --- |
 | OrderState | 订单、独立队列和备餐计时、核码、一次性结算 | 两种载具共享 |
 | VehicleController | 简化汽车加速、刹车、转向与碰撞 | 保留载具接口边界 |
-| WalkingController | 步行、转身、障碍检查与进出车辆 | 两种载具共享 |
+| WalkingController | 前后移动、横移、朝向与障碍检查 | 两种载具共享 |
+| TouchControls / TouchInput | 独立摇杆、视角、踏板指针与情境按钮 | 手机触屏与浏览器试用 |
 | MusicPlayer | 单播放器、浏览器本地选歌、距离音量与导航压低 | 两种载具共享 |
 | DeliveryDemo / World | Cocos 场景、交互距离、手机和仪表 | 扩展餐厅与路线 |
 | CarModel / ModelGeometry | 车厢、真实仪表与导航、后视摄像机、复用网格和静态合批 | 扩展载具与街景 |
