@@ -34,3 +34,8 @@ test('unfinished orders prevent area replacement and completed earnings survive 
   assert.equal(state.completedOrders,1);
   assert.equal(state.selectArea(createDistrictOrder(district,0)),false);
 });
+test('a new work area starts its own restaurant and destination cycle while global order IDs remain unique',()=>{
+ const order=createDistrictOrder(district,7,0);
+ assert.equal(order.id,'FL-1049');assert.equal(order.restaurantId,'noodles');assert.equal(order.deliveryPointId,'door-0');
+ assert.equal(createDistrictOrder(district,8,1).restaurantId,'dumplings');
+});
