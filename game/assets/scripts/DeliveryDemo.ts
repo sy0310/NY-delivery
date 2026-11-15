@@ -251,10 +251,15 @@ export class DeliveryDemo extends Component {
     if (stage === 'carrying' || stage === 'delivering') {
       const yaw = this.walker.yaw;
       this.world.bag.setPosition(this.walker.x + .45 * Math.cos(yaw) - .65 * Math.sin(yaw),
-        1.05 + this.world.groundHeight(this.walker.x,this.walker.z), this.walker.z - .45 * Math.sin(yaw) - .65 * Math.cos(yaw));
+        1.20 + this.world.groundHeight(this.walker.x,this.walker.z), this.walker.z - .45 * Math.sin(yaw) - .65 * Math.cos(yaw));
+      this.world.bag.setRotationFromEuler(0,yaw*DEG,0);
     } else if (stage === 'stowed') {
       this.world.bag.setPosition(.45, 1.06, .35);
-    } else this.world.bag.setPosition(this.pickup.x - 1.2, 1.55, this.pickup.z - .6);
+      this.world.bag.setRotationFromEuler(0,180,0);
+    } else {
+      this.world.bag.setPosition(this.pickup.x - 1.2, 1.55, this.pickup.z - .6);
+      this.world.bag.setRotationFromEuler(0,90,0);
+    }
   }
 
   private interact(): void {

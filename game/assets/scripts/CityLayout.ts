@@ -1,8 +1,9 @@
 export interface CityPoint { x: number; z: number }
 export const AVENUES = [0, 300];
 export const CROSS_STREETS = [-480, -120, 140];
-export const COUNTER = {x:285.7, z:-120};
-export const PICKUP_PARKING = {x:294.5, z:-106};
+export const RESTAURANT_ORIGIN = {x:300, z:-85};
+export const COUNTER = {x:RESTAURANT_ORIGIN.x-14.3, z:RESTAURANT_ORIGIN.z};
+export const PICKUP_PARKING = {x:RESTAURANT_ORIGIN.x-5.5, z:RESTAURANT_ORIGIN.z+14};
 export const SPAWN = {x:2.5, z:23};
 const nodes: CityPoint[] = [{x:0,z:140},{x:0,z:-120},{x:0,z:-480},
   {x:300,z:-480},{x:300,z:-120},{x:300,z:140}];
@@ -36,6 +37,7 @@ function nearest(point: CityPoint) {
 
 /** Project onto the directed road graph, then find the shortest connected route. */
 export function planRoute(from: CityPoint, to: CityPoint): {points: CityPoint[]; distance:number} {
+  if (distance(from,to) < 24) return {points:[to],distance:distance(from,to)};
   const start = nearest(from);
   const end = nearest(to);
   if (start.a === end.a && start.b === end.b && end.progress >= start.progress) {

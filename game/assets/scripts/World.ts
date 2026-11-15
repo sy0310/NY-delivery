@@ -4,7 +4,7 @@ import type { PaintedPanel } from './ModelGeometry';
 import type { BagLabel } from './OrderState';
 import { CarModel, CarTelemetry } from './CarModel';
 import { OrderData } from './OrderState';
-import { AVENUES, CROSS_STREETS, roadAt } from './CityLayout';
+import { AVENUES, CROSS_STREETS, roadAt, RESTAURANT_ORIGIN, PICKUP_PARKING } from './CityLayout';
 import { Person } from './Person';
 import type { OrderStage } from './OrderState';
 
@@ -33,7 +33,7 @@ export class World {
     this.geometry.sky();
     this.street();
     this.city();
-    this.buildAt('Juniper Kitchen', 300, -120, () => this.restaurant());
+    this.buildAt('Juniper Kitchen', RESTAURANT_ORIGIN.x, RESTAURANT_ORIGIN.z, () => this.restaurant());
     for (const [z, address] of [[-360, '18 ORCHARD WALK'], [60, '42 ORCHARD WALK'], [-250, '76 ORCHARD · LOBBY']] as const) {
       this.buildAt(address, 0, z + 30, () => this.destination(address));
     }
@@ -93,12 +93,13 @@ export class World {
   update(dt: number, telemetry: CarTelemetry): void { this.sedan.update(dt, telemetry); }
   handoff(): void { this.handoffTime = 1.2; }
   groundHeight(x: number, z: number): number {
-    return x > 281 && x < 290 && Math.abs(z+120) < 6 ? .25 : 0;
+    return x > RESTAURANT_ORIGIN.x-19 && x < RESTAURANT_ORIGIN.x-10
+      && Math.abs(z-RESTAURANT_ORIGIN.z) < 6 ? .25 : 0;
   }
   updateActors(dt: number, stage: OrderStage, joined: boolean, remaining: number, player: {x:number;z:number}): void {
     this.actorTime += dt;
     this.handoffTime = Math.max(0,this.handoffTime-dt);
-    const lookYaw = Math.atan2(player.x-282.2,player.z+120)*180/Math.PI-90;
+    const lookYaw = Math.atan2(player.x-(RESTAURANT_ORIGIN.x-17.8),player.z-RESTAURANT_ORIGIN.z)*180/Math.PI-90;
     this.clerk.animate(this.actorTime,Math.sin(Math.min(1,this.handoffTime)*Math.PI/2),false,lookYaw);
     if (!this.npc.active) return;
     if (joined && remaining===0 || stage!=='accepted' && stage!=='idle') this.riderTime += dt;
@@ -224,7 +225,7 @@ export class World {
         }
       }
     }
-    for (const [x,z,name] of [[294.5,-106,'JUNIPER PICKUP'],[5.5,-350,'18 ORCHARD'],[5.5,70,'42 ORCHARD'],[5.5,-240,'76 LOBBY']] as const) {
+    for (const [x,z,name] of [[PICKUP_PARKING.x,PICKUP_PARKING.z,'JUNIPER PICKUP'],[5.5,-350,'18 ORCHARD'],[5.5,70,'42 ORCHARD'],[5.5,-240,'76 LOBBY']] as const) {
       for (const side of [-1,1]) g.box('Parking bay side', x+side*1.2,.04,z,.08,.02,6,'#dbd1a9');
       g.box('Parking bay end',x,.04,z-3,2.4,.02,.08,'#dbd1a9');
       this.sign(name,x > 200 ? 292.4 : 8.2,2.2,z,2.8,x > 200 ? -90 : 90,'#355b55');
@@ -274,7 +275,7 @@ export class World {
       for (const side of [-1,1]) for (let index=0; index<34; index++) {
         const z = -466+index*18;
         if (CROSS_STREETS.some(cross => Math.abs(z-cross)<23)) continue;
-        if (avenue===300 && side<0 && Math.abs(z+120)<18) continue;
+        if (avenue===RESTAURANT_ORIGIN.x && side<0 && Math.abs(z-RESTAURANT_ORIGIN.z)<18) continue;
         if (avenue===0 && side>0 && [-360,60,-250].some(door => Math.abs(z-door)<18)) continue;
         const height = 13+(index*7%5)*2.7;
         this.wall('Masonry frontage',side*17,height/2,z,14,height,16.7,this.facade(colors[index%5],index));
@@ -447,7 +448,7 @@ export class World {
       if (CROSS_STREETS.some(cross => Math.abs(z-cross)<18)) continue;
       for (const side of [-1,1]) {
         if (avenue===0 && side>0 && [-360,60,-250].some(door => Math.abs(z-door)<12)) continue;
-        if (avenue===300 && side<0 && Math.abs(z+120)<25) continue;
+        if (avenue===RESTAURANT_ORIGIN.x && side<0 && Math.abs(z-RESTAURANT_ORIGIN.z)<25) continue;
         g.cylinder('Street lamp',avenue+side*7.8,2.8,z,.055,5.6,'#3e5154');
         g.box('Street light housing',avenue+side*7.6,5.45,z,.65,.12,.3,'#495a5a');
         g.box('Street light diffuser',avenue+side*7.6,5.37,z,.5,.025,.22,'#d9d4ad');

@@ -18,7 +18,7 @@ test('connected one-way blocks provide a long reachable delivery leg and a conti
 test('moving through a junction advances the next target and near-goal route stays short', () => {
   assert.deepEqual(planRoute({x:2.5,z:23},PICKUP_PARKING).points[0], {x:0,z:-120});
   assert.deepEqual(planRoute({x:30,z:-120},PICKUP_PARKING).points[0], {x:300,z:-120});
-  assert.ok(planRoute({x:294.5,z:-107},PICKUP_PARKING).distance < 15);
+  assert.ok(planRoute({x:PICKUP_PARKING.x,z:PICKUP_PARKING.z-1},PICKUP_PARKING).distance < 15);
   assert.equal(new Set([0,1,2].map(i => orderLocation(i).address)).size, 3);
 });
 
