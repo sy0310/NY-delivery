@@ -493,7 +493,7 @@ export class DeliveryDemo extends Component {
 
       <button id="context-action">接单</button>
       <section id="pause-menu" hidden><h2>暂停</h2><p>音乐继续播放，可在音乐面板中暂停。</p><p>W/S 前后移动，A/D 驾驶转向或步行横移。拖动空白处观察，E 执行情境操作。手机左手移动/转向，右侧观察，油门与刹车独立。</p><button id="resume">继续游戏</button><button id="safe-recover">安全复位</button><p>安全复位会将人与车放回起点，保留订单与音乐。</p></section>
-      <div class="notice" id="notice"></div><pre id="diagnostics" style="display:none;position:absolute;left:28px;top:165px;background:#142b30dd;padding:12px;font:11px monospace"></pre>`;
+      <div class="notice" id="notice"></div><pre id="diagnostics" style="display:none;position:absolute;left:28px;top:165px;background:#142b30dd;padding:12px;font:10px monospace;max-width:min(370px,calc(100% - 56px));max-height:calc(100% - 185px);white-space:pre-wrap;overflow:auto"></pre>`;
     this.musicPanel = new MusicPanel(this.music);
     this.hud.appendChild(this.musicPanel.element);
     document.body.appendChild(this.hud);
