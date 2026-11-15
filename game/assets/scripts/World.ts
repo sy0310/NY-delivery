@@ -1,5 +1,7 @@
 import { Node, Material, Color, DirectionalLight, SphereLight, Vec3 } from 'cc';
 import { ModelGeometry } from './ModelGeometry';
+import type { PaintedPanel } from './ModelGeometry';
+import type { BagLabel } from './OrderState';
 import { CarModel, CarTelemetry } from './CarModel';
 import { OrderData } from './OrderState';
 
@@ -13,6 +15,7 @@ export class World {
   readonly npc = new Node('Waiting customer');
   private geometry: ModelGeometry;
   private sedan: CarModel;
+  private bagPanel!: PaintedPanel;
   private facades = new Map<string, Material>();
 
   constructor(private root: Node, surface: Material, unlit: Material, private order: Readonly<OrderData>) {
@@ -32,6 +35,17 @@ export class World {
     this.geometry.box('Folded bag top', 0, .26, 0, .35, .045, .25, '#c79b62', this.bag);
     const tag = this.geometry.panel('Shared order bag label', .27, .22, 256, 192, this.bag);
     tag.node.setPosition(0, .04, .126);
+    this.bagPanel = tag;
+    this.setOrder(order);
+  }
+
+  get bagLabel(): BagLabel {
+    return {orderId: this.order.id, code: this.order.code, count: this.order.bagCount ?? 1};
+  }
+
+  setOrder(order: Readonly<OrderData>): void {
+    this.order = order;
+    const tag = this.bagPanel;
     tag.context.fillStyle = '#f2e7cd';
     tag.context.fillRect(0, 0, 256, 192);
     tag.context.fillStyle = '#25484a';
@@ -41,7 +55,7 @@ export class World {
     tag.context.font = 'bold 48px DM-Sans';
     tag.context.fillText(order.code, 128, 117);
     tag.context.font = '18px DM-Sans';
-    tag.context.fillText('SEALED · THANK YOU', 128, 160);
+    tag.context.fillText(`${order.bagCount ?? 1} BAG${(order.bagCount ?? 1) > 1 ? 'S' : ''} · SEALED`, 128, 160);
     tag.texture.uploadData(tag.canvas);
   }
 

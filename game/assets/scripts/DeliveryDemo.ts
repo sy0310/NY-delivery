@@ -3,11 +3,13 @@ import {
   AudioClip, Material, Font, profiler, game, input, Input, EventKeyboard, KeyCode,
 } from 'cc';
 import { EDITOR } from 'cc/env';
-import { OrderState } from './OrderState';
+import { OrderState, createOrder } from './OrderState';
 import { VehicleController } from './VehicleController';
 import { WalkingController } from './WalkingController';
 import { TouchControls } from './TouchControls';
 import { World } from './World';
+import { resolveInteraction, directionTo } from './Interaction';
+import type { Interaction } from './Interaction';
 import { MusicPlayer } from './MusicPlayer';
 
 const { ccclass, property } = _decorator;
@@ -38,7 +40,10 @@ const KEY_BINDINGS: Partial<Record<KeyCode, string>> = {
 export class DeliveryDemo extends Component {
   @property(Material) surfaceMaterial: Material = null!;
   @property(Material) signMaterial: Material = null!;
-  private order = new OrderState();
+  private order = new OrderState(createOrder(0));
+  private orderSequence = 0;
+  private orderStartDistance = 0;
+  private working = true;
   private vehicle = new VehicleController();
   private walker = new WalkingController();
   private world!: World;
@@ -47,7 +52,7 @@ export class DeliveryDemo extends Component {
   private hud!: HTMLElement;
   private keys = new Set<string>();
   private inCar = true;
-  private notice = '傍晚的第一单。先选一首歌，再接单出发。';
+  private notice = '傍晚的第一单已就绪。音乐可自由选择，也可静音出发。';
   private elapsed = 0;
   private refresh = 0;
   private frames: number[] = [];
@@ -127,7 +132,34 @@ export class DeliveryDemo extends Component {
     const player = this.inCar ? this.vehicle : this.walker;
     return Math.hypot(player.x - x, player.z - z);
   }
-  private atCounter(): boolean { return !this.inCar && this.distance(-14.3, 0) < 2.6; }
+  private get pickup(): {x: number; z: number} { return this.order.data.pickup ?? {x:-14.3, z:0}; }
+  private get dropoff(): {x: number; z: number} { return this.order.data.dropoff ?? {x:9.4, z:-30}; }
+  private atCounter(): boolean { return !this.inCar && this.distance(this.pickup.x, this.pickup.z) < 2.6; }
+
+  private getInteraction(): Interaction {
+    const player = this.inCar ? this.vehicle : this.walker;
+    const action = resolveInteraction({stage: this.order.stage, inCar: this.inCar, speed: this.vehicle.speed,
+      queueJoined: this.order.queueJoined, ready: this.order.queueRemaining === 0 && this.order.kitchenRemaining === 0,
+      pickup: directionTo(player, this.pickup), dropoff: directionTo(player, this.dropoff),
+      carDistance: this.distance(this.vehicle.x, this.vehicle.z)});
+    if (action.kind === 'accept') action.label += ' · $' + this.order.data.pay.toFixed(2);
+    if (action.kind === 'continue' && !this.working) action.label = '开始新工作';
+    return action;
+  }
+
+  private showInteraction(action: Interaction): void {
+    const button = this.hud.querySelector<HTMLButtonElement>('#action')!;
+    button.textContent = action.label;
+    button.disabled = !action.enabled;
+    this.touch.update(this.inCar, action.label, action.enabled);
+  }
+
+  private enterCar(): void {
+    this.inCar = true;
+    this.recenterView();
+    this.vehicle.speed = 0;
+    this.clearKeys();
+  }
 
   update(dt: number): void {
     if (!this.world) return;
@@ -204,49 +236,68 @@ export class DeliveryDemo extends Component {
   }
 
   private interact(): void {
-    if (this.inCar) {
-      const exit = this.vehicle.exitPosition(this.world.canMove);
-      if (!exit) { this.notice = '先刹停车辆。两侧受阻时挪车后再下车。'; return; }
-      this.walker.place(exit, this.vehicle.yaw + this.driverLookYaw);
-      this.driverLookYaw = 0;
-      this.inCar = false;
-      this.clearKeys();
-      this.order.retrieve();
-      this.notice = this.order.stage === 'delivering'
-        ? '已下车。步行到 18 Orchard Walk 门口，按 E 交付。'
-        : `已下车。W/S 前后走，A/D 横移，${LOOK_HINT}，靠近取餐柜台按 E。`;
-      return;
-    }
-    if (this.distance(this.vehicle.x, this.vehicle.z) < 3.4) {
-      if (this.order.stage === 'carrying' || this.order.stage === 'delivering') {
-        this.order.stow();
-        this.notice = '餐袋已放在副驾驶。再次按 E 上车，沿街驶向 18 Orchard Walk。';
+    const action = this.getInteraction();
+    this.showInteraction(action);
+    if (!action.enabled) { this.notice = action.label; return; }
+    switch (action.kind) {
+      case 'accept':
+        this.order.accept();
+        this.working = true;
+        this.elapsed = 0;
+        this.orderStartDistance = this.vehicle.distance;
+        this.notice = '已接单，驶向 ' + this.order.data.restaurant + '。';
         this.music.chime();
-      } else {
-        this.inCar = true;
-        this.recenterView();
-        this.vehicle.speed = 0;
+        break;
+      case 'continue':
+        if (!this.order.next(createOrder(this.orderSequence + 1))) return;
+        this.orderSequence += 1;
+        this.order.accept();
+        this.world.setOrder(this.order.data);
+        this.working = true;
+        this.elapsed = 0;
+        this.orderStartDistance = this.vehicle.distance;
         this.clearKeys();
-        this.notice = '已系好安全带。W 加速，空格刹车。';
+        (this.hud.querySelector('#handoff-code') as HTMLInputElement).value = '';
+        this.notice = '已接下新订单 ' + this.order.data.id + '，当前位置与音乐继续保留。';
+        break;
+      case 'exit': {
+        const exit = this.vehicle.exitPosition(this.world.canMove);
+        if (!exit) { this.notice = '两侧受阻，请挪到安全位置再下车。'; return; }
+        this.walker.place(exit, this.vehicle.yaw + this.driverLookYaw);
+        this.driverLookYaw = 0;
+        this.inCar = false;
+        this.clearKeys();
+        this.order.retrieve();
+        this.notice = `已下车。WASD 移动，${LOOK_HINT}，靠近当前目标交互。`;
+        break;
       }
-      return;
-    }
-    if (this.atCounter() && this.order.stage === 'accepted') {
-      if (!this.order.queueJoined) {
+      case 'queue':
         this.order.joinQueue();
-        this.notice = this.order.kitchenRemaining > 0
-          ? '已加入队列。前面还有一位客人，厨房正在备餐。'
-          : '已加入队列。餐已备好，请等前面的客人完成取餐。';
-      } else this.notice = '留在取餐区等候，轮到你后在手机中输入交接码。';
-      return;
+        this.notice = this.order.data.note || '已加入取餐队列，请在柜台前等候。';
+        break;
+      case 'pickup':
+        if (this.order.take(this.order.data.code, this.world.bagLabel)) {
+          this.notice = `取餐码 ${this.order.data.code} 与 ${this.world.bagLabel.count} 袋餐品已核对，回车旁装餐。`;
+          this.music.chime();
+        } else this.notice = '餐袋编号、取餐码或袋数不匹配，请在柜台重新核对。';
+        break;
+      case 'stow-enter':
+        this.order.stow();
+        this.enterCar();
+        this.notice = '餐袋已放妥并上车，下一站 ' + this.order.data.address + '。';
+        this.music.chime();
+        break;
+      case 'enter':
+        this.enterCar();
+        this.notice = '已上车。W 加速，空格刹车。';
+        break;
+      case 'deliver':
+        if (this.order.deliver()) {
+          this.notice = '已交付 · $' + this.order.earnings.toFixed(2) + '，可继续接单或结束工作。';
+          this.music.chime();
+        }
+        break;
     }
-    if (this.distance(9.4, -30) < 2.5 && this.order.stage === 'delivering') {
-      this.order.deliver();
-      this.notice = '送达成功。顾客收到了热餐，结算已完成。';
-      this.music.chime();
-      return;
-    }
-    this.notice = '靠近餐厅柜台、汽车或送达门口后按 E。';
   }
 
   private recover(): void {
@@ -257,27 +308,7 @@ export class DeliveryDemo extends Component {
     this.notice = '已回到起点安全位置，订单与音乐进度保留。';
   }
 
-  private restart(): void {
-    if (this.order.stage !== 'delivered') return;
-    this.order.restart();
-    this.vehicle.reset();
-    this.vehicle.distance = 0;
-    this.inCar = true;
-    this.recenterView();
-    this.elapsed = 0;
-    this.clearKeys();
-    this.notice = '新的一单已准备好，音乐继续。';
-    (this.hud.querySelector('#handoff-code') as HTMLInputElement).value = '';
-  }
-
-  private orderAction(): void {
-    if (this.order.stage === 'delivered') { this.restart(); return; }
-    if (this.order.stage !== 'idle') { this.interact(); return; }
-    if (this.music.audio.paused) { this.notice = '先点击播放演示曲，或选择一首本地歌曲。'; return; }
-    this.order.accept();
-    this.music.chime();
-    this.notice = '已接单。向前驶向左侧 Juniper Kitchen，停稳后下车。';
-  }
+  private orderAction(): void { this.interact(); }
 
   private createHUD(): void {
     this.hud = document.createElement('div');
@@ -378,7 +409,7 @@ export class DeliveryDemo extends Component {
       <div class="top"><div class="sub">NEW YORK · 6:42 PM</div><div class="wordmark">我在纽约送外卖</div><div class="route" id="route"></div></div>
       <section class="phone"><div class="phone-header"><span>ORCHARD / DELIVERY</span><span>● 4G</span></div><h2 id="restaurant"></h2><div class="muted" id="order-id"></div><div class="order-detail" id="items"></div><div class="muted">交接码</div><div class="code" id="order-code"></div><div class="muted" id="customer"></div><div class="status" id="status"></div>
       <div id="code-panel"><input id="handoff-code" inputmode="numeric" maxlength="4" placeholder="输入交接码" aria-label="交接码"><button id="verify">核对并取餐</button><button id="skip">等餐快进</button></div>
-      <button id="action">接单</button><div id="result"><div class="muted">DELIVERED · 本单收入</div><div id="pay"></div><div id="summary" class="muted"></div><button id="restart">开始下一单</button></div></section>
+      <button id="action">接单</button><div id="result"><div class="muted">DELIVERED · 本单收入</div><div id="pay"></div><div id="summary" class="muted"></div><button id="restart">继续接单</button><button id="end-work">结束本次工作</button></div></section>
       <div class="controls"><kbd>W / S</kbd> 前进 / 后退　<kbd>A / D</kbd> 驾驶转向 / 步行横移<br>${LOOK_HINT} · 自由观察　<kbd>SPACE</kbd> 刹车<br><kbd>E</kbd> 上下车 / 交互　<kbd>R</kbd> 卡住恢复<br><kbd>M</kbd> 音乐播放 / 暂停</div>
       <div class="speed"><span id="mph">0</span><span>mph<br><span id="mode">DRIVING</span></span></div>
       <section class="music"><div class="music-title"><span>ORCHARD RADIO</span><span id="music-time">00:00</span></div><div id="track"></div><button id="play">播放 / 暂停</button><button id="choose">本地 MP3 / WAV</button><button id="next">切歌</button><label>音量 <input id="volume" aria-label="音乐音量" type="range" min="0" max="1" step=".01" value=".55"></label><label style="font-size:10px"><input id="continuous" type="checkbox">连续聆听</label></section>
@@ -398,13 +429,14 @@ export class DeliveryDemo extends Component {
     on('play', () => this.music.toggle());
     on('choose', () => this.music.choose());
     on('next', () => this.music.next());
-    on('restart', () => this.restart());
+    on('restart', () => this.interact());
+    on('end-work', () => { this.working = false; this.notice = '本次工作结束，累计完成 ' + this.order.completedOrders + ' 单 · $' + this.order.totalEarnings.toFixed(2); });
     on('action', () => this.orderAction());
     on('verify', () => {
       const code = (this.hud.querySelector('#handoff-code') as HTMLInputElement).value;
       if (!this.atCounter()) { this.notice = '请回到柜台旁核验取餐。'; return; }
-      const taken = this.order.take(code);
-      this.notice = taken ? '核验成功。餐袋标签已与手机订单匹配，回车旁按 E 装袋。' : '暂时无法取餐。核对交接码，并等待排队与厨房状态完成。';
+      const taken = this.order.take(code, this.world.bagLabel);
+      this.notice = taken ? '核验成功，回车旁装餐并上车。' : '暂时无法取餐。核对交接码，并等待排队与厨房状态完成。';
       if (taken) this.music.chime();
     });
     on('skip', () => {
@@ -446,17 +478,20 @@ export class DeliveryDemo extends Component {
     text('track', this.music.message);
     const time = Math.floor(this.music.audio.currentTime || 0);
     text('music-time', String(Math.floor(time / 60)).padStart(2, '0') + ':' + String(time % 60).padStart(2, '0'));
+    const target = stage === 'carrying' ? this.vehicle : ['stowed','delivering'].includes(stage) ? this.dropoff : this.pickup;
+    const playerHeading = this.inCar ? this.vehicle : this.walker;
+    const navigation = directionTo(playerHeading, target);
     const routes = {
-      idle: '选一首歌，接下傍晚的第一单',
-      accepted: `← Juniper Kitchen · ${Math.round(this.distance(-10, 0))} m`,
-      carrying: '回到汽车旁 · 按 E 将餐袋装车',
-      stowed: `18 Orchard Walk → · ${Math.round(this.distance(9.4, -30))} m`,
-      delivering: `携带餐袋 · 18 Orchard Walk → · ${Math.round(this.distance(9.4, -30))} m`,
+      idle: '自由选歌或静音 · 接单出发',
+      accepted: `${navigation.symbol} ${data.restaurant} · ${Math.round(navigation.distance)} m`,
+      carrying: `${navigation.symbol} 回到汽车旁 · 装餐并上车`,
+      stowed: `${navigation.symbol} ${data.address} · ${Math.round(navigation.distance)} m`,
+      delivering: `${navigation.symbol} 携带餐袋 · ${data.address} · ${Math.round(navigation.distance)} m`,
       delivered: '订单完成 · 享受你的傍晚',
     };
     text('route', routes[stage]);
     const statuses = {
-      idle: '歌曲就绪后接单。餐厅在前方左侧。',
+      idle: '音乐可自由选择，静音也能接单。',
       accepted: `队列 ${this.order.queueJoined ? Math.ceil(this.order.queueRemaining) + ' s' : '尚未加入'} · 厨房 ${Math.ceil(this.order.kitchenRemaining)} s`,
       carrying: `餐袋 ${data.id} · 标签 ${data.code} · 已领取`,
       stowed: '餐袋已装车 · 门口下车后按 E 交付',
@@ -464,24 +499,17 @@ export class DeliveryDemo extends Component {
       delivered: '已交付 · 本单只结算一次',
     };
     text('status', statuses[stage]);
-    this.hud.querySelector<HTMLElement>('#code-panel')!.style.display = stage === 'accepted' && this.order.queueJoined ? 'block' : 'none';
+    this.hud.querySelector<HTMLElement>('#code-panel')!.style.display = stage === 'accepted' && this.order.queueJoined && this.atCounter() ? 'block' : 'none';
     this.hud.querySelector<HTMLElement>('#result')!.style.display = stage === 'delivered' ? 'block' : 'none';
     this.hud.querySelector<HTMLElement>('#action')!.style.display = stage === 'delivered' ? 'none' : 'block';
-    let action = 'E · 交互';
-    if (stage === 'delivered') action = '开始下一单';
-    else if (stage === 'idle') action = '接单 · $' + data.pay.toFixed(2);
-    else if (this.inCar) action = 'E · 停稳下车';
-    else if (stage === 'delivering' && this.distance(9.4, -30) < 2.5) action = 'E · 交付';
-    else if (this.atCounter() && stage === 'accepted') action = 'E · 排队 / 交接';
-    else if (this.distance(this.vehicle.x, this.vehicle.z) < 3.4) {
-      action = stage === 'carrying' || stage === 'delivering' ? 'E · 装袋' : 'E · 上车';
-    }
-    text('action', action);
-    this.touch.update(this.inCar, action);
+    const action = this.getInteraction();
+    this.showInteraction(action);
+    text('restart', action.label);
+    this.hud.querySelector<HTMLButtonElement>('#end-work')!.hidden = !this.working;
     text('touch-toggle', this.touch.enabled ? '键鼠操作' : '触屏操作');
     this.hud.querySelector('#touch-toggle')!.setAttribute('aria-pressed', String(this.touch.enabled));
     text('pay', '$' + this.order.earnings.toFixed(2));
-    text('summary', Math.round(this.vehicle.distance) + ' m · ' + Math.round(this.elapsed) + ' s');
+    text('summary', Math.round(this.vehicle.distance - this.orderStartDistance) + ' m · ' + Math.round(this.elapsed) + ' s · 累计 $' + this.order.totalEarnings.toFixed(2));
     const diagnostics = this.hud.querySelector<HTMLElement>('#diagnostics')!;
     diagnostics.style.display = this.diagnostics ? 'block' : 'none';
     const player = this.inCar ? this.vehicle : this.walker;

@@ -137,12 +137,13 @@ export class TouchControls {
     this.root.querySelectorAll('.held').forEach(button => button.classList.remove('held'));
     this.drawStick();
   }
-  update(inCar: boolean, action: string): void {
+  update(inCar: boolean, action: string, enabled = true): void {
     if (inCar !== this.inCar) this.clear();
     this.inCar = inCar;
     this.root.dataset.mode = inCar ? 'drive' : 'walk';
     this.root.querySelector('.stick-label')!.textContent = inCar ? '‹  转向  ›' : '移动';
     this.button('touch-action').textContent = action.replace('E · ', '');
+    this.button('touch-action').disabled = !enabled;
   }
   dispose(): void { this.abort.abort(); this.root.remove(); }
 }
