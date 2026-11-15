@@ -14,7 +14,9 @@ import { MusicPlayer } from './MusicPlayer';
 import { MusicPanel } from './MusicPanel';
 import { planRoute } from './CityLayout';
 import { FLUSHING_DISTRICT } from './FlushingDistrict';
-import { createDistrictOrder } from './DistrictOrders';
+import { CHINATOWN_DISTRICT } from './ChinatownDistrict';
+import type { DistrictDefinition } from './DistrictDefinition';
+import { createDistrictOrder, canSwitchDistrict } from './DistrictOrders';
 import { drawDistrictMap } from './DistrictMap';
 import { OrderTiming } from './OrderTiming';
 import { PerformanceRun } from './PerformanceRun';
@@ -49,6 +51,11 @@ export class DeliveryDemo extends Component {
   private district = FLUSHING_DISTRICT;
   private order = new OrderState(createDistrictOrder(this.district,0));
   private orderSequence = 0;
+  private areaSequence=0;
+  private loading=false;
+  private sceneReady=false;
+  private quality: 'low'|'standard'='standard';
+  private swaps=0;
   private timing = new OrderTiming();
   private orderStartDistance = 0;
   private working = true;
@@ -102,7 +109,6 @@ export class DeliveryDemo extends Component {
     this.vehicle.z=this.district.spawn.z;
     this.vehicle.yaw=this.district.spawn.yaw*Math.PI/180;
     this.world = new World(this.node, this.surfaceMaterial, this.signMaterial, this.order.data);
-    await this.world.loadDistrict(this.district);
     this.world.car.setPosition(this.vehicle.x, 0, this.vehicle.z);
     const scene = this.node.scene;
     scene.globals.ambient.skyColor = new Vec4(.48, .61, .72, 1);
@@ -129,12 +135,46 @@ export class DeliveryDemo extends Component {
     input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
     input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
     window.addEventListener('blur', this.clearKeys);
+    this.notice='正在加载法拉盛街区…';
+    this.renderHUD();
+    await this.loadArea(this.district);
     this.updateView();
     this.renderHUD();
     this.timeToHud = performance.now();
   }
 
+  private async loadArea(next:DistrictDefinition):Promise<void> {
+    if(this.loading) return;
+    if(this.sceneReady && !canSwitchDistrict(this.order.stage,this.working)) {
+      this.notice='完成当前订单并结束本次工作后，可选择新区域。';return;
+    }
+    const changed=next.id!==this.district.id;
+    if(!changed && this.sceneReady)return;
+    this.loading=true;this.sceneReady=false;this.clearKeys();this.vehicle.speed=0;
+    this.hud.querySelector('#notice')!.textContent='正在加载 '+next.name+'…';
+    this.hud.querySelector<HTMLElement>('#notice')!.hidden=false;
+    this.hud.querySelectorAll<HTMLButtonElement>('.area-select').forEach(button=>button.disabled=true);
+    try {
+      await this.world.loadDistrict(next);
+      if(changed) {
+        this.orderSequence++;this.areaSequence=0;this.swaps++;
+        if(!this.order.selectArea(createDistrictOrder(next,this.orderSequence,0)))throw new Error('Order state rejected district change');
+      }
+      this.district=next;this.world.setOrder(this.order.data);
+      Object.assign(this.vehicle,{x:next.spawn.x,z:next.spawn.z,yaw:next.spawn.yaw/DEG,speed:0});
+      this.walker.place(next.spawn,this.vehicle.yaw);this.lastExit={...next.spawn};this.inCar=true;this.recenterView();
+      this.world.setQuality(this.quality);this.sceneReady=true;
+      this.notice='已进入 '+next.name+'。选择接单后出发，音乐保持当前状态。';
+    } catch(error) {
+      this.notice='街区加载失败，可在工作区域中重试。'+String(error);
+      console.error(error);
+    } finally {
+      this.loading=false;this.clearKeys();this.renderHUD();
+    }
+  }
+
   private onKeyDown = (event: EventKeyboard): void => {
+    if (!this.sceneReady || this.loading) return;
     if (event.keyCode === KeyCode.ESCAPE) { this.togglePause(); return; }
     if (document.activeElement?.matches('input,select,textarea')) return;
     const code = KEY_BINDINGS[event.keyCode];
@@ -195,8 +235,9 @@ export class DeliveryDemo extends Component {
   }
 
   update(dt: number): void {
-    if (!this.world || !this.hud || this.world.loading) return;
+    if (!this.world || !this.hud) return;
     this.samplePerformance(dt);
+    if(!this.sceneReady || this.loading) return;
     if (!this.paused && this.order.stage !== 'idle' && this.order.stage !== 'delivered') this.elapsed += dt;
     this.noticeAge += dt;
     this.frames.push(dt);
@@ -248,7 +289,7 @@ export class DeliveryDemo extends Component {
   private samplePerformance(dt: number): void {
     if (!this.sampling || !this.performanceRun) return;
     const background = document.hidden || !document.hasFocus();
-    const mode = background || this.wasBackground ? 'background' : this.paused ? 'paused'
+    const mode = background || this.wasBackground ? 'background' : this.paused || this.loading ? 'paused'
       : this.order.stage === 'idle' || this.order.stage === 'delivered' ? 'idle' : 'active';
     this.wasBackground = background;
     this.performanceRun.frame(dt, mode,this.district.id);
@@ -258,6 +299,7 @@ export class DeliveryDemo extends Component {
     const device = director.root!.device;
     const memory = (performance as Performance & {memory?: {usedJSHeapSize:number}}).memory;
     this.resourceSamples.push({seconds:(now-this.performanceStart)/1000, mode,
+      district:this.district.id,quality:this.quality,generation:this.world.generation,completed:this.order.completedOrders,
       drawCalls:device.numDrawCalls, triangles:device.numTris,
       textureBytes:device.memoryStatus.textureSize, bufferBytes:device.memoryStatus.bufferSize,
       jsHeapBytes:memory?.usedJSHeapSize ?? null});
@@ -282,7 +324,9 @@ export class DeliveryDemo extends Component {
     const output = this.hud.querySelector<HTMLTextAreaElement>('#performance-output')!;
     output.value = JSON.stringify({engine:'3.8.8',time:new Date().toISOString(),
       viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},
-      timeToHudMs:this.timeToHud,summary:this.performanceRun.summary(),resources:this.resourceSamples,
+      timeToHudMs:this.timeToHud,swaps:this.swaps,completedOrders:this.order.completedOrders,quality:this.quality,
+      districts:Object.fromEntries([FLUSHING_DISTRICT,CHINATOWN_DISTRICT].map(district=>[district.id,this.performanceRun!.summary(district.id)])),
+      summary:this.performanceRun.summary(),resources:this.resourceSamples,
       frameColumns:['milliseconds','mode','district'],frames:this.performanceRun.samples,
       memoryScope:'Cocos estimated texture/buffer bytes and browser-reported JS heap. Native/driver/process memory is not collected.'});
     this.hud.querySelector<HTMLElement>('#performance-panel')!.hidden = false;
@@ -327,6 +371,7 @@ export class DeliveryDemo extends Component {
   }
 
   private interact(): void {
+    if(!this.sceneReady || this.loading)return;
     const action = this.getInteraction();
     this.showInteraction(action);
     if (!action.enabled) { this.notice = action.label; return; }
@@ -342,8 +387,9 @@ export class DeliveryDemo extends Component {
         this.music.chime();
         break;
       case 'continue':
-        if (!this.order.next(createDistrictOrder(this.district,this.orderSequence + 1))) return;
+        if (!this.order.next(createDistrictOrder(this.district,this.orderSequence + 1,this.areaSequence+1))) return;
         this.orderSequence += 1;
+        this.areaSequence++;
         this.order.accept();
         this.hud.classList.remove('phone-open');
         this.world.setOrder(this.order.data);
@@ -555,7 +601,7 @@ export class DeliveryDemo extends Component {
         #delivery-hud.touch-mode #result { bottom:210px; }
       }
       </style>
-      <nav class="toolbar"><button id="touch-toggle">触屏操作</button><button id="order-toggle">订单</button><button id="music-toggle">音乐</button><button id="map-toggle">地图</button><button id="pause">暂停</button></nav>
+      <nav class="toolbar"><button id="touch-toggle">触屏操作</button><button id="order-toggle">订单</button><button id="music-toggle">音乐</button><button id="map-toggle">地图</button><button id="area-toggle">区域</button><button id="pause">暂停</button></nav>
       <div class="top"><div class="sub">NEW YORK · 6:42 PM</div><div class="wordmark">我在纽约送外卖</div><div class="route" id="route"></div></div>
       <section class="phone"><div class="phone-header"><span>ORCHARD / DELIVERY</span><span>● 4G</span></div><h2 id="restaurant"></h2><div class="muted" id="order-id"></div><div class="order-detail" id="items"></div><div class="muted">交接码</div><div class="code" id="order-code"></div><div class="muted" id="customer"></div><div class="status" id="status"></div>
       <details id="code-panel"><summary>手动核验与等餐快进</summary><input id="handoff-code" inputmode="numeric" maxlength="4" placeholder="输入交接码" aria-label="交接码"><button id="verify">核对并取餐</button><button id="skip">等餐快进</button></details>
@@ -565,7 +611,7 @@ export class DeliveryDemo extends Component {
 
       <button id="context-action">接单</button>
       <button id="sound-resume" hidden>点按恢复声音</button>
-      <section id="pause-menu" hidden><h2>暂停</h2><p>音乐继续播放，可在音乐面板中暂停。</p><p>W/S 前后移动，A/D 驾驶转向或步行横移。拖动空白处观察，E 执行情境操作。手机左手移动/转向，右侧观察，油门与刹车独立。</p><button id="resume">继续游戏</button><button id="safe-recover">安全复位</button><p>安全复位会将人与车放回起点，保留订单与音乐。</p><button id="performance-start">开始性能采样</button><button id="performance-finish">停止并查看性能</button></section>
+      <section id="pause-menu" hidden><h2>暂停</h2><p>音乐继续播放，可在音乐面板中暂停。</p><p>W/S 前后移动，A/D 驾驶转向或步行横移。拖动空白处观察，E 执行情境操作。手机左手移动/转向，右侧观察，油门与刹车独立。</p><button id="resume">继续游戏</button><button id="safe-recover">安全复位</button><p>安全复位会将人与车放回起点，保留订单与音乐。</p><label>画质 <select id="quality" aria-label="画质"><option value="standard">标准</option><option value="low">低</option></select></label><h3>工作区域</h3><p id="area-status"></p><button class="area-select" id="area-flushing">法拉盛 · Queens</button><button class="area-select" id="area-chinatown">唐人街 · Manhattan</button><p>完成订单并结束本次工作后换区。</p><button id="performance-start">开始性能采样</button><button id="performance-finish">停止并查看性能</button></section>
       <section id="performance-panel" hidden><h2>整段性能采样</h2><textarea id="performance-output" aria-label="性能原始数据" readonly></textarea><button id="performance-close">关闭数据</button></section>
       <section id="district-map" hidden><button id="map-close">返回街道</button><canvas id="map-canvas" aria-label="工作区域地图"></canvas><div id="map-legend"></div></section>
       <div class="notice" id="notice"></div><pre id="diagnostics" style="display:none;position:absolute;left:28px;top:165px;background:#142b30dd;padding:12px;font:10px monospace;max-width:min(370px,calc(100% - 56px));max-height:calc(100% - 185px);white-space:pre-wrap;overflow:auto"></pre>`;
@@ -586,6 +632,12 @@ export class DeliveryDemo extends Component {
     on('map-toggle', () => { this.clearKeys(); this.mapOpen=true; this.hud.querySelector<HTMLElement>('#district-map')!.hidden=false; });
     on('map-close', () => { this.clearKeys(); this.mapOpen=false; this.hud.querySelector<HTMLElement>('#district-map')!.hidden=true; });
     on('pause', () => this.togglePause());
+    on('area-toggle',()=>{if(!this.paused)this.togglePause();});
+    on('area-flushing',()=>{void this.loadArea(FLUSHING_DISTRICT);});
+    on('area-chinatown',()=>{void this.loadArea(CHINATOWN_DISTRICT);});
+    this.hud.querySelector<HTMLSelectElement>('#quality')!.addEventListener('change',event=>{
+      this.quality=(event.target as HTMLSelectElement).value as 'low'|'standard';this.world.setQuality(this.quality);
+    });
     on('resume', () => this.togglePause());
     on('safe-recover', () => { this.recover(); this.togglePause(); });
     on('sound-resume', () => { void this.music.resumeSound(); });
@@ -628,6 +680,10 @@ export class DeliveryDemo extends Component {
     }
     const text = (id: string, value: string) => { this.hud.querySelector('#' + id)!.textContent = value; };
     const data = this.order.data;
+    text('area-status',this.district.name+' · '+this.world.resourceState);
+    this.hud.querySelectorAll<HTMLButtonElement>('.area-select').forEach(button=>{
+      button.disabled=this.loading || this.sceneReady && !canSwitchDistrict(this.order.stage,this.working);
+    });
     this.hud.querySelector<HTMLElement>('#sound-resume')!.hidden = !this.music.needsResume;
     const stage = this.order.stage;
     text('restaurant', data.restaurant);
@@ -683,6 +739,7 @@ export class DeliveryDemo extends Component {
     this.hud.querySelector<HTMLElement>('#action')!.style.display = stage === 'delivered' ? 'none' : 'block';
     const action = this.getInteraction();
     this.showInteraction(action);
+    if(!this.sceneReady || this.loading) this.hud.querySelectorAll<HTMLButtonElement>('#action,#context-action').forEach(button=>button.disabled=true);
     text('restart', action.label);
     this.hud.querySelector<HTMLButtonElement>('#end-work')!.hidden = !this.working;
     text('touch-toggle', this.touch.enabled ? '键鼠操作' : '触屏操作');
@@ -717,7 +774,7 @@ export class DeliveryDemo extends Component {
       `Context ${this.music.context?.state ?? 'uninitialized'} · music ${this.music.levels.music} environment ${this.music.levels.environment} effects ${this.music.levels.effects}`,
       `Draws ${director.root!.device.numDrawCalls} · triangles ${director.root!.device.numTris} · texture ${(director.root!.device.memoryStatus.textureSize/1048576).toFixed(1)} MiB`,
       this.runSummary,
-      `District ${this.world.resourceState}`,
+      `District ${this.world.resourceState} · swaps ${this.swaps}`,
       `Route ${JSON.stringify(route.points)}`,
       `Goal ${JSON.stringify(this.inCar?parking:target)}`,
       `Order ${this.order.data.id} · ${this.order.completedOrders} completed · $${this.order.totalEarnings.toFixed(2)}`,

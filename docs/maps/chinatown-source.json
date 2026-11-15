@@ -1,0 +1,56 @@
+{
+  "district": "chinatown",
+  "origin": {
+    "crs": "EPSG:2263",
+    "coordinates": [
+      984794.692170342,
+      199706.373130395
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://services6.arcgis.com/yG5s3afENB5iO9fj/arcgis/rest/services/Centerline_view/FeatureServer/0/query?f=json&geometryType=esriGeometryEnvelope&geometry=-73.9996%2C40.7129%2C-73.9895%2C40.718&inSR=4326&outSR=2263&spatialRel=esriSpatialRelIntersects&where=1%3D1&outFields=OBJECTID%2CPHYSICALID%2CFULL_STREET_NAME%2CTRAFDIR%2CSTREETWIDTH%2CSTATUS%2CACCESSIBLE%2CNONPED%2CFCC%2CRW_TYPE%2CFROM_LEVEL_CODE%2CTO_LEVEL_CODE%2CSEGMENT_TYPE%2CSEGMENT_TYPE_VALUE&returnGeometry=true&resultRecordCount=2000",
+      "retrieved": "2026-11-15T19:22:41.366789+00:00",
+      "sha256": "726d2b940838942dae4c132530fa6fa0e7cd9f672e4f0da9d00854195cbd792d",
+      "license": "NYC Open Data terms, source/version/modifications retained"
+    },
+    {
+      "url": "https://services6.arcgis.com/yG5s3afENB5iO9fj/arcgis/rest/services/BUILDING_view/FeatureServer/0/query?f=json&geometryType=esriGeometryEnvelope&geometry=-73.9996%2C40.7129%2C-73.9895%2C40.718&inSR=4326&outSR=2263&spatialRel=esriSpatialRelIntersects&where=1%3D1&outFields=OBJECTID%2CBIN%2CHEIGHT_ROOF%2CFEATURE_CODE&returnGeometry=true&resultRecordCount=2000",
+      "retrieved": "2026-11-15T19:22:41.366789+00:00",
+      "sha256": "a529cd85c08a4190ab131123c7bb549ea76367e0775d05d7780ca2bac19779bb",
+      "license": "NYC Open Data terms, source/version/modifications retained"
+    },
+    {
+      "url": "https://data.ny.gov/resource/i9wp-a4ja.json?%24where=entrance_latitude+between+40.7129+and+40.718+AND+entrance_longitude+between+-73.9996+and+-73.9895&%24limit=5000",
+      "retrieved": "2026-11-15T20:48:24.748880+00:00",
+      "sha256": "60e7b1482d22c16c9bc0a15ff3dd5000ba31afce7314e59341aae277c59343ec",
+      "license": "MTA via New York State Open Data, provider terms and dataset date retained; ArcGIS projection for coordinates."
+    },
+    {
+      "url": "https://data.ny.gov/resource/2ucp-7wg5.json?%24where=in_effect+%3D+%27true%27+AND+latitude+between+40.7129+and+40.718+AND+longitude+between+-73.9996+and+-73.9895&%24limit=5000",
+      "retrieved": "2026-11-15T20:48:24.748880+00:00",
+      "sha256": "911a1718daafbdf3664a04a3cca60c08c6240cdd675eb39a666ecdae392b6930",
+      "license": "MTA via New York State Open Data, provider terms and dataset date retained; ArcGIS projection for coordinates."
+    },
+    {
+      "url": "https://utility.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer/project?f=json&inSR=4326&outSR=2263&geometries=%7B%22geometryType%22%3A%22esriGeometryMultipoint%22%2C%22geometries%22%3A%5B%7B%22points%22%3A%5B%5B-73.9903537%2C40.7142366%5D%2C%5B-73.9900148%2C40.713885%5D%2C%5B-73.9899%2C40.7144001%5D%2C%5B-73.99265%2C40.713808%5D%2C%5B-73.998961%2C40.713411%5D%2C%5B-73.996465%2C40.715391%5D%2C%5B-73.998679%2C40.713374%5D%2C%5B-73.9953%2C40.717343%5D%2C%5B-73.999037%2C40.713757%5D%2C%5B-73.997626%2C40.71351%5D%2C%5B-73.992385%2C40.713947%5D%2C%5B-73.995011%2C40.71373%5D%2C%5B-73.996422%2C40.715915%5D%2C%5B-73.989723%2C40.715445%5D%2C%5B-73.992805%2C40.714855%5D%2C%5B-73.991191%2C40.717202%5D%2C%5B-73.992468%2C40.714303%5D%2C%5B-73.997392%2C40.713376%5D%2C%5B-73.9971%2C40.714772%5D%2C%5B-73.990301%2C40.714094%5D%2C%5B-73.994096%2C40.713675%5D%2C%5B-73.992021%2C40.716371%5D%2C%5B-73.991663%2C40.717144%5D%2C%5B-73.991222%2C40.717171%5D%5D%7D%5D%7D",
+      "retrieved": "2026-11-15T20:48:24.748880+00:00",
+      "sha256": "7bf04951d3972b3d465a20284de72e266812828f7366c2ba6108e73c33b8ddf6",
+      "license": "MTA via New York State Open Data, provider terms and dataset date retained; ArcGIS projection for coordinates."
+    }
+  ],
+  "streetBlocks": 9,
+  "roads": 37,
+  "buildings": 281,
+  "fallbackHeights": 0,
+  "heightSimplifications": 4,
+  "modifications": [
+    "Local EPSG:2263 US survey feet to metres, north is negative Z.",
+    "Only curated constructed at-grade source segments. Original endpoints and direction retained.",
+    "Main/Lippmann (Flushing) and Doyers (Chinatown) remain foot-only, crossing side streets retained.",
+    "Curated complete source street faces plus 45m background footprint context. Chinatown ends at Market Street to keep the slice compact.",
+    "Largest exterior footprint ring, courtyard holes omitted, ground flattened.",
+    "Roof heights are feet above ground, missing height falls back to 12m, visible shell range 4.5–96m.",
+    "Restaurant brands, interiors and temporary curb parking are authored game locations."
+  ]
+}

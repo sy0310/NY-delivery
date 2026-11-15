@@ -10,6 +10,7 @@ import math
 from pathlib import Path
 import urllib.parse
 import urllib.request
+from transit_data import fetch_transit, add_transit
 from district_data import access_flags, clean_ring, distance, inside, local_point, polygon_area, project, roof_height, transform, write_building_gltf
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +24,8 @@ FLUSHING_FACES = [
     [84124, 102464, -91832, -5122],
     [91832, 91831, 91830, 16802, -9330, -9329, -5121],
 ]
+
+CHINATOWN_FACES = [[1782, 79920, -1839, -204036, -1836, 140948], [-1782, -140864, -140946, -182263, -182381, 182376, 79921], [1836, -173243, -197225, -140868, 140863, 1837], [-1837, 140864, -140948], [-1840, -79920, -79921, -99642, 16665], [16666, 99642, -182376, -166808], [16708, -69123, -140866, 140870, 140869], [-69124, 101099, 140866], [-4258, -91633, 69123, 16707], [-101099, -140885, 140946, -140863, 140865], [140885, -182384, -207604, -182380, 182381, 182263]]
 
 
 def fetch_snapshot(district, bounds):
@@ -59,6 +62,19 @@ def chain(roads, signed_ids):
     return clean_ring(points)
 
 
+def hull(points):
+    coordinates=sorted(set((point['x'],point['z']) for point in points))
+    def cross(a,b,c): return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])
+    chains=[]
+    for ordered in (coordinates,list(reversed(coordinates))):
+        chain=[]
+        for point in ordered:
+            while len(chain)>1 and cross(chain[-2],chain[-1],point)<=0: chain.pop()
+            chain.append(point)
+        chains.extend(chain[:-1])
+    return [{'x':x,'z':z} for x,z in chains]
+
+
 def boundary_for(roads, faces):
     counts = Counter(abs(identity) for face in faces for identity in face)
     remaining = [roads[identity]['points'] for identity, count in counts.items() if count == 1]
@@ -90,12 +106,12 @@ def point_on_road(road, fraction):
     raise ValueError('Empty road')
 
 
-def place_on_frontage(buildings, road, fraction, side, identity, name, used, shop=False, lobby=False):
+def place_on_frontage(buildings, road, fraction, side, identity, name, used, shop=False, lobby=False, shop_width=6.8):
     desired, road_a, road_b = point_on_road(road, fraction)
     dx, dz = road_b['x'] - road_a['x'], road_b['z'] - road_a['z']
     length = math.hypot(dx, dz)
     right = (-dz / length, dx / length)
-    width, depth = (6.8, 7) if shop else (3.2, 3) if lobby else (1.8, 0)
+    width, depth = (shop_width, 7) if shop else (3.2, 3) if lobby else (1.8, 0)
     candidates = []
     for building in buildings:
         if building['id'] in used or building['block'].startswith('context'):
@@ -122,6 +138,14 @@ def place_on_frontage(buildings, road, fraction, side, identity, name, used, sho
                 yaw += 180
             if depth and not all(inside(transform(entry, yaw, x, z), ring)
                                  for x in (-width / 2 + .15, width / 2 - .15) for z in (.3, depth - .2)):
+                continue
+            if inside(transform(entry,yaw,0,-.5),ring):
+                continue
+            steps=max(1,math.ceil(distance(centre,entry)/.4))
+            corridor=[{'x':centre['x']+(entry['x']-centre['x'])*step/steps,
+                       'z':centre['z']+(entry['z']-centre['z'])*step/steps} for step in range(steps+1)]
+            if any(inside(point,other['footprint']) or min(project(point,a,other['footprint'][(j+1)%len(other['footprint'])])[2] for j,a in enumerate(other['footprint']))<.38
+                   for other in buildings if other is not building for point in corridor):
                 continue
             candidates.append((distance(desired, centre) + abs(distance_to_road - road['width'] / 2) * 2,
                                building, index, entry, centre, yaw))
@@ -161,29 +185,32 @@ def parking_for(place, road, fraction=None):
             for along, across in [(-12, -half_width), (12, -half_width), (12, half_width), (-12, half_width)]]
 
 
-def convert_flushing():
-    streets = json.loads((RAW / 'flushing-streets.json').read_text())
-    footprints = json.loads((RAW / 'flushing-buildings.json').read_text())
+def convert_region(region, face_ids, origin_id, prefix):
+    streets = json.loads((RAW / f'{region}-streets.json').read_text())
+    footprints = json.loads((RAW / f'{region}-buildings.json').read_text())
     source = {feature['attributes']['PHYSICALID']: feature for feature in streets['features']}
-    origin = source[9329]['geometry']['paths'][0][0]
-    selected = {abs(identity) for face in FLUSHING_FACES for identity in face} | {101370}
+    origin = source[origin_id]['geometry']['paths'][0][0]
+    selected = {abs(identity) for face in face_ids for identity in face} | ({101370} if region=='flushing' else set())
     roads = {}
     for identity in sorted(selected):
         feature = source[identity]
         attributes = feature['attributes']
-        access = access_flags(attributes, 'flushing')
+        access = access_flags(attributes, region)
         if access is None:
             raise ValueError('Selected road is no longer an at-grade, constructed segment')
-        if len(feature['geometry']['paths']) != 1:
-            raise ValueError('Review a multipart source road before conversion')
-        points = [rounded(local_point(point, origin, streets['spatialReference']['latestWkid'])) for point in feature['geometry']['paths'][0]]
+        path = []
+        for part in feature['geometry']['paths']:
+            if path and math.hypot(path[-1][0]-part[0][0],path[-1][1]-part[0][1]) > .05:
+                raise ValueError('Disconnected multipart road needs source review')
+            path.extend(part if not path else part[1:])
+        points = [rounded(local_point(point, origin, streets['spatialReference']['latestWkid'])) for point in path]
         key = lambda point: f"{point['x']:.3f},{point['z']:.3f},13"
         roads[identity] = {'id': 'nyc-' + str(identity), 'name': attributes['FULL_STREET_NAME'],
                            'from': key(points[0]), 'to': key(points[-1]), 'points': points,
                            'width': round((attributes['STREETWIDTH'] or 30) * .3048, 3),
                            'levelFrom': 13, 'levelTo': 13, **access}
-    faces = [chain(roads, face) for face in FLUSHING_FACES]
-    boundary = boundary_for(roads, FLUSHING_FACES)
+    faces = [chain(roads, face) for face in face_ids]
+    boundary = boundary_for(roads, face_ids) if region=='flushing' else hull([point for face in faces for point in face])
     buildings = []
     for feature in footprints['features']:
         attributes = feature['attributes']
@@ -194,7 +221,9 @@ def convert_flushing():
         if len(ring) < 3 or abs(polygon_area(ring)) < 8:
             continue
         centre = {'x': sum(point['x'] for point in ring) / len(ring), 'z': sum(point['z'] for point in ring) / len(ring)}
-        block = next(('F' + str(index + 1) for index, face in enumerate(faces) if inside(centre, face)), None)
+        block = next((prefix + str(index + 1) for index, face in enumerate(faces) if inside(centre, face)), None)
+        if block is None and region=='chinatown' and inside(centre,boundary):
+            block='C-infill'
         if block is None:
             nearest = min(project(centre, a, boundary[(index + 1) % len(boundary)])[2] for index, a in enumerate(boundary))
             if nearest > 45:
@@ -204,32 +233,44 @@ def convert_flushing():
                           'block': block, 'style': attributes['BIN'] % 3, **roof_height(attributes['HEIGHT_ROOF'])})
     buildings.sort(key=lambda building: building['id'])
     used = set()
-    noodles = place_on_frontage(buildings, roads[83900], .45, -1, 'willow-noodles', 'Willow Noodle House', used, shop=True)
-    noodles.update({'chineseName': '槐香面馆', 'menu': '1 × Hand-pulled noodles · 1 × Ginger tea'})
-    dumplings = place_on_frontage(buildings, roads[5121], .52, -1, 'lantern-dumplings', 'Lantern Dumplings', used, shop=True)
-    dumplings.update({'chineseName': '灯笼饺子', 'menu': '1 × Dumplings · 1 × Sesame noodles'})
-    deliveries = [place_on_frontage(buildings, roads[84125], .72, 1, '38-avenue-residence', '38th Avenue residence', used),
-                  place_on_frontage(buildings, roads[16802], .57, 1, 'union-lobby', 'Union Street lobby', used, lobby=True),
-                  place_on_frontage(buildings, roads[91831], .63, 1, '39-avenue-door', '39th Avenue entrance', used)]
-    places = [noodles, dumplings] + deliveries
-    areas = [parking_for(noodles, roads[83900]), parking_for(dumplings, roads[91833], .82)]
-    areas.extend([parking_for(deliveries[0], roads[84125]), parking_for(deliveries[1], roads[16802]), parking_for(deliveries[2], roads[91831])])
+    if region == 'flushing':
+        noodles = place_on_frontage(buildings, roads[83900], .45, -1, 'willow-noodles', 'Willow Noodle House', used, shop=True)
+        noodles.update({'chineseName': '槐香面馆', 'menu': '1 × Hand-pulled noodles · 1 × Ginger tea'})
+        dumplings = place_on_frontage(buildings, roads[5121], .52, -1, 'lantern-dumplings', 'Lantern Dumplings', used, shop=True)
+        dumplings.update({'chineseName': '灯笼饺子', 'menu': '1 × Dumplings · 1 × Sesame noodles'})
+        deliveries = [place_on_frontage(buildings, roads[84125], .72, 1, '38-avenue-residence', '38th Avenue residence', used),
+                      place_on_frontage(buildings, roads[16802], .57, 1, 'union-lobby', 'Union Street lobby', used, lobby=True),
+                      place_on_frontage(buildings, roads[91831], .63, 1, '39-avenue-door', '39th Avenue entrance', used)]
+        places = [noodles, dumplings] + deliveries
+        areas = [parking_for(noodles, roads[83900]), parking_for(dumplings, roads[91833], .82)]
+        areas.extend([parking_for(deliveries[0], roads[84125]), parking_for(deliveries[1], roads[16802]), parking_for(deliveries[2], roads[91831])])
+    else:
+        noodles = place_on_frontage(buildings, roads[140864], .58, -1, 'pearl-noodles', 'Pearl Alley Noodles', used, shop=True, shop_width=4.6)
+        noodles.update({'chineseName': '珍巷面馆', 'menu': '1 × Wonton noodles · 1 × Oolong tea'})
+        dumplings = place_on_frontage(buildings, roads[79920], .5, -1, 'mott-dumplings', 'Mott Steam Kitchen', used, shop=True)
+        dumplings.update({'chineseName': '莫街蒸馆', 'menu': '1 × Steam buns · 1 × Scallion noodles'})
+        deliveries = [place_on_frontage(buildings, roads[69123], .55, 1, 'east-broadway-door', 'East Broadway entrance', used),
+                      place_on_frontage(buildings, roads[4258], .68, -1, 'henry-lobby', 'Henry Street lobby', used, lobby=True),
+                      place_on_frontage(buildings, roads[16665], .5, 1, 'mulberry-residence', 'Mulberry residence', used)]
+        places = [noodles, dumplings] + deliveries
+        areas = [parking_for(noodles, roads[140948], .45),parking_for(dumplings, roads[79920])]
+        areas.extend([parking_for(deliveries[0], roads[69123]),parking_for(deliveries[1], roads[4258]),parking_for(deliveries[2], roads[16665])])
     for place in places:
         place.pop('_centre')
         place.pop('_road')
-    spawn, a, b = point_on_road(roads[16802], .18)
+    spawn, a, b = point_on_road(roads[16802] if region=='flushing' else roads[69123], .18 if region=='flushing' else .8)
     yaw = math.degrees(math.atan2(-(b['x'] - a['x']), -(b['z'] - a['z'])))
     xs, zs = [point['x'] for point in boundary], [point['z'] for point in boundary]
     sources = []
-    retrieved_file = RAW / 'flushing-retrieved.txt'
+    retrieved_file = RAW / f'{region}-retrieved.txt'
     if not retrieved_file.exists():
-        retrieved_file.write_text(datetime.fromtimestamp((RAW / 'flushing-streets.json').stat().st_mtime, timezone.utc).isoformat())
+        retrieved_file.write_text(datetime.fromtimestamp((RAW / f'{region}-streets.json').stat().st_mtime, timezone.utc).isoformat())
     for kind in ('streets', 'buildings'):
-        raw_file = RAW / f'flushing-{kind}.json'
-        sources.append({'url': (RAW / f'flushing-{kind}-url.txt').read_text(), 'retrieved': retrieved_file.read_text().strip(),
+        raw_file = RAW / f'{region}-{kind}.json'
+        sources.append({'url': (RAW / f'{region}-{kind}-url.txt').read_text(), 'retrieved': retrieved_file.read_text().strip(),
                         'sha256': hashlib.sha256(raw_file.read_bytes()).hexdigest(),
                         'license': 'NYC Open Data terms, source/version/modifications retained'})
-    district = {'id': 'flushing', 'name': '法拉盛 · Flushing', 'borough': 'Queens', 'orderPrefix': 'FL', 'units': 'm',
+    district = {'id': region, 'name': '法拉盛 · Flushing' if region=='flushing' else '唐人街 · Chinatown', 'borough': 'Queens' if region=='flushing' else 'Manhattan', 'orderPrefix': 'FL' if region=='flushing' else 'CT', 'units': 'm',
                 'origin': {'crs': 'EPSG:2263', 'coordinates': origin}, 'boundary': boundary,
                 'bounds': {'minX': min(xs) - 35, 'maxX': max(xs) + 35, 'minZ': min(zs) - 35, 'maxZ': max(zs) + 35},
                 'roads': list(roads.values()), 'buildings': buildings, 'restaurants': [noodles, dumplings], 'deliveries': deliveries,
@@ -238,10 +279,11 @@ def convert_flushing():
 
 
 def export(district, class_name):
+    add_transit(RAW,district)
     output = ROOT / 'game/assets/resources/districts' / district['id']
     output.mkdir(parents=True, exist_ok=True)
     places = district['restaurants'] + district['deliveries']
-    sample = next(building for building in district['buildings'] if building['block'].startswith('F') and building['id'] not in {place['buildingId'] for place in places})
+    sample = next(building for building in district['buildings'] if not building['block'].startswith('context') and building['id'] not in {place['buildingId'] for place in places})
     groups = {'sample-building': [sample]}
     for building in district['buildings']:
         if building is not sample:
@@ -256,13 +298,13 @@ def export(district, class_name):
                                    'buildings': [building['id'] for building in buildings]})
     serialized = json.dumps(district, ensure_ascii=False, separators=(',', ':'))
     (ROOT / 'game/assets/scripts' / (class_name + '.ts')).write_text("import type { DistrictDefinition } from './DistrictDefinition';\n\n// Generated by scripts/convert-districts.py from the recorded NYC snapshot.\nexport const " + district['id'].upper() + '_DISTRICT: DistrictDefinition = ' + serialized + ';\n')
-    manifest = {'district': district['id'], 'origin': district['origin'], 'sources': district['sources'], 'streetBlocks': 5,
+    manifest = {'district': district['id'], 'origin': district['origin'], 'sources': district['sources'], 'streetBlocks': sum(block['kind']=='street-block' for block in district['blocks']),
                 'roads': len(district['roads']), 'buildings': len(district['buildings']),
                 'fallbackHeights': sum(building['fallback'] for building in district['buildings']),
                 'heightSimplifications': sum(building['sourceHeight'] is not None and abs(building['sourceHeight'] - building['height']) > .01 for building in district['buildings']),
                 'modifications': ['Local EPSG:2263 US survey feet to metres, north is negative Z.', 'Only curated constructed at-grade source segments. Original endpoints and direction retained.',
-                                  'Main busway and Lippmann plaza are foot-only for prototype cars, crossing side streets retained.',
-                                  'Five complete street blocks plus 45m background footprint context.', 'Largest exterior footprint ring, courtyard holes omitted, ground flattened.',
+                                  'Main/Lippmann (Flushing) and Doyers (Chinatown) remain foot-only, crossing side streets retained.',
+                                  'Curated complete source street faces plus 45m background footprint context. Chinatown ends at Market Street to keep the slice compact.', 'Largest exterior footprint ring, courtyard holes omitted, ground flattened.',
                                   'Roof heights are feet above ground, missing height falls back to 12m, visible shell range 4.5–96m.', 'Restaurant brands, interiors and temporary curb parking are authored game locations.']}
     maps = ROOT / 'docs/maps'
     maps.mkdir(parents=True, exist_ok=True)
@@ -277,4 +319,8 @@ if __name__ == '__main__':
     arguments = parser.parse_args()
     if arguments.fetch:
         fetch_snapshot('flushing', [-73.8344, 40.7572, -73.8258, 40.7620])
-    export(convert_flushing(), 'FlushingDistrict')
+    if arguments.fetch:
+        fetch_snapshot('chinatown', [-73.9996,40.7129,-73.9895,40.7180])
+        fetch_transit(RAW)
+    export(convert_region('flushing', FLUSHING_FACES, 9329, 'F'), 'FlushingDistrict')
+    export(convert_region('chinatown', CHINATOWN_FACES, 1782, 'C'), 'ChinatownDistrict')
