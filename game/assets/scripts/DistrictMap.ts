@@ -61,9 +61,13 @@ export function drawDistrictMap(c: CanvasRenderingContext2D,width: number,height
       c.textAlign='left';c.fillText(place.name,x(place.entry)+8,y(place.entry)-5);
       c.strokeStyle='#e5d5aa';c.lineWidth=1.5;c.strokeRect(x(place.parking)-4,y(place.parking)-4,8,8);
     }
+    for(const landmark of district.landmarks) {
+      c.fillStyle=landmark.kind==='subway'?'#b6bce3':'#a0c8df';
+      c.fillRect(x(landmark.position)-3,y(landmark.position)-3,6,6);
+    }
     c.textAlign='left';c.textBaseline='top';c.font='18px DM-Sans, NYDistrictSans, sans-serif';c.fillStyle='#f4e6cc';
     c.fillText(district.name+' · '+district.borough,20,14);
-    c.font='11px DM-Sans, NYDistrictSans, sans-serif';c.fillText('N ↑  ·  metres  ·  P parking  ·  amber pedestrian / busway',20,height-22);
+    c.font='11px DM-Sans, NYDistrictSans, sans-serif';c.fillText('N ↑  ·  metres  ·  P parking  ·  amber pedestrian / busway  ·  NYC / MTA data',20,height-22);
   }
   if (view.target) {c.fillStyle='#f6cd83';c.beginPath();c.arc(x(view.target),y(view.target),view.labels?6:5,0,Math.PI*2);c.fill();}
   if (view.player) {

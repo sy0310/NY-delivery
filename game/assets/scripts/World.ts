@@ -89,6 +89,14 @@ export class World {
     for(const landmark of district.landmarks) {
       const sign=this.sign(g,landmark.name,2.8,.65,'#243f46');
       sign.setPosition(landmark.position.x,2.4,landmark.position.z);sign.setRotationFromEuler(0,landmark.yaw,0);
+      g.cylinder('Transit sign post',landmark.position.x,1.2,landmark.position.z,.055,2.4,'#4e675b');
+      if(landmark.kind==='subway') {
+        for(const side of [-1,1]) {
+          g.box('Subway entrance railing',landmark.position.x+side*.65,.55,landmark.position.z+1.6,.045,1.1,2.5,'#33564b');
+          for(const offset of [.5,1,1.5,2,2.5])g.box('Subway railing upright',landmark.position.x+side*.65,.5,landmark.position.z+offset,.05,1,.05,'#33564b');
+        }
+        g.box('Subway stairwell indication',landmark.position.x,.09,landmark.position.z+1.6,1.2,.025,2.5,'#283f40');
+      }
     }
     g.batchStatic();this.setOrder(this.order);this.loading=false;
   }

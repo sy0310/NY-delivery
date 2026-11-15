@@ -13,6 +13,7 @@ import type { Interaction } from './Interaction';
 import { MusicPlayer } from './MusicPlayer';
 import { MusicPanel } from './MusicPanel';
 import { planRoute } from './CityLayout';
+import { routeWalking } from './WalkingRoute';
 import { FLUSHING_DISTRICT } from './FlushingDistrict';
 import { CHINATOWN_DISTRICT } from './ChinatownDistrict';
 import type { DistrictDefinition } from './DistrictDefinition';
@@ -56,6 +57,8 @@ export class DeliveryDemo extends Component {
   private sceneReady=false;
   private quality: 'low'|'standard'='standard';
   private swaps=0;
+  private completedRuns:object[]=[];
+  private switchEvents:object[]=[];
   private timing = new OrderTiming();
   private orderStartDistance = 0;
   private working = true;
@@ -149,6 +152,8 @@ export class DeliveryDemo extends Component {
       this.notice='完成当前订单并结束本次工作后，可选择新区域。';return;
     }
     const changed=next.id!==this.district.id;
+    const audioBefore=this.musicSnapshot();
+    const previousDistrict=this.district.id;
     if(!changed && this.sceneReady)return;
     this.loading=true;this.sceneReady=false;this.clearKeys();this.vehicle.speed=0;
     this.hud.querySelector('#notice')!.textContent='正在加载 '+next.name+'…';
@@ -164,6 +169,8 @@ export class DeliveryDemo extends Component {
       Object.assign(this.vehicle,{x:next.spawn.x,z:next.spawn.z,yaw:next.spawn.yaw/DEG,speed:0});
       this.walker.place(next.spawn,this.vehicle.yaw);this.lastExit={...next.spawn};this.inCar=true;this.recenterView();
       this.world.setQuality(this.quality);this.sceneReady=true;
+      if(changed)this.switchEvents.push({seconds:performance.now()/1000,from:previousDistrict,to:next.id,
+        before:audioBefore,after:this.musicSnapshot(),generation:this.world.generation});
       this.notice='已进入 '+next.name+'。选择接单后出发，音乐保持当前状态。';
     } catch(error) {
       this.notice='街区加载失败，可在工作区域中重试。'+String(error);
@@ -171,6 +178,12 @@ export class DeliveryDemo extends Component {
     } finally {
       this.loading=false;this.clearKeys();this.renderHUD();
     }
+  }
+
+  private musicSnapshot():object {
+    return {time:this.music.audio.currentTime,paused:this.music.audio.paused,source:this.music.playlist.source,
+      wantsPlayback:this.music.playlist.wantsPlayback,track:this.music.playlist.current?.id,
+      queue:this.music.playlist.tracks.map(track=>track.id),levels:this.music.levels};
   }
 
   private onKeyDown = (event: EventKeyboard): void => {
@@ -324,7 +337,7 @@ export class DeliveryDemo extends Component {
     const output = this.hud.querySelector<HTMLTextAreaElement>('#performance-output')!;
     output.value = JSON.stringify({engine:'3.8.8',time:new Date().toISOString(),
       viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},
-      timeToHudMs:this.timeToHud,swaps:this.swaps,completedOrders:this.order.completedOrders,quality:this.quality,
+      timeToHudMs:this.timeToHud,switchEvents:this.switchEvents,deliveries:this.completedRuns,swaps:this.swaps,completedOrders:this.order.completedOrders,quality:this.quality,
       districts:Object.fromEntries([FLUSHING_DISTRICT,CHINATOWN_DISTRICT].map(district=>[district.id,this.performanceRun!.summary(district.id)])),
       summary:this.performanceRun.summary(),resources:this.resourceSamples,
       frameColumns:['milliseconds','mode','district'],frames:this.performanceRun.samples,
@@ -437,6 +450,9 @@ export class DeliveryDemo extends Component {
         break;
       case 'deliver':
         if (this.order.deliver()) {
+          this.completedRuns.push({id:this.order.data.id,district:this.district.id,restaurant:this.order.data.restaurantId,
+            delivery:this.order.data.deliveryPointId,elapsed:this.elapsed,distance:this.vehicle.distance-this.orderStartDistance,
+            phases:{...this.timing.seconds},earnings:this.order.earnings,completed:this.order.completedOrders});
           this.notice = '已交付 · $' + this.order.earnings.toFixed(2) + '，可继续接单或结束工作。';
           this.music.chime();
         }
@@ -700,7 +716,7 @@ export class DeliveryDemo extends Component {
     const target = stage === 'carrying' ? this.lastExit : ['stowed','delivering'].includes(stage) ? this.dropoff : this.pickup;
     const playerHeading = this.inCar ? this.vehicle : this.walker;
     const parking = stage === 'accepted' || stage === 'idle' ? data.pickupParking! : data.dropoffParking!;
-    const route = planRoute(playerHeading,this.inCar?parking:target,this.district,this.inCar?'car':'foot');
+    const route = this.inCar?planRoute(playerHeading,parking,this.district,'car'):routeWalking(this.district,playerHeading,target,this.vehicle);
     const next = route.points.find(point=>this.distance(point.x,point.z)>(this.inCar?8:.7)) ?? target;
     const navigation = directionTo(playerHeading, next);
     const routeDistance = Math.round(route.distance);

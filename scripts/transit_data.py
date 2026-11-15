@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """MTA point snapshots and official ArcGIS coordinate projection, run only offline at development time."""
 import hashlib
 import json
