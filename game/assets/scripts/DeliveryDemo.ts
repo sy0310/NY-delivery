@@ -90,6 +90,8 @@ export class DeliveryDemo extends Component {
   private performanceNext = 0;
   private wasBackground = false;
   private timeToHud = 0;
+  private timeToSceneReady=0;
+  private startupFrames:object[]=[];
   private resourceSamples: object[] = [];
   private runSummary = '';
   private mapOpen = false;
@@ -128,6 +130,7 @@ export class DeliveryDemo extends Component {
     this.music = new MusicPlayer();
     profiler.hideStats();
     this.createHUD();
+    this.timeToHud=performance.now();
     resources.load('music/evening-loop', AudioClip, (error, clip) => {
       if (error) this.music.message = '演示曲载入失败，仍可选择本地歌曲';
       else this.music.setDemo(clip.nativeUrl);
@@ -143,7 +146,7 @@ export class DeliveryDemo extends Component {
     await this.loadArea(this.district);
     this.updateView();
     this.renderHUD();
-    this.timeToHud = performance.now();
+    this.timeToSceneReady = performance.now();
   }
 
   private async loadArea(next:DistrictDefinition):Promise<void> {
@@ -251,6 +254,7 @@ export class DeliveryDemo extends Component {
     if (!this.world || !this.hud) return;
     this.samplePerformance(dt);
     if(!this.sceneReady || this.loading) return;
+    if(this.startupFrames.length<180)this.startupFrames.push({milliseconds:dt*1000,sinceNavigation:performance.now(),foreground:!document.hidden&&document.hasFocus(),...this.readResources()});
     if (!this.paused && this.order.stage !== 'idle' && this.order.stage !== 'delivered') this.elapsed += dt;
     this.noticeAge += dt;
     this.frames.push(dt);
@@ -299,6 +303,13 @@ export class DeliveryDemo extends Component {
     if (this.refresh > .1) { this.renderHUD(); this.refresh = 0; }
   }
 
+  private readResources():{drawCalls:number;triangles:number;textureBytes:number;bufferBytes:number;jsHeapBytes:number|null} {
+    const device=director.root!.device;
+    const memory=(performance as Performance & {memory?:{usedJSHeapSize:number}}).memory;
+    return {drawCalls:device.numDrawCalls,triangles:device.numTris,textureBytes:device.memoryStatus.textureSize,
+      bufferBytes:device.memoryStatus.bufferSize,jsHeapBytes:memory?.usedJSHeapSize??null};
+  }
+
   private samplePerformance(dt: number): void {
     if (!this.sampling || !this.performanceRun) return;
     const background = document.hidden || !document.hasFocus();
@@ -309,13 +320,9 @@ export class DeliveryDemo extends Component {
     const now = performance.now();
     if (now < this.performanceNext) return;
     this.performanceNext = now + 5000;
-    const device = director.root!.device;
-    const memory = (performance as Performance & {memory?: {usedJSHeapSize:number}}).memory;
     this.resourceSamples.push({seconds:(now-this.performanceStart)/1000, mode,
       district:this.district.id,quality:this.quality,renderScale:director.root!.pipeline.shadingScale,generation:this.world.generation,completed:this.order.completedOrders,
-      drawCalls:device.numDrawCalls, triangles:device.numTris,
-      textureBytes:device.memoryStatus.textureSize, bufferBytes:device.memoryStatus.bufferSize,
-      jsHeapBytes:memory?.usedJSHeapSize ?? null});
+      ...this.readResources()});
     const active = this.performanceRun.summary().active;
     this.runSummary = `Run active ${active.seconds.toFixed(1)}s · ${active.fps.toFixed(1)} FPS · p95 ${active.p95.toFixed(1)} / p99 ${active.p99.toFixed(1)} ms · >50ms ${active.longFrames}`;
   }
@@ -337,7 +344,8 @@ export class DeliveryDemo extends Component {
     const output = this.hud.querySelector<HTMLTextAreaElement>('#performance-output')!;
     output.value = JSON.stringify({engine:'3.8.8',time:new Date().toISOString(),
       viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},
-      timeToHudMs:this.timeToHud,switchEvents:this.switchEvents,deliveries:this.completedRuns,swaps:this.swaps,completedOrders:this.order.completedOrders,quality:this.quality,
+      timeToHudMs:this.timeToHud,startup:{hudMs:this.timeToHud,sceneReadyMs:this.timeToSceneReady,frames:this.startupFrames,
+        scope:'First page scene, browser process already running. Cocos texture/buffer estimates and optional JS heap.'},switchEvents:this.switchEvents,deliveries:this.completedRuns,swaps:this.swaps,completedOrders:this.order.completedOrders,quality:this.quality,
       districts:Object.fromEntries([FLUSHING_DISTRICT,CHINATOWN_DISTRICT].map(district=>[district.id,this.performanceRun!.summary(district.id)])),
       summary:this.performanceRun.summary(),resources:this.resourceSamples,
       frameColumns:['milliseconds','mode','district'],frames:this.performanceRun.samples,
