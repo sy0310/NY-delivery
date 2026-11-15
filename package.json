@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
-    "test:coverage": "node --experimental-test-coverage --test tests/*.test.mjs",
+    "test": "node --import ./tests/register-typescript.mjs --test tests/*.test.mjs",
+    "test:coverage": "node --import ./tests/register-typescript.mjs --experimental-test-coverage --test tests/*.test.mjs",
     "build": "python3 scripts/build.py",
     "start": "python3 scripts/serve.py",
     "doctor": "python3 scripts/doctor.py"

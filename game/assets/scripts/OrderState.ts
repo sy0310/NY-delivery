@@ -1,4 +1,7 @@
 export interface OrderData {
+  districtId?: string;
+  restaurantId?: string;
+  deliveryPointId?: string;
   id: string;
   restaurant: string;
   customer: string;
@@ -116,7 +119,12 @@ export class OrderState {
   }
 
   next(data: Readonly<OrderData>): boolean {
-    if (this.stage !== 'delivered' || this.settled.has(data.id) || !data.id) return false;
+    if (this.stage !== 'delivered') return false;
+    return this.selectArea(data);
+  }
+
+  selectArea(data: Readonly<OrderData>): boolean {
+    if (this.stage !== 'idle' && this.stage !== 'delivered' || this.settled.has(data.id) || !data.id) return false;
     this.current = Object.freeze({...data});
     this.resetCurrent();
     return true;
