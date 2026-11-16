@@ -723,7 +723,7 @@ export class DeliveryDemo extends Component {
     const navigation = directionTo(playerHeading, next);
     const routeDistance = Math.round(route.distance);
     const guidance=navigationStep(playerHeading,route.points);
-    const drivingDirection=`${guidance.symbol} ${guidance.distance} m ${guidance.instruction}`;
+    const drivingDirection=guidance.symbol==='↶' ? '↶ 低速调整车头' : `${guidance.symbol} ${guidance.distance} m ${guidance.instruction}`;
     const routes = {
       idle: '自由选歌或静音 · 接单出发',
       accepted: this.inCar ? drivingDirection : `${navigation.symbol} 步行取餐 · ${routeDistance} m`,

@@ -19,14 +19,19 @@ export function mapTransform(width:number,height:number,district:DistrictDefinit
   return {scale,x:(p:CityPoint)=>left+(p.x-minX)*scale,y:(p:CityPoint)=>top+(p.z-minZ)*scale};
 }
 
-export function navigationStep(player:CityPoint,route:CityPoint[]):{symbol:string;instruction:string;distance:number} {
+export function navigationStep(player:CityPoint & {yaw?:number},route:CityPoint[]):{symbol:string;instruction:string;distance:number} {
+  const forward=route.find(point=>Math.hypot(point.x-player.x,point.z-player.z)>8);
+  if (forward && player.yaw!==undefined) {
+    const difference=Math.atan2(-(forward.x-player.x),-(forward.z-player.z))-player.yaw;
+    if (Math.abs(Math.atan2(Math.sin(difference),Math.cos(difference)))>1.9) return {symbol:'↶',instruction:'调整车头',distance:0};
+  }
   const points=[player,...route];
   let distance=0;
   for(let index=1;index<points.length;index++) {
     const a=points[index-1],b=points[index],next=points[index+1];
     const length=Math.hypot(b.x-a.x,b.z-a.z);
     distance+=length;
-    if (!next || length<6) continue;
+    if (!next || length<6 || Math.hypot(next.x-b.x,next.z-b.z)<.5) continue;
     const incoming=Math.atan2(-(b.x-a.x),-(b.z-a.z));
     const outgoing=Math.atan2(-(next.x-b.x),-(next.z-b.z));
     const turn=Math.atan2(Math.sin(outgoing-incoming),Math.cos(outgoing-incoming));
@@ -72,13 +77,13 @@ export function drawDistrictMap(c: CanvasRenderingContext2D,width: number,height
       const length=(points: CityPoint[])=>points.reduce((sum,p,i)=>sum+(i?Math.hypot(p.x-points[i-1].x,p.z-points[i-1].z):0),0);
       return length(b.points)-length(a.points);
     });
-    c.font=(view.navigation?'16':'12')+'px DM-Sans, sans-serif';c.textAlign='center';c.textBaseline='bottom';
+    c.font=(view.navigation?'26':'12')+'px DM-Sans, sans-serif';c.textAlign='center';c.textBaseline='bottom';
     for (const road of roads) {
       if (names.has(road.name)) continue;
       const a=road.points[0],b=road.points[road.points.length-1];
       const labelX=(x(a)+x(b))/2,labelY=(y(a)+y(b))/2;
       if (labelX<35 || labelX>width-35 || labelY<22 || labelY>height-24
-        || labels.some(label=>Math.abs(label.x-labelX)<85 && Math.abs(label.y-labelY)<23)) continue;
+        || labels.some(label=>Math.abs(label.x-labelX)<(view.navigation?150:85) && Math.abs(label.y-labelY)<(view.navigation?36:23))) continue;
       names.add(road.name);labels.push({x:labelX,y:labelY});
       let angle=Math.atan2(y(b)-y(a),x(b)-x(a));
       if (angle>Math.PI/2 || angle<-Math.PI/2) angle+=Math.PI;
@@ -111,6 +116,6 @@ export function drawDistrictMap(c: CanvasRenderingContext2D,width: number,height
   }
   if (view.navigation) {
     c.strokeStyle='#d7e4dc';c.lineWidth=2;c.beginPath();c.moveTo(16,height-16);c.lineTo(16+30*scale,height-16);c.stroke();
-    c.fillStyle='#e5eee9';c.font='14px DM-Sans';c.textAlign='left';c.fillText('30 m',16,height-23);
+    c.fillStyle='#e5eee9';c.font='22px DM-Sans';c.textAlign='left';c.fillText('30 m',16,height-23);
   }
 }
