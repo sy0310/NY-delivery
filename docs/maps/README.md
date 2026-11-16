@@ -1,0 +1,63 @@
+# 真实街区与离线转换
+
+## 当前范围
+
+| 区域 | 实际裁片 | 道路 / 建筑 / glTF分组 | 可玩地点 |
+| --- | --- | --- | --- |
+| 法拉盛，Queens | Main / Roosevelt核心，Prince至Union，约512×312米的边界包围盒，五个完整连通街块 | 19 / 175 / 18 | 槐香面馆、灯笼饺子，38th Avenue住宅、Union门厅、39th Avenue楼门 |
+| 唐人街，Manhattan | Mott / Pell / Doyers核心，向East Broadway与Henry延伸，东界Market，约439×346米 | 37 / 284 / 19 | 珍巷面馆、莫街蒸馆，East Broadway楼门、Henry门厅、Mulberry住宅 |
+
+曼哈顿为保持紧凑，将东界收至Market，Allen / Orchard延伸留待后续。两区通过结束本次工作后选区加载，各自保持实际道路比例和位置。游戏地图中绘制街名、方向、虚线边界、R取餐、D送达与P停车标记。
+
+Chinatown转换选取11个闭合中心线面，包含交通岛等小面。八个有建筑的源面形成C1、C2、C4—C9分组，另有C-infill填充组。来源JSON的历史字段streetBlocks=9统计这九个渲染组，其余为背景和样本分组。法拉盛该字段为五个源街块。所有模型分组均用于资源管理。
+
+## 数据、单位与可复现入口
+
+准确服务查询、UTC获取时间和SHA-256分别见[法拉盛来源](flushing-source.json)与[唐人街来源](chinatown-source.json)。官方道路、建筑快照取得于2026-11-15，采用NYC开放数据适用条款。MTA楼梯入口采用2024数据，公交站筛选当期in_effect=true，来源及许可另见[素材记录](../ASSETS.md)。
+
+- 地理源为EPSG2263。原始坐标长度采用美国测量英尺，乘1200/3937转米，本地X朝东、Z朝南。
+- 法拉盛原点为Main / Roosevelt的中心线端点，2263坐标为1031306.95988648、216054.328747238。
+- 唐人街原点为Pell / Doyers端点，2263坐标为984794.692170342、199706.373130395。
+- HEIGHT_ROOF为离地英尺，乘0.3048换算。0/NULL回退12米并标记。可见高度夹取4.5—96米，原始高度仍保留。当前缺失高度回退均为0，法拉盛30栋、唐人街4栋采用高度夹取。
+
+```bash
+# 使用本机 .local/map-source 已保存的裁片快照离线重建
+.local/road-tools/bin/python scripts/convert-districts.py
+# 从记录的官方接口重新取快照后重建，上游变化会改变校验值
+.local/road-tools/bin/python scripts/convert-districts.py --fetch
+```
+
+大型原始快照保留在本机。脚本、必要生成配置、glTF与.meta入库。新机器可用--fetch重建当前上游裁片，精确重现本次输入需使用来源记录校验相符的快照。游戏运行期间只读取本地生成资产。
+
+## 可见路面与车行边界
+
+离线路面生成使用Python 3.10+、Shapely 2.1.2。本机在.local/road-tools虚拟环境验证，普通游戏运行、Creator导入与发布构建直接使用已生成数据。
+
+```bash
+python3.14 -m venv .local/road-tools
+.local/road-tools/bin/pip install "shapely==2.1.2"
+.local/road-tools/bin/python scripts/convert-districts.py
+.local/road-tools/bin/python tests/street-surfaces.test.py
+```
+
+scripts/street_surfaces.py按car、bus、walk、sidewalk顺序裁切为互斥平面，排除建筑与区域外部，先量化至0.0001m再进行约束Delaunay剖分。DistrictDefinition.surfaces保存多边形边界、孔洞及三角形，World渲染与车身边界判断共用同一份数据。
+
+局部调整保留sourceWidth。法拉盛nyc-84124/84125各加1.4m，唐人街nyc-1782/140948各加1.4m、nyc-99642加1.2m。道路拓扑、单行方向与步行限制继续来自同一源中心线。停车标记按最近线段方向放置。
+
+## 地理筛选和简化
+
+构建中的地面道路采用源STATUS与层级13，并保留FT/TF/TW/NV方向。道路原端点建立拓扑，多段曲线保持完整，二维交叉保持原端点关系。建筑采用FEATURE_CODE2100与最大外环，省略庭院孔洞、平坦化地面、简化屋顶，凹轮廓使用三角剖分。边界外45米内的建筑按最近轮廓距离保留，避免大建筑被质心裁切。
+
+Main / Kissena在固定18:42时段采用普通车禁行的保守简化，保留侧街交叉与步行取餐。Lippmann按源NV保留步行。Doyers为步行广场，车行导航绕行Pell和邻街。公交限行的实际转出例外与全部路边标牌尚未逐一复刻。来源依据为[NYC Busways](https://www.nyc.gov/html/brt/html/busways/busways.shtml)与[步行广场清单](https://www.nyc.gov/html/dot/html/pedestrians/nyc-plaza-program.shtml)。
+
+地铁楼梯和公交标记使用MTA真实点位，经ArcGIS官方投影服务转至2263，再选取边界内、近道路的少量点。法拉盛四个7号线楼梯点和四个公交点，唐人街裁片内选四个公交点。地标采用原创简化外观。
+
+餐厅品牌、菜单、顾客、室内、门厅、入口分配、停车标记和街边设施均为原创游戏布置。停车标记提供可玩的停靠空间，尚未完成真实路缘合法停车调查。
+
+## Creator导入与生命周期
+
+先导入sample-building，再扩展按街块分组的glTF。生成资产含米制位置、法线与UV，保留.meta/UUID，Creator 3.8.8实际导入为Prefab。模型路径使用资源目录及同名模型子资产，法拉盛18个、唐人街19个Prefab在运行中分别核对。
+
+World只加载当前区域细节，切区销毁旧区节点、生成mesh/材质/纹理并释放资源引用。共享车、人、天空和单一音乐播放器独立保留。三个立面图集、屋顶材质和店招缓存减少重复创建。按块AABB距离管理模型，近景门框与消防梯单独控制显示，附近64米网格约束碰撞候选。
+
+低/标准画质分别采用0.7/1.0渲染比例、1024/2048阴影、30/55米阴影距离、128×48@15Hz / 256×96@30Hz后视镜和210/340米街块距离。后视镜切档保留RenderTexture窗口并更新材质绑定。桌面测得预算和实体手机待测边界见[验证记录](../VALIDATION.md)。

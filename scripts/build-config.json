@@ -1,0 +1,15 @@
+{
+  "name": "NY Delivery",
+  "platform": "web-desktop",
+  "buildPath": "project://build",
+  "outputName": "web-desktop",
+  "debug": true,
+  "startScene": "e4aa4b7f-680d-430d-a7f5-93161b59e630",
+  "scenes": [
+    {
+      "url": "db://assets/scenes/Orchard.scene",
+      "uuid": "e4aa4b7f-680d-430d-a7f5-93161b59e630"
+    }
+  ],
+  "sourceMaps": true
+}

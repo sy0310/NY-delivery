@@ -8,3 +8,5 @@ game/build/
 node_modules/
 .local/
 *.log
+__pycache__/
+*.pyc
