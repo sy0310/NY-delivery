@@ -94,6 +94,7 @@ export class MusicPlayer {
     try {
       if (!await this.reconcileContext(true)) return;
       if (this.policy.bgm) await this.playCurrent(this.revision, true);
+      if (!this.policy.channels) return;
       this.message = this.context!.state === 'running' ? '游戏声音已恢复' : '请点按恢复声音';
     } catch { if(this.policy.channels) this.message = '声音恢复失败，请再次点按'; }
   }
