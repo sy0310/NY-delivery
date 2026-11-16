@@ -132,7 +132,7 @@ export class DeliveryDemo extends Component {
     camera.near = .05;
     camera.far = 1600;
     camera.visibility |= VEHICLE_LAYER;
-    camera.clearColor = new Color(188, 209, 222, 255);
+    camera.clearColor = new Color(117, 139, 151, 255);
     this.music = new MusicPlayer();
     profiler.hideStats();
     this.createHUD();

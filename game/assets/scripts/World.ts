@@ -7,7 +7,7 @@ import type { OrderData, BagLabel, OrderStage } from './OrderState';
 import { Person } from './Person';
 import type { DistrictDefinition, DistrictPlace, DistrictRestaurant, CityPoint } from './DistrictDefinition';
 import { isAccessible, vehicleAccessible, probeRoad, roomPoint, projectPoint, insidePolygon } from './DistrictNavigation';
-import { roadSegments, placePose, updateDistrictVisibility } from './DistrictPresentation';
+import { roadSegments, placePose, updateDistrictVisibility, backdropBuildings, STREET_BRANDS, frontageVariant } from './DistrictPresentation';
 import type { SceneView } from './DistrictPresentation';
 
 /** District meshes are replaceable. The car, bag and audio owner survive work-area changes. */
@@ -30,6 +30,8 @@ export class World {
   private handoffTime = 0;
   private light: DirectionalLight;
   private lamps:SphereLight[]=[];
+  private sky:Node;
+  private brandMaterial!:Material;
   private quality: 'low'|'standard' = 'standard';
   generation = 0;
   loading = false;
@@ -41,9 +43,9 @@ export class World {
     this.light.shadowEnabled=true;this.light.shadowDistance=55;this.light.shadowBias=.001;
     const globals=root.scene.globals;
     globals.shadows.enabled=true;globals.shadows.type=1;globals.shadows.shadowMapSize=2048;
-    globals.fog.enabled=true;globals.fog.type=0;globals.fog.fogStart=150;globals.fog.fogEnd=510;
-    globals.fog.fogColor=new Color(188,209,222);
-    this.geometry.sky();
+    globals.fog.enabled=true;globals.fog.type=0;globals.fog.fogStart=190;globals.fog.fogEnd=900;
+    globals.fog.fogColor=new Color(117,139,151);
+    this.sky=this.geometry.sky();
     this.sedan=new CarModel(this.geometry);this.car=this.sedan.node;
     root.addChild(this.bag);
     this.geometry.box('Folded paper bag',0,0,0,.34,.49,.24,'#bb8c52',this.bag);
@@ -72,6 +74,8 @@ export class World {
     const group=new Node(district.name+' source geometry');this.root.addChild(group);this.districtRoot=group;
     const g=new ModelGeometry(group,this.surface,this.unlit);this.districtGeometry=g;
     this.buildStreets(g,district);
+    this.buildBackdrop(g,district);
+    this.brandMaterial=g.paintedMaterial(this.brandAtlas()).material;
     const facades=[this.facade(g,0),this.facade(g,1),this.facade(g,2)];
     const roof=g.material('#5b6361');
     blocks.forEach((block,index)=>{
@@ -151,8 +155,59 @@ export class World {
   groundHeight(x:number,z:number):number {return this.district.restaurants.some(place=>{const p=roomPoint(place.entry,place.yaw,{x,z});return Math.abs(p.x)<place.width/2 && p.z>0 && p.z<place.depth;})?.08:0;}
   handoff():void {this.handoffTime=1.2;}
   update(dt:number,telemetry:CarTelemetry,view:SceneView):void {
+    this.sky.setPosition(view.position.x,0,view.position.z);
     this.sedan.update(dt,telemetry,view);
     updateDistrictVisibility(this.chunks,this.details,view.position,this.quality);
+  }
+  private buildBackdrop(g:ModelGeometry,district:DistrictDefinition):void {
+    const colors=['#516871','#607785','#6c818e'];
+    backdropBuildings(district).forEach((building,index)=>{
+      const node=g.box('Background block band '+building.band,building.x,building.height/2,building.z,
+        building.width,building.height,building.depth,colors[building.shade]);
+      node.getComponent(MeshRenderer)!.shadowCastingMode=MeshRenderer.ShadowCastingMode.OFF;
+      if(building.band===0 && index%5===0) {
+        const crown=g.box('Distant street tree',building.x,4,building.z-12,3,4,2.5,'#4d655f');
+        crown.getComponent(MeshRenderer)!.shadowCastingMode=MeshRenderer.ShadowCastingMode.OFF;
+        const lamp=g.box('Distant lamp silhouette',building.x+7,3,building.z-12,.12,6,.12,'#53656b');
+        lamp.getComponent(MeshRenderer)!.shadowCastingMode=MeshRenderer.ShadowCastingMode.OFF;
+      }
+    });
+  }
+
+  private brandAtlas():HTMLCanvasElement {
+    const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=512;
+    const c=canvas.getContext('2d')!;c.translate(0,512);c.scale(1,-1);
+    STREET_BRANDS.forEach((brand,index)=>{
+      c.save();c.translate(index%4*256,Math.floor(index/4)*128);
+      c.fillStyle=brand.color;c.fillRect(0,0,256,128);c.strokeStyle=brand.accent;c.lineWidth=2;c.strokeRect(5,5,246,118);
+      c.save();c.translate(43,62);c.strokeStyle=brand.accent;c.fillStyle=brand.accent;c.lineWidth=4;c.lineCap='round';
+      c.beginPath();
+      if(brand.icon==='bowl' || brand.icon==='steam') {
+        c.arc(0,0,23,0,Math.PI);c.moveTo(-26,0);c.lineTo(26,0);c.moveTo(-12,-10);c.quadraticCurveTo(-20,-20,-10,-30);
+        c.moveTo(4,-10);c.quadraticCurveTo(-4,-20,6,-30);c.stroke();
+      } else if(brand.icon==='leaf' || brand.icon==='flower') {
+        c.ellipse(0,0,12,27,-.5,0,Math.PI*2);c.stroke();c.moveTo(-8,19);c.lineTo(9,-20);c.stroke();
+      } else if(brand.icon==='wash') {
+        c.rect(-24,-26,48,52);c.stroke();c.beginPath();c.arc(0,3,15,0,Math.PI*2);c.stroke();
+        c.beginPath();c.moveTo(-13,4);c.quadraticCurveTo(0,-3,13,4);c.stroke();
+      } else if(brand.icon==='cup') {
+        c.rect(-21,-17,34,36);c.moveTo(13,-10);c.bezierCurveTo(35,-14,35,15,13,12);c.stroke();
+        c.beginPath();c.moveTo(-13,-25);c.quadraticCurveTo(-20,-32,-9,-37);c.stroke();
+      } else {
+        c.rect(-24,-13,48,36);c.moveTo(-20,-13);c.lineTo(-9,-30);c.moveTo(20,-13);c.lineTo(9,-30);
+        c.moveTo(-10,-7);c.lineTo(-10,17);c.moveTo(8,-7);c.lineTo(8,17);c.stroke();
+      }
+      c.restore();c.fillStyle=brand.accent;c.textAlign='left';c.textBaseline='middle';
+      c.font='bold 17px DM-Sans';c.fillText(brand.name,79,43,167);
+      c.font='23px NYDistrictSans, DM-Sans';c.fillText(brand.caption,79,77,167);
+      c.restore();
+    });
+    c.fillStyle='#d6c6a4';c.fillRect(0,384,1024,128);c.fillStyle='#314c4a';
+    c.font='bold 28px DM-Sans';c.fillText('OPEN DAILY',24,425);c.font='24px DM-Sans';c.fillText('8 AM – 9 PM',24,467);
+    c.fillText('FRESH TODAY',282,425);c.fillText('TAKEOUT · PICKUP',282,467);
+    c.fillText('NEIGHBORHOOD',538,425);c.fillText('LOCAL DELIVERY',538,467);
+    c.fillText('PLEASE KEEP',794,425);c.fillText('DOORWAY CLEAR',794,467);
+    return canvas;
   }
   updateActors(dt:number,stage:OrderStage,joined:boolean,remaining:number,player:CityPoint):void {
     this.actorTime+=dt;this.handoffTime=Math.max(0,this.handoffTime-dt);
@@ -269,8 +324,10 @@ export class World {
     g.box('Back kitchen wall',0,1.55,d-.08,w,3.1,.16,'#839487',node);
     g.roundedBox('Service counter',0,.58,5.6,w-1.6,1.16,.9,.05,'#556d63',node);
     g.box('Stone counter top',0,1.19,5.6,w-1.45,.1,1.05,'#d4c6a6',node);
-    g.box('Frontage sign backing',0,2.94,-.12,w,.62,.25,'#324f44',node);
-    const sign=this.sign(g,place.chineseName+' · '+place.name,w-.15,.58,'#324f44',node);sign.setPosition(0,2.95,-.26);sign.setRotationFromEuler(0,180,0);
+    const brand=(this.district.id==='flushing'?0:6)+this.district.restaurants.findIndex(item=>item.id===place.id);
+    g.box('Frontage sign backing',0,3.02,-.12,w,.86,.25,STREET_BRANDS[brand].color,node);
+    const sign=g.atlasPanel('brand-'+brand,w-.15,.82,this.brandMaterial,brand,node);
+    sign.setPosition(0,3.02,-.26);sign.setRotationFromEuler(0,180,0);
     const menu=this.sign(g,place.menu,4,.65,'#263f3d',node);menu.setPosition(0,2.38,d-.18);menu.setRotationFromEuler(0,180,0);
     g.box('Preparation shelf',0,1.2,6.4,w-.3,.12,.8,'#9eaa90',node);
     const lamp=new Node('Warm counter light');node.addChild(lamp);lamp.setPosition(0,2.75,4.3);
@@ -284,12 +341,16 @@ export class World {
     const clerk=new Person(g,node,'#c4b18a',true);clerk.node.setPosition(.5,0,6.45);clerk.node.setRotationFromEuler(0,180,0);
     const rider=new Person(g,node,'#728879');rider.node.setPosition(-1.9,0,3.3);
     const parcel=new Node('Other customer bag');rider.parcelAnchor.addChild(parcel);g.box('Small takeaway bag',0,0,0,.22,.32,.18,'#bd965d',parcel);parcel.active=false;
+    this.streetDetails(g,node,w,place.id,brand);
     this.actors.push({place,clerk,rider,parcel});g.batchStatic(node);
   }
   private shopfronts(g:ModelGeometry,district:DistrictDefinition):void {
     const occupied=new Set([...district.restaurants,...district.deliveries].map(place=>place.buildingId));
     let count=0;
-    for(const building of district.buildings) {
+    const focus=district.restaurants[0].entry;
+    const buildings=district.buildings.slice().sort((a,b)=>
+      Math.hypot(a.footprint[0].x-focus.x,a.footprint[0].z-focus.z)-Math.hypot(b.footprint[0].x-focus.x,b.footprint[0].z-focus.z));
+    for(const building of buildings) {
       if(building.block.startsWith('context') || occupied.has(building.id) || count>=38)continue;
       const candidates=building.footprint.map((a,index)=>{
         const b=building.footprint[(index+1)%building.footprint.length],mid={x:(a.x+b.x)/2,z:(a.z+b.z)/2};
@@ -302,11 +363,13 @@ export class World {
       const place={entry:edge.mid,yaw};
       if(!insidePolygon(placePose(place,0,.4),building.footprint))place.yaw+=180;
       const node=this.placeRoot({...place,id:'front-'+building.id,name:'Commercial frontage',parking:place.entry,walkway:[]},g);
-      const names=district.id==='flushing'?['亚洲超市 · MARKET','烘焙 · BAKERY','茶铺 · TEA','美食广场 · FOOD HALL']:['GROCER · 食品','TEA & BAKERY · 茶点','PRINT & POST','NEIGHBORHOOD MARKET'];
+      const variant=frontageVariant(building.id),brand=(district.id==='flushing'?2:8)+variant.brand;
       g.box('Lower storefront glazing',0,1.35,-.04,width,2.7,.12,'#2d4e55',node);
       for(const x of [-width/2,0,width/2])g.box('Storefront frame',x,1.35,-.14,.08,2.7,.1,'#b2a383',node);
-      const sign=this.sign(g,names[count%names.length],width,.65,district.id==='flushing'?'#455e49':'#743d32',node);sign.setPosition(0,2.95,-.14);sign.setRotationFromEuler(0,180,0);
-      g.box('Canvas awning',0,2.5,-.45,width,.12,.9,district.id==='flushing'?'#7b9275':'#a6785b',node);
+      const sign=g.atlasPanel('brand-'+brand,width,.82,this.brandMaterial,brand,node);sign.setPosition(0,3.05,-.14);sign.setRotationFromEuler(0,180,0);
+      const awning=g.box('Canvas awning',0,2.5,-.45,width,.12,variant.awning===2?.55:1,STREET_BRANDS[brand].color,node);
+      awning.setRotationFromEuler(variant.awning===1?-12:0,0,0);
+      if(count<12)this.streetDetails(g,node,width,building.id,brand);
       if(district.id==='chinatown' && count%3===0 && building.height>10) {
         for(const y of [4.5,7.5]) {
           g.box('Fire escape landing',0,y,-.6,3,.1,1.2,'#48514c',node);
@@ -317,6 +380,25 @@ export class World {
       }
       g.batchStatic(node);count++;
     }
+  }
+
+  private streetDetails(g:ModelGeometry,node:Node,width:number,id:string,brand:number):void {
+    const variant=frontageVariant(id),identity=STREET_BRANDS[brand];
+    const hours=g.atlasPanel('hours',1.1,.55,this.brandMaterial,12,node);
+    hours.setPosition(width*.27,1.45,-.16);hours.setRotationFromEuler(0,180,0);
+    const poster=g.atlasPanel('notice-'+Number(variant.poster),1.15,.58,this.brandMaterial,variant.poster?13:14,node);
+    poster.setPosition(-width*.28,1.05,-.17);poster.setRotationFromEuler(0,180,0);
+    g.box('Window curtain',variant.curtain?-width*.22:width*.22,2.05,-.13,width*.28,.45,.025,'#c5b89c',node);
+    g.box('Faded kerb repair',width*.26,.125,-1.15,1.25,.004,.3,'#8d948b',node);
+    if(variant.crate) {
+      g.box('Folded produce crate',width*.37,.27,-.65,.58,.5,.44,'#9d835d',node);
+      g.box('Crate handle',width*.37,.38,-.89,.23,.07,.025,'#4d5d53',node);
+    }
+    if(variant.aircon) {
+      g.box('Window air conditioner',-width*.32,3.85,-.27,.85,.5,.5,'#b0b2a5',node);
+      for(const y of [3.72,3.83,3.94])g.box('Air conditioner vent',-width*.32,y,-.53,.68,.035,.025,'#4d5d53',node);
+    }
+    g.box('Small shop sticker',width*.16,.68,-.17,.18,.24,.025,identity.accent,node);
   }
 
   private destination(g:ModelGeometry,place:DistrictDefinition['deliveries'][number]):void {

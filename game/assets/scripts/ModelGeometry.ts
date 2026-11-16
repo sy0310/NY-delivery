@@ -41,6 +41,19 @@ export class ModelGeometry {
     return node;
   }
 
+  atlasPanel(key:string,width:number,height:number,material:Material,cell:number,parent:Node):Node {
+    const cacheKey='atlas/'+key;
+    let shared=this.panels.get(cacheKey);
+    if(!shared) {
+      const u=cell%4/4,v=Math.floor(cell/4)/4;
+      const geometry=primitives.quad();geometry.uvs=[u,v,u+.25,v,u,v+.25,u+.25,v+.25];
+      shared={material,mesh:utils.createMesh(geometry)};this.panels.set(cacheKey,shared);
+    }
+    const node=this.mesh(key,shared.mesh,shared.material,parent);node.setScale(width,height,1);
+    node.getComponent(MeshRenderer)!.shadowCastingMode=MeshRenderer.ShadowCastingMode.OFF;
+    return node;
+  }
+
   material(hex: string, metallic = 0, roughness = .8, finish?: 'grain' | 'brushed'): Material {
     const key = `${hex}/${metallic}/${roughness}/${finish || ''}`;
     let material = this.materials.get(key);
@@ -229,16 +242,16 @@ export class ModelGeometry {
     return { canvas, context, texture, node };
   }
 
-  sky(): void {
+  sky(): Node {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 512;
     const context = canvas.getContext('2d')!;
     const gradient = context.createLinearGradient(0, 0, 0, 512);
-    gradient.addColorStop(0, '#6e8390');
-    gradient.addColorStop(.46, '#9fbfd4');
-    gradient.addColorStop(.56, '#83acc9');
-    gradient.addColorStop(1, '#497ba9');
+    gradient.addColorStop(0, '#647d8b');
+    gradient.addColorStop(.46, '#869faf');
+    gradient.addColorStop(.56, '#7396b1');
+    gradient.addColorStop(1, '#426c92');
     context.fillStyle = gradient;
     context.fillRect(0, 0, 512, 512);
     const painted = this.paintedMaterial(canvas);
@@ -251,9 +264,9 @@ export class ModelGeometry {
         depthStencilState: { depthWrite: false },
       },
     });
-    const sky = this.mesh('Blue evening sky dome', utils.createMesh(primitives.sphere(1100, { segments: 48 })), material);
-    sky.setPosition(150, 0, -170);
+    const sky = this.mesh('Blue evening sky dome', utils.createMesh(primitives.sphere(1300, { segments: 32 })), material);
     sky.getComponent(MeshRenderer)!.shadowCastingMode = MeshRenderer.ShadowCastingMode.OFF;
+    return sky;
   }
 
   /** Preserve material boundaries while reducing thousands of static detail draws. */
