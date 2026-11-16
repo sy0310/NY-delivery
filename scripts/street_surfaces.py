@@ -1,7 +1,7 @@
 """Bake shared street polygons and disjoint pavement meshes with Shapely 2.1.2."""
 import json
 from pathlib import Path
-from shapely import constrained_delaunay_triangles, make_valid, unary_union
+from shapely import constrained_delaunay_triangles, make_valid, set_precision, unary_union
 from shapely.geometry import LineString, Polygon, box
 
 # Authored clearance adjustments in metres, limited to the delivery turns below.
@@ -19,7 +19,7 @@ def polygon_parts(geometry):
 
 def surface_record(kind, geometry):
     polygons, triangles = [], []
-    for polygon in polygon_parts(geometry):
+    for polygon in polygon_parts(set_precision(geometry, .0001)):
         if polygon.area < .001:
             continue
         def ring(coordinates):
