@@ -107,6 +107,15 @@ test('mute-all wins even when the media play promise completes after context rec
   player.muteAll();player.audio.playGate.resolve();await pending;await flush();
   assertMuted(player,true);
 });
+test('explicit recovery waiting for media playback preserves the later all-muted message',async t=>{
+  const player=fixture(t),starting=player.play();await flush();
+  player.context.gate.resolve();await starting;
+  player.audio.pause();player.audio.playGate=Promise.withResolvers();
+  const pending=player.resumeSound();await flush();
+  assert.equal(player.audio.playCalls,2);
+  player.muteAll();player.audio.playGate.resolve();await pending;await flush();
+  assertMuted(player,true);
+});
 test('overlapping old recovery and a new effects-only request finish in the latest policy',async t=>{
   const player=fixture(t),pending=player.play();await flush();
   player.muteAll();player.effectsVolume(.4);
