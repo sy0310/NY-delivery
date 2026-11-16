@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const report=JSON.parse(await readFile(process.argv[2],'utf8'));
-assert.deepEqual(report.toolbar,['地图','菜单']);
+assert.deepEqual(report.toolbar,process.argv.includes('--music-shortcut')?['地图','音乐','菜单']:['地图','菜单']);
 assert.equal(report.musicVisible,false);
 assert.equal(report.phoneVisible,false);
 assert.equal(report.navigationVisible,true);

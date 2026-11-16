@@ -20,22 +20,30 @@ export function mapTransform(width:number,height:number,district:DistrictDefinit
 }
 
 export function navigationStep(player:CityPoint & {yaw?:number},route:CityPoint[]):{symbol:string;instruction:string;distance:number} {
+  const points=[player,...route];
+  const total=route.reduce((sum,point,index)=>sum+Math.hypot(point.x-points[index].x,point.z-points[index].z),0);
+  if(total<12)return {symbol:'P',instruction:'靠边停车',distance:Math.round(total)};
   const forward=route.find(point=>Math.hypot(point.x-player.x,point.z-player.z)>8);
   if (forward && player.yaw!==undefined) {
     const difference=Math.atan2(-(forward.x-player.x),-(forward.z-player.z))-player.yaw;
     if (Math.abs(Math.atan2(Math.sin(difference),Math.cos(difference)))>1.9) return {symbol:'↶',instruction:'调整车头',distance:0};
   }
-  const points=[player,...route];
   let distance=0;
+  let accumulated=0,turnStart=0;
   for(let index=1;index<points.length;index++) {
     const a=points[index-1],b=points[index],next=points[index+1];
     const length=Math.hypot(b.x-a.x,b.z-a.z);
     distance+=length;
-    if (!next || length<6 || Math.hypot(next.x-b.x,next.z-b.z)<.5) continue;
+    if (!next || index===1 && length<6 || Math.hypot(next.x-b.x,next.z-b.z)<.5) continue;
     const incoming=Math.atan2(-(b.x-a.x),-(b.z-a.z));
     const outgoing=Math.atan2(-(next.x-b.x),-(next.z-b.z));
     const turn=Math.atan2(Math.sin(outgoing-incoming),Math.cos(outgoing-incoming));
-    if (Math.abs(turn)>.4 && distance<160) return {symbol:turn>0?'←':'→',instruction:turn>0?'左转':'右转',distance:Math.round(distance)};
+    if(Math.abs(turn)<.045){accumulated=0;continue;}
+    if(length>18 || accumulated*turn<=0){accumulated=turn;turnStart=distance;}
+    else accumulated+=turn;
+    if(Math.abs(accumulated)>.4) return turnStart<160
+      ?{symbol:accumulated>0?'←':'→',instruction:accumulated>0?'左转':'右转',distance:Math.round(turnStart)}
+      :{symbol:'↑',instruction:'直行',distance:Math.round(turnStart)};
   }
   return {symbol:distance<12?'P':'↑',instruction:distance<12?'靠边停车':'直行',distance:Math.round(distance)};
 }

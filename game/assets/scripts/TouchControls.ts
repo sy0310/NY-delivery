@@ -23,16 +23,16 @@ export class TouchControls {
       #delivery-hud .touch-controls { position:absolute; inset:0; display:none; pointer-events:none; }
       #delivery-hud.touch-mode .touch-controls { display:block; }
       #delivery-hud .touch-controls button, #delivery-hud .stick { touch-action:none; user-select:none; -webkit-user-select:none; }
-      #delivery-hud .stick { position:absolute; left:24px; bottom:24px; width:132px; height:132px; border:2px solid #c6d3c18a; border-radius:50%; background:#18333966; pointer-events:auto; }
+      #delivery-hud .stick { position:absolute; left:max(20px,env(safe-area-inset-left)); bottom:max(20px,env(safe-area-inset-bottom)); width:var(--stick-size,clamp(104px,28vw,132px)); height:var(--stick-size,clamp(104px,28vw,132px)); border:2px solid #c6d3c18a; border-radius:50%; background:rgb(24 51 57 / var(--control-opacity,.55)); pointer-events:auto; }
       #delivery-hud .stick-label { position:absolute; top:8px; width:100%; text-align:center; color:#e7e6cf; font-size:11px; }
-      #delivery-hud .stick-knob { position:absolute; left:40px; top:40px; width:48px; height:48px; border:1px solid #d9bd83; border-radius:50%; background:#bfab7dbb; pointer-events:none; }
-      #delivery-hud .pedals { position:absolute; bottom:24px; right:24px; display:grid; grid-template-columns:70px 70px; gap:10px; }
-      #delivery-hud .pedals button { background:#19353ce6; color:#eee8d6; border:1px solid #99ada3; min-height:44px; border-radius:12px; }
+      #delivery-hud .stick-knob { position:absolute; left:calc(50% - 24px); top:calc(50% - 24px); width:48px; height:48px; border:1px solid #d9bd83; border-radius:50%; background:#bfab7dbb; pointer-events:none; }
+      #delivery-hud .pedals { position:absolute; bottom:max(20px,env(safe-area-inset-bottom)); right:max(20px,env(safe-area-inset-right)); display:grid; grid-template-columns:var(--pedal-width,clamp(58px,16vw,70px)) var(--pedal-width,clamp(58px,16vw,70px)); gap:10px; }
+      #delivery-hud .pedals button { background:rgb(25 53 60 / var(--control-opacity,.75)); color:#eee8d6; border:1px solid #99ada3; min-height:44px; border-radius:12px; }
       #delivery-hud .pedals .selected { background:#d9bd83; color:#172c32; }
       #delivery-hud .pedals #touch-brake { height:78px; }
       #delivery-hud .pedals #touch-gas { height:100px; background:repeating-linear-gradient(90deg,#34554eee 0 10px,#294740ee 10px 13px); }
       #delivery-hud .touch-controls button.held { background:#d9bd83 !important; color:#172c32 !important; }
-      #delivery-hud #touch-action { position:absolute; bottom:194px; right:24px; min-height:48px; width:150px; }
+      #delivery-hud #touch-action { position:absolute; bottom:calc(max(20px,env(safe-area-inset-bottom)) + 170px); right:max(20px,env(safe-area-inset-right)); min-height:48px; width:150px; }
       #delivery-hud .touch-tools { position:absolute; left:50%; bottom:24px; transform:translateX(-50%); display:flex; gap:8px; }
       #delivery-hud .touch-tools button { min-height:44px; padding:8px 12px; color:#dce4d6; background:#183339ce; border:1px solid #92aaa0; }
       #delivery-hud .look-hint { position:absolute; top:100px; right:24px; font-size:10px; color:#ecedd9; background:#183339b0; padding:3px 7px; border-radius:4px; }
@@ -122,13 +122,21 @@ export class TouchControls {
       }, options);
     }
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.clear(); }, options);
+    window.addEventListener('resize',()=>this.clear(),options);
     this.applyMode();
   }
 
   private button(id: string): HTMLButtonElement { return this.root.querySelector<HTMLButtonElement>('#' + id)!; }
   private drawStick(): void {
     const knob = this.root.querySelector<HTMLElement>('.stick-knob')!;
-    knob.style.transform = `translate(${this.input.horizontal * 44}px, ${-this.input.forward * 44}px)`;
+    const travel=Math.min(44,this.root.querySelector<HTMLElement>('.stick')!.clientWidth*.33);
+    knob.style.transform = `translate(${this.input.horizontal * travel}px, ${-this.input.forward * travel}px)`;
+  }
+  configure(size:number,opacity:number):void {
+    this.root.style.setProperty('--stick-size',Math.max(104,132*size)+'px');
+    this.root.style.setProperty('--pedal-width',Math.max(58,70*size)+'px');
+    this.root.style.setProperty('--control-opacity',String(opacity));
+    this.clear();
   }
   private applyMode(): void { this.hud.classList.toggle('touch-mode', this.enabled); }
   toggle(): void { this.enabled = !this.enabled; this.clear(); this.applyMode(); }

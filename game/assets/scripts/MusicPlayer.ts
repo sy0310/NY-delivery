@@ -220,6 +220,13 @@ export class MusicPlayer {
     if (source === 'external') this.message = '内部 BGM 已关闭。请自行开启外部 App，手机共存需真机验证。';
     this.reconcileContext();
   }
+  externalAudio(mode:'effects'|'silent'):void {
+    this.source('external');
+    if(mode==='silent') {this.muteAll();return;}
+    this.environmentVolume(.2);this.effectsVolume(.45);
+    void this.resumeSound();
+    this.message='游戏背景音乐已关闭。请用系统切换到音乐 App 选曲播放，再返回 TapTap。';
+  }
   next(direction = 1): void { this.playlist.next(direction); this.sync(true); }
   select(id: string): void { if (this.playlist.select(id)) this.sync(true); }
   remove(id: string): void { const retired = this.playlist.remove(id); this.sync(); this.release(retired); }

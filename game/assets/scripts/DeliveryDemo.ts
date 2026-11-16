@@ -97,6 +97,7 @@ export class DeliveryDemo extends Component {
   private runSummary = '';
   private mapOpen = false;
   private buildVersion='editor';
+  private counterPanelDismissed=false;
   private lastExit = {x:.6,z:23};
 
   async start(): Promise<void> {
@@ -200,12 +201,16 @@ export class DeliveryDemo extends Component {
 
   private onKeyDown = (event: EventKeyboard): void => {
     if (!this.sceneReady || this.loading) return;
-    if (event.keyCode === KeyCode.ESCAPE) { this.togglePause(); return; }
+    if (event.keyCode === KeyCode.ESCAPE) {
+      if(this.hud.classList.contains('music-open') || this.hud.classList.contains('phone-open'))this.closePanel();
+      else this.togglePause();
+      return;
+    }
     if (document.activeElement?.matches('input,select,textarea')) return;
     const code = KEY_BINDINGS[event.keyCode];
     if (!code || this.keys.has(code)) return;
     this.keys.add(code);
-    if (code === 'KeyE') this.interact();
+    if (code === 'KeyE' && !this.paused && !this.mapOpen && !this.hud.classList.contains('music-open') && !this.hud.classList.contains('phone-open')) this.interact();
     if (code === 'KeyM') this.music.toggle();
     if (code === 'F3') this.diagnostics = !this.diagnostics;
   };
@@ -270,7 +275,7 @@ export class DeliveryDemo extends Component {
     if (this.frames.length > 600) this.frames.shift();
     const step = this.paused ? 0 : Math.min(dt, .05);
     const blocked = this.paused || this.mapOpen || this.hud.classList.contains('music-open')
-      || this.hud.classList.contains('phone-open');
+      || this.hud.classList.contains('phone-open') || this.hud.classList.contains('counter-open');
     this.touch.suspend(blocked);
     const controls = this.touch.input;
     const horizontal = blocked ? 0 : Math.max(-1, Math.min(1, this.axis(RIGHT_KEYS, LEFT_KEYS) + controls.horizontal));
@@ -345,7 +350,6 @@ export class DeliveryDemo extends Component {
     this.performanceNext = 0;
     this.wasBackground = document.hidden;
     this.sampling = true;
-    if (this.paused) this.togglePause();
     this.notice = '整段性能采样已开始，暂停菜单可停止并查看原始数据。';
   }
 
@@ -488,6 +492,21 @@ export class DeliveryDemo extends Component {
     if (this.paused) this.hud.classList.remove('phone-open','music-open');
   }
 
+  private openPanel(panel:'music'|'phone'):void {
+    this.clearKeys();this.vehicle.speed=0;
+    this.hud.classList.remove('phone-open','music-open');
+    this.hud.classList.add(panel+'-open');
+    this.hud.querySelector<HTMLElement>('#pause-menu')!.hidden=true;
+    if(panel==='phone')this.counterPanelDismissed=false;
+  }
+
+  private closePanel():void {
+    this.clearKeys();this.hud.classList.remove('phone-open','music-open');
+    this.counterPanelDismissed=true;
+    this.hud.querySelector<HTMLElement>('#pause-menu')!.hidden=!this.paused;
+    game.canvas.focus();
+  }
+
   private recover(): void {
     this.vehicle.reset();
     Object.assign(this.vehicle,{x:this.district.spawn.x,z:this.district.spawn.z,yaw:this.district.spawn.yaw/DEG});
@@ -573,7 +592,7 @@ export class DeliveryDemo extends Component {
       #delivery-hud button { min-height:44px; }
       #delivery-hud .toolbar { position:absolute; top:var(--edge-top); right:var(--edge-right); display:flex; gap:8px; pointer-events:auto; }
       #delivery-hud .toolbar button { background:#16323bea; color:#edf3ed; border:1px solid #718f85; min-width:52px; }
-      #delivery-hud .top { top:var(--edge-top); left:var(--edge-left); max-width:calc(100% - 140px); }
+      #delivery-hud .top { top:var(--edge-top); left:var(--edge-left); max-width:calc(100% - 208px); }
       #delivery-hud .wordmark { font-size:20px; }
       #delivery-hud .sub, #delivery-hud .controls { display:none; }
       #delivery-hud .route { margin-top:6px; font-size:14px; padding:8px 12px; max-width:280px; }
@@ -584,13 +603,29 @@ export class DeliveryDemo extends Component {
       #delivery-hud .phone { display:none; top:calc(var(--edge-top) + 54px); right:var(--edge-right); max-height:calc(100% - 86px); overflow:auto; width:min(280px,calc(100% - 24px)); }
       #delivery-hud.phone-open .phone, #delivery-hud.counter-open .phone { display:block; }
       #delivery-hud .phone button, #delivery-hud .phone input { min-height:44px; }
-      #delivery-hud .music { display:none; position:absolute; top:calc(var(--edge-top) + 54px); bottom:auto; left:50%; transform:translateX(-50%); width:min(380px,calc(100% - 24px)); max-height:calc(100% - 86px); overflow:auto; padding:12px; }
-      #delivery-hud.music-open .music { display:block; }
-      #delivery-hud .music-details { position:static; display:block; padding-top:12px; }
-      #delivery-hud .music button { min-height:44px; padding:8px 10px; }
-      #delivery-hud .music-details select { background:#243e43; color:#f0e8d4; min-height:44px; max-width:170px; }
-      #delivery-hud .music-details label { display:inline-block; margin:5px 0; }
-      #delivery-hud .music-note { font-size:11px; line-height:1.5; color:#c7d2c9; }
+      #delivery-hud .music { display:none; position:absolute; top:50%; bottom:auto; left:50%; transform:translate(-50%,-50%); width:min(720px,calc(100% - 24px)); height:min(590px,calc(100% - 24px)); max-height:calc(100% - 24px); padding:14px; background:#162e34fa; border:1px solid #819d91; border-radius:12px; z-index:25; }
+      #delivery-hud.music-open .music { display:flex; flex-direction:column; gap:10px; }
+      #delivery-hud.music-open .phone { display:none; }
+      #delivery-hud .music-header h2 { font:24px 'InstrumentSerif',serif; margin:0; }
+      #delivery-hud .music-sources, #delivery-hud .music-transport { display:flex; gap:6px; }
+      #delivery-hud .music-sources button { flex:1; background:#27474b; color:#e4e9dc; border:1px solid #67887c; }
+      #delivery-hud .music-sources button[aria-selected=true] { background:#d9bd83; color:#172c32; }
+      #delivery-hud .music-body { overflow:auto; min-height:0; flex:1; overscroll-behavior:contain; }
+      #delivery-hud .music button { min-height:44px; min-width:44px; padding:8px 10px; font-size:13px; margin:0; }
+      #delivery-hud .music label { font-size:13px; }
+      #delivery-hud .music summary { padding:10px 0; min-height:44px; cursor:pointer; }
+      #delivery-hud .music h3 { font-size:17px; margin:6px 0; }
+      #delivery-hud #track { font-size:19px; line-height:1.4; margin:8px 0; }
+      #delivery-hud .music-transport button { flex:1; }
+      #delivery-hud .music-volume, #delivery-hud .music-settings label { display:flex; align-items:center; gap:12px; min-height:44px; }
+      #delivery-hud .music-volume input { flex:1; }
+      #delivery-hud .music input[type=range] { min-height:44px; width:130px; }
+      #delivery-hud .music input[type=checkbox], #delivery-hud .music input[type=radio] { width:20px; height:20px; accent-color:#d9bd83; }
+      #delivery-hud .music select { background:#243e43; color:#f0e8d4; min-height:44px; }
+      #delivery-hud .music-primary, #delivery-hud .music footer button { width:100%; }
+      #delivery-hud .music-note, #delivery-hud .external-steps { font-size:12px; line-height:1.55; color:#c7d2c9; }
+      #delivery-hud .external-mix { display:flex; flex-wrap:wrap; gap:6px 18px; margin:8px 0; }
+      #delivery-hud .external-mix label { display:flex; align-items:center; min-height:44px; }
       #delivery-hud .playlist-row { display:flex; gap:6px; margin:6px 0; }
       #delivery-hud .playlist-row button:first-child { flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; }
       #delivery-hud #navigation-hud { position:absolute; top:calc(var(--edge-top) + 56px); left:var(--edge-left); width:220px; border:1px solid #6d929c; border-radius:8px; background:#142b33f2; overflow:hidden; }
@@ -622,9 +657,9 @@ export class DeliveryDemo extends Component {
         #delivery-hud .phone h2 { font-size:20px; }
       }
       </style>
-      <nav class="toolbar"><button id="map-toggle">地图</button><button id="pause">菜单</button></nav>
+      <nav class="toolbar"><button id="map-toggle">地图</button><button id="music-quick">音乐</button><button id="pause">菜单</button></nav>
       <div class="top"><div class="sub">NEW YORK · 6:42 PM</div><div class="wordmark">我在纽约送外卖</div><div class="route" id="route"></div></div>
-      <section class="phone"><div class="phone-header"><span>ORCHARD / DELIVERY</span><span>● 4G</span></div><h2 id="restaurant"></h2><div class="muted" id="order-id"></div><div class="order-detail" id="items"></div><div class="muted">交接码</div><div class="code" id="order-code"></div><div class="muted" id="customer"></div><div class="status" id="status"></div>
+      <section class="phone"><div class="phone-header"><span>ORCHARD / DELIVERY</span><button id="order-close">返回</button></div><h2 id="restaurant"></h2><div class="muted" id="order-id"></div><div class="order-detail" id="items"></div><div class="muted">交接码</div><div class="code" id="order-code"></div><div class="muted" id="customer"></div><div class="status" id="status"></div>
       <details id="code-panel"><summary>手动核验与等餐快进</summary><input id="handoff-code" inputmode="numeric" maxlength="4" placeholder="输入交接码" aria-label="交接码"><button id="verify">核对并取餐</button><button id="skip">等餐快进</button></details>
       <button id="action">接单</button></section><section id="result"><div class="muted">DELIVERED · 本单收入</div><div id="pay"></div><div id="summary" class="muted"></div><button id="restart">继续接单</button><button id="end-work">结束本次工作</button></section>
       <div class="controls"><kbd>W / S</kbd> 前进 / 后退　<kbd>A / D</kbd> 驾驶转向 / 步行横移<br>${LOOK_HINT} · 自由观察　<kbd>SPACE</kbd> 刹车<br><kbd>E</kbd> 上下车 / 交互　<kbd>ESC</kbd> 暂停 / 安全复位<br><kbd>M</kbd> 音乐播放 / 暂停</div>
@@ -633,11 +668,11 @@ export class DeliveryDemo extends Component {
       <section id="navigation-hud" aria-label="实时导航" hidden><canvas id="navigation-canvas" width="440" height="260" aria-label="朝向前方的局部导航地图"></canvas><div id="navigation-distance"></div></section>
       <button id="context-action">接单</button>
       <button id="sound-resume" hidden>点按恢复声音</button>
-      <section id="pause-menu" hidden><h2>暂停</h2><div class="menu-actions"><button id="resume">继续游戏</button><button id="order-toggle">订单详情</button><button id="music-toggle">音乐</button><button id="touch-toggle">触屏操作</button><button id="view-center">视角回正</button></div><details><summary>操作与设置</summary><p>W/S油门与倒车，A/D转向或步行横移，空格刹车。手机使用摇杆、踏板和右侧拖动观察。停稳后交互。</p><p>音乐按原播放选择继续，可在音乐面板暂停。</p><label>画质 <select id="quality" aria-label="画质"><option value="standard">标准</option><option value="low">低</option></select></label><p><button id="safe-recover">安全复位</button></p><p>恢复起点并保留订单与音乐。</p><button id="performance-start">开始性能采样</button><button id="performance-finish">停止并查看性能</button></details><details><summary>工作区域</summary><p id="area-status"></p><button class="area-select" id="area-flushing">法拉盛 · Queens</button><button class="area-select" id="area-chinatown">唐人街 · Manhattan</button><p>完成订单并结束本次工作后换区。</p></details></section>
+      <section id="pause-menu" hidden><h2>暂停</h2><div class="menu-actions"><button id="resume">继续游戏</button><button id="order-toggle">订单详情</button><button id="music-toggle">音乐</button><button id="touch-toggle">触屏操作</button><button id="view-center">视角回正</button></div><details><summary>操作与设置</summary><p>W/S油门与倒车，A/D转向或步行横移，空格刹车。手机使用摇杆、踏板和右侧拖动观察。停稳后交互。</p><p>音乐按原播放选择继续，可在音乐面板暂停。</p><label>画质 <select id="quality" aria-label="画质"><option value="standard">标准</option><option value="low">低</option></select></label><p><label>触屏尺寸 <input id="control-size" aria-label="触屏控件尺寸" type="range" min=".9" max="1.1" step=".05" value="1"></label></p><p><label>控件透明度 <input id="control-opacity" aria-label="触屏控件透明度" type="range" min=".35" max=".85" step=".05" value=".6"></label></p><p><button id="safe-recover">安全复位</button></p><p>恢复起点并保留订单与音乐。</p><button id="performance-start">开始性能采样</button><button id="performance-finish">停止并查看性能</button></details><details><summary>工作区域</summary><p id="area-status"></p><button class="area-select" id="area-flushing">法拉盛 · Queens</button><button class="area-select" id="area-chinatown">唐人街 · Manhattan</button><p>完成订单并结束本次工作后换区。</p></details><p id="build-version" class="muted"></p></section>
       <section id="performance-panel" hidden><h2>整段性能采样</h2><textarea id="performance-output" aria-label="性能原始数据" readonly></textarea><button id="performance-close">关闭数据</button></section>
       <section id="district-map" hidden><button id="map-close">返回街道</button><canvas id="map-canvas" aria-label="工作区域地图"></canvas><div id="map-legend"></div></section>
       <div class="notice" id="notice"></div><pre id="diagnostics" style="display:none;position:absolute;left:28px;top:165px;background:#142b30dd;padding:12px;font:10px monospace;max-width:min(370px,calc(100% - 56px));max-height:calc(100% - 185px);white-space:pre-wrap;overflow:auto"></pre>`;
-    this.musicPanel = new MusicPanel(this.music);
+    this.musicPanel = new MusicPanel(this.music,()=>this.closePanel());
     this.hud.appendChild(this.musicPanel.element);
     document.body.appendChild(this.hud);
     this.touch = new TouchControls(this.hud, game.canvas, this.look,
@@ -649,19 +684,25 @@ export class DeliveryDemo extends Component {
       });
     };
     on('touch-toggle', () => { this.clearKeys(); this.touch.toggle(); });
-    on('order-toggle', () => { if(this.paused)this.togglePause(); this.clearKeys(); this.hud.classList.remove('music-open'); this.hud.classList.toggle('phone-open'); });
-    on('music-toggle', () => { if(this.paused)this.togglePause(); this.clearKeys(); this.hud.classList.remove('phone-open'); this.hud.classList.toggle('music-open'); });
+    on('order-toggle', () => this.openPanel('phone'));
+    on('order-close', () => this.closePanel());
+    on('music-toggle', () => this.openPanel('music'));
+    on('music-quick', () => this.openPanel('music'));
     on('view-center',this.recenterView);
     on('map-toggle', () => { this.clearKeys(); this.hud.classList.remove('phone-open','music-open'); this.mapOpen=true; this.hud.querySelector<HTMLElement>('#district-map')!.hidden=false; });
     on('map-close', () => { this.clearKeys(); this.mapOpen=false; this.hud.querySelector<HTMLElement>('#district-map')!.hidden=true; });
-    on('pause', () => this.togglePause());
+    on('pause', () => {this.closePanel();if(!this.paused)this.togglePause();});
     on('area-flushing',()=>{void this.loadArea(FLUSHING_DISTRICT);});
     on('area-chinatown',()=>{void this.loadArea(CHINATOWN_DISTRICT);});
     this.hud.querySelector<HTMLSelectElement>('#quality')!.addEventListener('change',event=>{
       this.quality=(event.target as HTMLSelectElement).value as 'low'|'standard';this.world.setQuality(this.quality);
     });
+    const configureControls=()=>this.touch.configure(Number(this.hud.querySelector<HTMLInputElement>('#control-size')!.value),
+      Number(this.hud.querySelector<HTMLInputElement>('#control-opacity')!.value));
+    this.hud.querySelector('#control-size')!.addEventListener('input',configureControls);
+    this.hud.querySelector('#control-opacity')!.addEventListener('input',configureControls);
     on('resume', () => this.togglePause());
-    on('safe-recover', () => { this.recover(); this.togglePause(); });
+    on('safe-recover', () => this.recover());
     on('sound-resume', () => { void this.music.resumeSound(); });
     on('performance-start', () => this.startPerformance());
     on('performance-finish', () => this.finishPerformance());
@@ -687,7 +728,7 @@ export class DeliveryDemo extends Component {
 
   private renderHUD(): void {
     const viewport = game.canvas.getBoundingClientRect();
-    const scale = this.touch.enabled ? Math.min(1, viewport.width / 360, viewport.height / 340)
+    const scale = this.touch.enabled ? 1
       : Math.min(1, viewport.width / 1100, viewport.height / 650);
     if (scale > 0) {
       Object.assign(this.hud.style, {
@@ -706,7 +747,9 @@ export class DeliveryDemo extends Component {
     this.hud.querySelectorAll<HTMLButtonElement>('.area-select').forEach(button=>{
       button.disabled=this.loading || this.sceneReady && !canSwitchDistrict(this.order.stage,this.working);
     });
-    this.hud.querySelector<HTMLElement>('#sound-resume')!.hidden = !this.music.needsResume;
+    this.hud.querySelector<HTMLElement>('#sound-resume')!.hidden = !this.music.needsResume || this.paused || this.hud.classList.contains('music-open');
+    text('music-close',this.paused?'返回暂停菜单':'返回游戏');
+    text('build-version',this.buildVersion+' · Creator 3.8.8 · 21 mph');
     const stage = this.order.stage;
     text('restaurant', data.restaurant);
     text('order-id', data.id + ' · $' + data.pay.toFixed(2));
@@ -766,11 +809,13 @@ export class DeliveryDemo extends Component {
       delivered: '已交付 · 本单只结算一次',
     };
     text('status', statuses[stage]);
-    this.hud.classList.toggle('counter-open',stage === 'accepted' && this.atCounter());
+    if(!this.atCounter())this.counterPanelDismissed=false;
+    this.hud.classList.toggle('counter-open',!this.paused && !this.counterPanelDismissed && stage === 'accepted' && this.atCounter());
     this.hud.querySelector<HTMLElement>('#code-panel')!.style.display = stage === 'accepted' && this.order.queueJoined && this.atCounter() ? 'block' : 'none';
     this.hud.querySelector<HTMLElement>('#result')!.style.display = stage === 'delivered' ? 'block' : 'none';
     this.hud.querySelector<HTMLElement>('#action')!.style.display = stage === 'delivered' ? 'none' : 'block';
     const action = this.getInteraction();
+    if(this.paused)action.enabled=false;
     this.hud.querySelector<HTMLButtonElement>('#context-action')!.hidden = stage === 'delivered' || !action.enabled;
     this.showInteraction(action);
     if(!this.sceneReady || this.loading) this.hud.querySelectorAll<HTMLButtonElement>('#action,#context-action').forEach(button=>button.disabled=true);
