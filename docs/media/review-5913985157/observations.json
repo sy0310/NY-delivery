@@ -1,0 +1,126 @@
+{
+  "sourceCommit": "ce62b43b1bf78561201fb851f87cce57a4401f5b",
+  "device": "Apple M2 Pro / Brave / 1512x777 / DPR1 viewport override",
+  "observations": [
+    {
+      "case": "flushing-far-counter-standard",
+      "car": {
+        "x": 280.95,
+        "z": -157.01
+      },
+      "hud": "x -158.13  z 19.82  yaw -67.9\nFPS 60.0  p95 17.5 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 473.7780 m (peak 0.0000 m)\nSeat yaw 90.4000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 0.00 s  gain 0.044\nSingle player · paused\nContext running · music 0.55 environment 0.2 effects 0.45\nRender scale 1.00\nCar displays frozen · mirror 0 · updates 3431 panels 1142\nDraws 1247 · triangles 708916 · texture 46.3 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict flushing generation 1 · 18 prefabs · 15/18 blocks · standard · swaps 0\nRoute [{\"x\":-158.101,\"z\":19.809}]\nGoal {\"x\":-158.101,\"z\":19.809}\nOrder FL-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":4,\"toPickupWalk\":354,\"parking\":137,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 4.1 / 495.5 s · 0.8%"
+    },
+    {
+      "case": "flushing-far-counter-low",
+      "car": {
+        "x": 280.95,
+        "z": -157.01
+      },
+      "hud": "x -158.13  z 19.82  yaw -67.9\nFPS 60.0  p95 17.7 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 473.7780 m (peak 0.0000 m)\nSeat yaw 90.4000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 0.00 s  gain 0.044\nSingle player · paused\nContext running · music 0.55 environment 0.2 effects 0.45\nRender scale 0.70\nCar displays frozen · mirror 0 · updates 3431 panels 1142\nDraws 715 · triangles 413579 · texture 46.2 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict flushing generation 1 · 18 prefabs · 13/18 blocks · low · swaps 0\nRoute [{\"x\":-158.101,\"z\":19.809}]\nGoal {\"x\":-158.101,\"z\":19.809}\nOrder FL-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":4,\"toPickupWalk\":396,\"parking\":137,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 4.1 / 537.0 s · 0.8%"
+    },
+    {
+      "case": "flushing-far-door-low",
+      "car": {
+        "x": 280.95,
+        "z": -157.01
+      },
+      "hud": "x -92.55  z -109.82  yaw -515.7\nFPS 59.7  p95 21.4 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 376.8585 m (peak 0.0000 m)\nSeat yaw 2.6441 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 0.00 s  gain 0.044\nSingle player · paused\nContext running · music 0.55 environment 0.2 effects 0.45\nRender scale 0.70\nCar displays frozen · mirror 0 · updates 3431 panels 1142\nDraws 302 · triangles 202955 · texture 46.2 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict flushing generation 1 · 18 prefabs · 15/18 blocks · low · swaps 0\nRoute [{\"x\":-51.261,\"z\":-135.741},{\"x\":-18.03,\"z\":-71.066},{\"x\":275.962,\"z\":-169.556},{\"x\":282.71472527695755,\"z\":-157.70757982176883}]\nGoal {\"x\":282.71472527695755,\"z\":-157.70757982176883}\nOrder FL-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":4,\"toPickupWalk\":396,\"parking\":137,\"wait\":0,\"handoff\":0,\"toCar\":125,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 4.1 / 663.0 s · 0.6%"
+    },
+    {
+      "case": "flushing-far-door-standard",
+      "car": {
+        "x": 280.95,
+        "z": -157.01
+      },
+      "hud": "x -93.64  z -112.24  yaw -515.7\nFPS 59.8  p95 20.5 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 377.6459 m (peak 0.0000 m)\nSeat yaw 2.6441 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 0.00 s  gain 0.044\nSingle player · paused\nContext running · music 0.55 environment 0.2 effects 0.45\nRender scale 1.00\nCar displays frozen · mirror 0 · updates 3431 panels 1142\nDraws 1032 · triangles 583259 · texture 46.3 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict flushing generation 1 · 18 prefabs · 16/18 blocks · standard · swaps 0\nRoute [{\"x\":-51.261,\"z\":-135.741},{\"x\":-18.03,\"z\":-71.066},{\"x\":275.962,\"z\":-169.556},{\"x\":282.71472527695755,\"z\":-157.70757982176883}]\nGoal {\"x\":282.71472527695755,\"z\":-157.70757982176883}\nOrder FL-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":4,\"toPickupWalk\":396,\"parking\":137,\"wait\":0,\"handoff\":0,\"toCar\":161,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 4.1 / 698.8 s · 0.6%"
+    },
+    {
+      "case": "flushing-far-door-low-framed",
+      "car": {
+        "x": 280.95,
+        "z": -157.01
+      },
+      "hud": "x -93.64  z -112.24  yaw -515.7\nFPS 59.8  p95 20.4 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 377.6459 m (peak 0.0000 m)\nSeat yaw 2.6441 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 0.00 s  gain 0.044\nSingle player · paused\nContext running · music 0.55 environment 0.2 effects 0.45\nRender scale 0.70\nCar displays frozen · mirror 0 · updates 3431 panels 1142\nDraws 298 · triangles 202755 · texture 46.2 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict flushing generation 1 · 18 prefabs · 15/18 blocks · low · swaps 0\nRoute [{\"x\":-51.261,\"z\":-135.741},{\"x\":-18.03,\"z\":-71.066},{\"x\":275.962,\"z\":-169.556},{\"x\":282.71472527695755,\"z\":-157.70757982176883}]\nGoal {\"x\":282.71472527695755,\"z\":-157.70757982176883}\nOrder FL-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":4,\"toPickupWalk\":396,\"parking\":137,\"wait\":0,\"handoff\":0,\"toCar\":162,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 4.1 / 699.3 s · 0.6%"
+    },
+    {
+      "case": "flushing-return-near-car",
+      "hud": "x 282.71  z -157.72  yaw -510.1\nFPS 60.0  p95 17.7 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 1.4933 m (peak 0.0000 m)\nSeat yaw 8.2676 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 0.00 s  gain 0.329\nSingle player · paused\nContext running · music 0.55 environment 0.2 effects 0.45\nRender scale 0.70\nCar displays nearby · mirror 0 · updates 3441 panels 1151\nDraws 432 · triangles 277001 · texture 46.2 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict flushing generation 1 · 18 prefabs · 6/18 blocks · low · swaps 0\nRoute [{\"x\":282.71472527695755,\"z\":-157.70757982176883}]\nGoal {\"x\":282.71472527695755,\"z\":-157.70757982176883}\nOrder FL-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":4,\"toPickupWalk\":396,\"parking\":137,\"wait\":0,\"handoff\":0,\"toCar\":618,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 4.1 / 1155.9 s · 0.4%"
+    },
+    {
+      "case": "flushing-return-entered",
+      "hud": "x 280.95  z -157.01  yaw -158.3\nFPS 60.0  p95 17.7 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 1.4770 m\nAudio 0.00 s  gain 0.258\nSingle player · paused\nContext running · music 0.55 environment 0.2 effects 0.45\nRender scale 0.70\nCar displays driving · mirror 1 · updates 3446 panels 1154\nDraws 479 · triangles 289274 · texture 46.2 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict flushing generation 1 · 18 prefabs · 6/18 blocks · low · swaps 0\nRoute [{\"x\":303.666,\"z\":-99.831},{\"x\":197.846,\"z\":-64.88},{\"x\":0,\"z\":0},{\"x\":-149.389,\"z\":69.29},{\"x\":-186.609,\"z\":-11.696},{\"x\":-208.627,\"z\":-65.992},{\"x\":-95.3790126909598,\"z\":-116.18666636260849},{\"x\":-94.709,\"z\":-114.675}]\nGoal {\"x\":-94.709,\"z\":-114.675}\nOrder FL-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":4,\"toPickupWalk\":396,\"parking\":138,\"wait\":0,\"handoff\":0,\"toCar\":619,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 4.1 / 1156.3 s · 0.4%"
+    },
+    {
+      "case": "browser-mute-all",
+      "hud": "x 280.95  z -157.01  yaw -158.3\nFPS 59.8  p95 17.5 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 1.4770 m\nAudio 0.28 s  gain 0.000\nSingle player · paused\nContext suspended · music 0 environment 0 effects 0\nRender scale 0.70\nCar displays driving · mirror 0 · updates 3630 panels 1259\nDraws 596 · triangles 308625 · texture 55.2 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict flushing generation 1 · 18 prefabs · 6/18 blocks · low · swaps 0\nRoute [{\"x\":303.666,\"z\":-99.831},{\"x\":197.846,\"z\":-64.88},{\"x\":0,\"z\":0},{\"x\":-149.389,\"z\":69.29},{\"x\":-186.609,\"z\":-11.696},{\"x\":-208.627,\"z\":-65.992},{\"x\":-95.3790126909598,\"z\":-116.18666636260849},{\"x\":-94.709,\"z\":-114.675}]\nGoal {\"x\":-94.709,\"z\":-114.675}\nOrder FL-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":4,\"toPickupWalk\":396,\"parking\":151,\"wait\":0,\"handoff\":0,\"toCar\":619,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 4.1 / 1170.2 s · 0.3%",
+      "music": "ORCHARD RADIO\n00:00\nEvening on Orchard · 全部静音\n播放 / 暂停上一首下一首\n来源 \n游戏电台\n我的音乐\n使用外部播放器\n 顺序 \n列表循环\n单曲循环\n顺序播放一次\n追加 MP3 / WAV替换本地歌单\n\n从系统文件选择 MP3/WAV，仅在此设备播放，不上传。音乐 App 收藏和会员缓存需由相应 App 播放。请选择你有权播放的音频，公开录屏或直播时另行确认授权。刷新后需重新选取文件。\n\n▶ Evening on Orchard\nRiver Lights\n音乐  环境  提示 \n持续聆听关闭时使用车载音箱，离车渐弱\n录屏用音乐模式 关闭全部游戏声音\n\n录屏模式仅控制游戏自身音轨。外部播放器及系统录音由录屏工具控制。手机外部 App 共存尚待真机验证，可独立关闭三种声音。\n\n全部游戏声音已关闭，可在外部 App 中自行播放"
+    },
+    {
+      "case": "browser-effects-only-recovered",
+      "hud": "x 280.95  z -157.01  yaw -158.3\nFPS 59.9  p95 17.7 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 1.4770 m\nAudio 0.28 s  gain 0.000\nSingle player · paused\nContext running · music 0 environment 0 effects 0.3\nRender scale 0.70\nCar displays driving · mirror 0 · updates 3752 panels 1329\nDraws 479 · triangles 289274 · texture 46.2 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict flushing generation 1 · 18 prefabs · 6/18 blocks · low · swaps 0\nRoute [{\"x\":303.666,\"z\":-99.831},{\"x\":197.846,\"z\":-64.88},{\"x\":0,\"z\":0},{\"x\":-149.389,\"z\":69.29},{\"x\":-186.609,\"z\":-11.696},{\"x\":-208.627,\"z\":-65.992},{\"x\":-95.3790126909598,\"z\":-116.18666636260849},{\"x\":-94.709,\"z\":-114.675}]\nGoal {\"x\":-94.709,\"z\":-114.675}\nOrder FL-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":4,\"toPickupWalk\":396,\"parking\":161,\"wait\":0,\"handoff\":0,\"toCar\":619,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 4.1 / 1179.5 s · 0.3%",
+      "music": "ORCHARD RADIO\n00:00\nEvening on Orchard · 系统暂停，点击恢复\n播放 / 暂停上一首下一首\n来源 \n游戏电台\n我的音乐\n使用外部播放器\n 顺序 \n列表循环\n单曲循环\n顺序播放一次\n追加 MP3 / WAV替换本地歌单\n\n从系统文件选择 MP3/WAV，仅在此设备播放，不上传。音乐 App 收藏和会员缓存需由相应 App 播放。请选择你有权播放的音频，公开录屏或直播时另行确认授权。刷新后需重新选取文件。\n\n▶ Evening on Orchard\nRiver Lights\n音乐  环境  提示 \n持续聆听关闭时使用车载音箱，离车渐弱\n录屏用音乐模式 关闭全部游戏声音\n\n录屏模式仅控制游戏自身音轨。外部播放器及系统录音由录屏工具控制。手机外部 App 共存尚待真机验证，可独立关闭三种声音。\n\n游戏声音已恢复"
+    },
+    {
+      "case": "flushing-order-complete",
+      "hud": "x -92.52  z -109.82  yaw -545.2\nFPS 60.0  p95 19.1 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 6.0230 m (peak 0.0000 m)\nSeat yaw 104.2995 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 49.92 s  gain 0.146\nSingle player · playing\nContext running · music 0.55 environment 0 effects 0.3\nRender scale 0.70\nCar displays nearby · mirror 1 · updates 5641 panels 2417\nDraws 368 · triangles 223272 · texture 46.2 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict flushing generation 1 · 18 prefabs · 15/18 blocks · low · swaps 0\nRoute [{\"x\":-208.627,\"z\":-65.992},{\"x\":-169.74721767370116,\"z\":24.993100039700153},{\"x\":-158.101,\"z\":19.809}]\nGoal {\"x\":-158.101,\"z\":19.809}\nOrder FL-1042 · 1 completed · $9.75\nPhases {\"toPickupDrive\":4,\"toPickupWalk\":396,\"parking\":212,\"wait\":0,\"handoff\":0,\"toCar\":619,\"toDropoffDrive\":90,\"toDropoffWalk\":5}\nDriving 93.8 / 1325.6 s · 7.1%",
+      "summary": "840 m · 1326 s · 累计 $9.75"
+    },
+    {
+      "case": "chinatown-switch-spawn",
+      "hud": "x 248.28  z 131.97  yaw 96.2\nFPS 60.0  p95 18.8 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.4415 m\nAudio 73.02 s  gain 0.550\nSingle player · playing\nContext running · music 0.55 environment 0 effects 0.3\nRender scale 0.70\nCar displays driving · mirror 0 · updates 5647 panels 2422\nDraws 467 · triangles 311966 · texture 46.9 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict chinatown generation 2 · 19 prefabs · 10/19 blocks · low · swaps 1\nRoute [{\"x\":61.522,\"z\":152.218},{\"x\":30.364,\"z\":155.211},{\"x\":25.079,\"z\":151.397},{\"x\":20.082,\"z\":147.214},{\"x\":15.398,\"z\":142.682},{\"x\":11.052,\"z\":137.826},{\"x\":7.066,\"z\":132.67},{\"x\":3.46,\"z\":127.241},{\"x\":1.328,\"z\":123.188},{\"x\":-0.054,\"z\":118.569},{\"x\":-38.016,\"z\":140.697},{\"x\":-50.27,\"z\":146.34},{\"x\":-119.666,\"z\":105.358},{\"x\":-128.561,\"z\":99.872},{\"x\":-131.592,\"z\":41.478},{\"x\":-136.663,\"z\":-38.012},{\"x\":-108.589,\"z\":-121.39},{\"x\":-38.554,\"z\":-89.75},{\"x\":26.711,\"z\":-59.111},{\"x\":98.834,\"z\":-25.905},{\"x\":73.57,\"z\":21.135},{\"x\":40.46386502590302,\"z\":11.624354863700699},{\"x\":40.26,\"z\":12.334}]\nGoal {\"x\":40.26,\"z\":12.334}\nOrder CT-1043 · 1 completed · $9.75\nPhases {\"toPickupDrive\":4,\"toPickupWalk\":396,\"parking\":212,\"wait\":0,\"handoff\":0,\"toCar\":619,\"toDropoffDrive\":90,\"toDropoffWalk\":5}\nDriving 93.8 / 1325.6 s · 7.1%"
+    },
+    {
+      "case": "chinatown-far-counter-low",
+      "car": {
+        "x": 248.28,
+        "z": 131.97
+      },
+      "hud": "x -15.95  z 30.97  yaw 86.4\nFPS 60.0  p95 18.7 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 283.1634 m (peak 0.0000 m)\nSeat yaw 9.7615 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 8.33 s  gain 0.044\nSingle player · playing\nContext running · music 0.55 environment 0 effects 0.3\nRender scale 0.70\nCar displays frozen · mirror 0 · updates 5662 panels 2434\nDraws 824 · triangles 457520 · texture 46.9 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict chinatown generation 2 · 19 prefabs · 17/19 blocks · low · swaps 1\nRoute [{\"x\":-16.009,\"z\":30.97}]\nGoal {\"x\":-16.009,\"z\":30.97}\nOrder CT-1043 · 1 completed · $9.75\nPhases {\"toPickupDrive\":0,\"toPickupWalk\":151,\"parking\":0,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 0.0 / 151.4 s · 0.0%"
+    },
+    {
+      "case": "chinatown-far-counter-standard",
+      "car": {
+        "x": 248.28,
+        "z": 131.97
+      },
+      "hud": "x -15.95  z 30.97  yaw 86.4\nFPS 60.0  p95 19.1 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 283.1634 m (peak 0.0000 m)\nSeat yaw 9.7615 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 9.53 s  gain 0.044\nSingle player · playing\nContext running · music 0.55 environment 0 effects 0.3\nRender scale 1.00\nCar displays frozen · mirror 0 · updates 5662 panels 2434\nDraws 1036 · triangles 554606 · texture 47.1 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict chinatown generation 2 · 19 prefabs · 19/19 blocks · standard · swaps 1\nRoute [{\"x\":-16.009,\"z\":30.97}]\nGoal {\"x\":-16.009,\"z\":30.97}\nOrder CT-1043 · 1 completed · $9.75\nPhases {\"toPickupDrive\":0,\"toPickupWalk\":151,\"parking\":0,\"wait\":1,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 0.0 / 152.1 s · 0.0%"
+    },
+    {
+      "case": "chinatown-far-door-standard",
+      "car": {
+        "x": 248.28,
+        "z": 131.97
+      },
+      "hud": "x -129.50  z -47.75  yaw -108.2\nFPS 55.8  p95 28.5 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 418.6633 m (peak 0.0000 m)\nSeat yaw 155.6451 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 92.33 s  gain 0.044\nSingle player · playing\nContext running · music 0.55 environment 0 effects 0.3\nRender scale 1.00\nCar displays frozen · mirror 0 · updates 5662 panels 2434\nDraws 1259 · triangles 716763 · texture 47.1 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict chinatown generation 2 · 19 prefabs · 17/19 blocks · standard · swaps 1\nRoute [{\"x\":-136.663,\"z\":-38.012},{\"x\":-128.561,\"z\":99.872},{\"x\":-32.811,\"z\":148.396},{\"x\":7.066,\"z\":132.67},{\"x\":30.364,\"z\":155.211},{\"x\":248.48883802005022,\"z\":133.8539259873118}]\nGoal {\"x\":248.48883802005022,\"z\":133.8539259873118}\nOrder CT-1043 · 1 completed · $9.75\nPhases {\"toPickupDrive\":0,\"toPickupWalk\":151,\"parking\":0,\"wait\":6,\"handoff\":9,\"toCar\":188,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 0.0 / 354.9 s · 0.0%"
+    },
+    {
+      "case": "chinatown-far-door-low",
+      "car": {
+        "x": 248.28,
+        "z": 131.97
+      },
+      "hud": "x -129.50  z -47.75  yaw -108.2\nFPS 56.4  p95 28.6 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 418.6633 m (peak 0.0000 m)\nSeat yaw 155.6451 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 93.08 s  gain 0.044\nSingle player · playing\nContext running · music 0.55 environment 0 effects 0.3\nRender scale 0.70\nCar displays frozen · mirror 0 · updates 5662 panels 2434\nDraws 619 · triangles 406908 · texture 46.9 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict chinatown generation 2 · 19 prefabs · 11/19 blocks · low · swaps 1\nRoute [{\"x\":-136.663,\"z\":-38.012},{\"x\":-128.561,\"z\":99.872},{\"x\":-32.811,\"z\":148.396},{\"x\":7.066,\"z\":132.67},{\"x\":30.364,\"z\":155.211},{\"x\":248.48883802005022,\"z\":133.8539259873118}]\nGoal {\"x\":248.48883802005022,\"z\":133.8539259873118}\nOrder CT-1043 · 1 completed · $9.75\nPhases {\"toPickupDrive\":0,\"toPickupWalk\":151,\"parking\":0,\"wait\":6,\"handoff\":9,\"toCar\":189,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 0.0 / 355.3 s · 0.0%"
+    },
+    {
+      "case": "chinatown-return-near-car",
+      "hud": "x 246.86  z 133.95  yaw -86.2\nFPS 60.0  p95 19.1 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 2.2313 m (peak 0.0000 m)\nSeat yaw 177.6084 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 92.71 s  gain 0.296\nSingle player · playing\nContext running · music 0.55 environment 0 effects 0.3\nRender scale 0.70\nCar displays nearby · mirror 0 · updates 5695 panels 2467\nDraws 435 · triangles 311158 · texture 46.9 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict chinatown generation 2 · 19 prefabs · 10/19 blocks · low · swaps 1\nRoute [{\"x\":248.48883802005022,\"z\":133.8539259873118}]\nGoal {\"x\":248.48883802005022,\"z\":133.8539259873118}\nOrder CT-1043 · 1 completed · $9.75\nPhases {\"toPickupDrive\":0,\"toPickupWalk\":151,\"parking\":0,\"wait\":6,\"handoff\":9,\"toCar\":500,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 0.0 / 666.9 s · 0.0%"
+    },
+    {
+      "case": "chinatown-return-entered",
+      "hud": "x 248.28  z 131.97  yaw 96.2\nFPS 60.0  p95 19.2 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 2.2205 m\nAudio 93.04 s  gain 0.231\nSingle player · playing\nContext running · music 0.55 environment 0 effects 0.3\nRender scale 0.70\nCar displays driving · mirror 0 · updates 5698 panels 2469\nDraws 475 · triangles 312062 · texture 46.9 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict chinatown generation 2 · 19 prefabs · 10/19 blocks · low · swaps 1\nRoute [{\"x\":190.54689263519856,\"z\":138.22634351260132},{\"x\":191.218,\"z\":144.415}]\nGoal {\"x\":191.218,\"z\":144.415}\nOrder CT-1043 · 1 completed · $9.75\nPhases {\"toPickupDrive\":0,\"toPickupWalk\":151,\"parking\":1,\"wait\":6,\"handoff\":9,\"toCar\":500,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 0.0 / 667.3 s · 0.0%"
+    },
+    {
+      "case": "chinatown-order-complete",
+      "hud": "x 191.66  z 148.12  yaw 154.7\nFPS 59.9  p95 18.6 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 4.7254 m (peak 0.0000 m)\nSeat yaw 15.8094 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 112.03 s  gain 0.159\nSingle player · playing\nContext running · music 0.55 environment 0 effects 0.3\nRender scale 0.70\nCar displays nearby · mirror 0 · updates 5931 panels 2606\nDraws 302 · triangles 236967 · texture 46.9 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict chinatown generation 2 · 19 prefabs · 13/19 blocks · low · swaps 1\nRoute [{\"x\":189.03662261044911,\"z\":144.22059944234516},{\"x\":61.522,\"z\":152.218},{\"x\":44.858,\"z\":83.888},{\"x\":17.132,\"z\":64.659},{\"x\":-7.26,\"z\":44.55},{\"x\":-7.0286142141998065,\"z\":31.053006613721145},{\"x\":-16.009,\"z\":30.97}]\nGoal {\"x\":-16.009,\"z\":30.97}\nOrder CT-1043 · 2 completed · $20.00\nPhases {\"toPickupDrive\":0,\"toPickupWalk\":151,\"parking\":8,\"wait\":6,\"handoff\":9,\"toCar\":500,\"toDropoffDrive\":9,\"toDropoffWalk\":2}\nDriving 8.9 / 686.1 s · 1.3%",
+      "summary": "59 m · 686 s · 累计 $20.00"
+    },
+    {
+      "case": "nearby-rate-start",
+      "hud": "x 191.66  z 148.12  yaw 154.7\nFPS 59.9  p95 22.9 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 4.7254 m (peak 0.0000 m)\nSeat yaw 15.8094 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 56.13 s  gain 0.203\nSingle player · playing\nContext running · music 0.55 environment 0 effects 0.3\nRender scale 0.70\nCar displays nearby · mirror 0 · updates 6236 panels 2911\nDraws 302 · triangles 236967 · texture 46.9 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict chinatown generation 2 · 19 prefabs · 13/19 blocks · low · swaps 1\nRoute [{\"x\":189.03662261044911,\"z\":144.22059944234516},{\"x\":61.522,\"z\":152.218},{\"x\":44.858,\"z\":83.888},{\"x\":17.132,\"z\":64.659},{\"x\":-7.26,\"z\":44.55},{\"x\":-7.0286142141998065,\"z\":31.053006613721145},{\"x\":-16.009,\"z\":30.97}]\nGoal {\"x\":-16.009,\"z\":30.97}\nOrder CT-1043 · 2 completed · $20.00\nPhases {\"toPickupDrive\":0,\"toPickupWalk\":151,\"parking\":8,\"wait\":6,\"handoff\":9,\"toCar\":500,\"toDropoffDrive\":9,\"toDropoffWalk\":2}\nDriving 8.9 / 686.1 s · 1.3%"
+    },
+    {
+      "case": "nearby-rate-end",
+      "hud": "x 191.66  z 148.12  yaw 154.7\nFPS 59.8  p95 22.9 ms\n1512 × 777  DPR 1\nView aspect 1.9459 canvas 1.9459\nSeat drift 4.7254 m (peak 0.0000 m)\nSeat yaw 15.8094 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 0.0000 m\nAudio 69.44 s  gain 0.203\nSingle player · playing\nContext running · music 0.55 environment 0 effects 0.3\nRender scale 0.70\nCar displays nearby · mirror 0 · updates 6299 panels 2974\nDraws 302 · triangles 236967 · texture 46.9 MiB\nRun active 74.2s · 59.9 FPS · p95 18.8 / p99 24.4 ms · >50ms 0\nDistrict chinatown generation 2 · 19 prefabs · 13/19 blocks · low · swaps 1\nRoute [{\"x\":189.03662261044911,\"z\":144.22059944234516},{\"x\":61.522,\"z\":152.218},{\"x\":44.858,\"z\":83.888},{\"x\":17.132,\"z\":64.659},{\"x\":-7.26,\"z\":44.55},{\"x\":-7.0286142141998065,\"z\":31.053006613721145},{\"x\":-16.009,\"z\":30.97}]\nGoal {\"x\":-16.009,\"z\":30.97}\nOrder CT-1043 · 2 completed · $20.00\nPhases {\"toPickupDrive\":0,\"toPickupWalk\":151,\"parking\":8,\"wait\":6,\"handoff\":9,\"toCar\":500,\"toDropoffDrive\":9,\"toDropoffWalk\":2}\nDriving 8.9 / 686.1 s · 1.3%"
+    }
+  ]
+}
