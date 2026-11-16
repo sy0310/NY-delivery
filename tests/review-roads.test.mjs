@@ -18,6 +18,9 @@ test('vehicle movement supplies its proposed heading to the normal collision cal
   car.update(.1,1,1,false,(x,z,radius,yaw)=>{headings.push(yaw);return true;});
   assert.ok(headings.length>0 && headings.every(Number.isFinite));
 });
+test('the first HUD render can query road diagnostics before district loading finishes',()=>{
+  assert.equal(navigation.probeRoad(undefined,{x:0,z:0}).reason,'loading');
+});
 
 for(const district of [FLUSHING_DISTRICT,CHINATOWN_DISTRICT]) {
   test(district.id+' road meshes and collision share clipped non-overlapping surface polygons',()=>{
