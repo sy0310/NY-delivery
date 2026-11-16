@@ -2,6 +2,40 @@
 
 开始时核对本地与远端 `e75beaf`，沿用 Creator 3.8.8 和 Draft PR #1。本目录保存本轮截图与原始观测，地图及订单数据继续使用原有两区。
 
+## 用户TapTap试玩反馈 · 当前版本 dc44b36
+
+用户成功扫码试玩 `ce62b43` 后，反馈驾驶过快、路缘卡车、地图难辨方向和驾驶UI拥挤。手机型号、系统与TapTap容器仍未提供。按反馈继续保留同一工程、分支与测试草稿。
+
+| 内容 | 修复SHA | 实现与范围 |
+| --- | --- | --- |
+| 驾驶与碰撞 | 60b8eb0 | 油门/转向渐进响应，前进上限9.5m/s约21mph、倒车2.5m/s，高速按3.6m/s²横向加速度限制转向，低速保留35度转角。120Hz子步检查接触，沿合法切向移动，受阻时保留倒车退出能力 |
+| 局部导航 | eebc73b、dc44b36 | 车头朝上、车辆固定在图下方，放大附近约180m街网，青色路线描边、下一路口距离与左/右转提示、街名和30m比例尺，偏离朝向先提示低速调整车头 |
+| 驾驶界面 | eb41a52 | 顶部只留地图/菜单，订单与完整音乐面板经菜单打开。默认隐藏音乐条、标题、无效交互和持续操作说明，保留导航、速度、摇杆与踏板。视角回正、区域、画质、恢复及性能工具仍在菜单 |
+
+上述车速、加速度和6m近车阈值均为本轮实现选择，最新手机手感需要用户再次试玩。碰撞继续使用现有几何通行检查。
+
+`dc44b36` 在干净工作树真实Creator构建退出36、dirty=false。90项测试通过、0跳过，真实cc类型检查通过。已加载脚本行覆盖87.82%、分支93.29%、函数86.01%，VehicleController行/函数100%、分支93.10%。Canvas绘制与引擎节点通过实际运行检查。
+
+### 本轮实际操作
+
+- 标准档844×390 / DPR1桌面视口，W持续3秒时约11mph，驾驶位位置和朝向偏移均为零。
+- 法拉盛实际碰撞点293.31 / -147.29、速度0。正常倒车3秒到289.77 / -143.15，约5.4m，显示6mph，路缘提示消失，位置仍处于合法车行面。
+- 唐人街实际碰撞点245.37 / 139.01、速度0。正常倒车3秒到243.05 / 134.07，约5.5m，显示6mph，路缘提示消失，位置仍合法。两次退出均在使用安全复位之前完成。
+- 两区菜单与换区、音乐面板打开及电台播放正常。正式包844×390与390×844的可见驾驶按钮均至少44px，均在屏内且互不重叠。桌面布局检查已通过，实体手机双指和安全区仍待专项验证。
+- 本轮针对驾驶改动进行了短时运行，原两区完整送单对应 `ce62b43`。调整手感后的整单节奏、15分钟手机性能和发热仍待新包实测。
+
+[横屏实际截图](phone-final-landscape.png)、[竖屏实际截图](phone-final-portrait.png)、[法拉盛接触截图](phone-final-flushing-edge.png)、[唐人街接触截图](phone-final-chinatown-edge.png)、[正常启动](phone-final-ready.png)均来自 `dc44b36`。
+
+[两区实际驾驶观测](phone-feedback-runtime.json)、[横屏边界](phone-final-landscape.json)、[竖屏边界](phone-final-portrait.json)可复算。
+
+```bash
+node --import ./tests/register-typescript.mjs tests/phone-driving.integration.mjs docs/media/review-5913985157/phone-feedback-runtime.json
+node tests/driving-ui.integration.mjs docs/media/review-5913985157/phone-final-landscape.json
+node tests/driving-ui.integration.mjs docs/media/review-5913985157/phone-final-portrait.json
+```
+
+当前TapTap测试包为 `NY-delivery-dc44b36-H5.zip`，9,899,992字节，154个文件。SHA-256为 `bcf69f81ae65b38ae6e79ec263e020f564fdcd372feb3059aac3778352b13ff6`。远端包体列表已读回，新的TapTap自测二维码对应该版本。早期 `ce62b43` 与 `315d203` 测试包继续保留版本记录。
+
 ## 阶段与源码
 
 | 阶段 | RED 回归提交 | 修复提交 | 证据范围 |

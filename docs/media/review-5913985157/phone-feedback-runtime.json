@@ -1,0 +1,41 @@
+{
+  "sourceCommit": "dc44b36430f360172757f2fa3de46f8eaa8cbfab",
+  "device": "Apple M2 Pro / Brave / 844x390 / DPR1 desktop viewport",
+  "observations": [
+    {
+      "name": "final-acceleration-3s",
+      "hud": "x 284.21  z -148.80  yaw -158.3\nFPS 59.9  p95 17.5 ms\n844 × 390  DPR 1\nView aspect 2.1641 canvas 2.1641\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 8.7396 m\nAudio 0.00 s  gain 0.550\nSingle player · paused\nContext running · music 0.55 environment 0.2 effects 0.45\nRender scale 1.00\nCar displays driving · mirror 0 · updates 510 panels 170\nDraws 666 · triangles 313112 · texture 82.4 MiB\n\nDistrict flushing generation 1 · 18 prefabs · 11/18 blocks · standard · swaps 0\nRoute [{\"x\":303.666,\"z\":-99.831},{\"x\":197.846,\"z\":-64.88},{\"x\":0,\"z\":0},{\"x\":-149.389,\"z\":69.29},{\"x\":-169.7471953437456,\"z\":24.993148626851685},{\"x\":-167.138,\"z\":23.794}]\nGoal {\"x\":-167.138,\"z\":23.794}\nOrder FL-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":3,\"toPickupWalk\":0,\"parking\":0,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 3.0 / 3.4 s · 87.3%",
+      "mph": "11",
+      "navigation": "Willow Noodle House · 589 m",
+      "route": "→ 53 m 右转"
+    },
+    {
+      "name": "final-flushing-edge",
+      "hud": "x 293.31  z -147.29  yaw -40.6\nFPS 60.0  p95 17.4 ms\n844 × 390  DPR 1\nView aspect 2.1641 canvas 2.1641\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 15.2897 m\nAudio 0.00 s  gain 0.550\nSingle player · paused\nContext running · music 0.55 environment 0.2 effects 0.45\nRender scale 1.00\nCar displays driving · mirror 0 · updates 661 panels 220\nDraws 444 · triangles 290253 · texture 46.3 MiB\n\nDistrict flushing generation 1 · 18 prefabs · 11/18 blocks · standard · swaps 0\nRoute [{\"x\":285.9676592733616,\"z\":-144.37391102962965},{\"x\":303.666,\"z\":-99.831},{\"x\":197.846,\"z\":-64.88},{\"x\":0,\"z\":0},{\"x\":-149.389,\"z\":69.29},{\"x\":-169.7471953437456,\"z\":24.993148626851685},{\"x\":-167.138,\"z\":23.794}]\nGoal {\"x\":-167.138,\"z\":23.794}\nOrder FL-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":7,\"toPickupWalk\":0,\"parking\":3,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 6.9 / 10.1 s · 67.9%",
+      "mph": "0",
+      "navigation": "路缘接触 · 松开油门，挂R退离",
+      "route": "↶ 低速调整车头"
+    },
+    {
+      "name": "final-flushing-reverse",
+      "hud": "x 289.58  z -142.93  yaw -40.6\nFPS 60.0  p95 17.5 ms\n844 × 390  DPR 1\nView aspect 2.1641 canvas 2.1641\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 16.1339 m\nAudio 0.00 s  gain 0.550\nSingle player · paused\nContext running · music 0.55 environment 0.2 effects 0.45\nRender scale 1.00\nCar displays driving · mirror 0 · updates 889 panels 294\nDraws 752 · triangles 315935 · texture 82.4 MiB\n\nDistrict flushing generation 1 · 18 prefabs · 11/18 blocks · standard · swaps 0\nRoute [{\"x\":286.95543163197124,\"z\":-141.88790078908485},{\"x\":303.666,\"z\":-99.831},{\"x\":197.846,\"z\":-64.88},{\"x\":0,\"z\":0},{\"x\":-149.389,\"z\":69.29},{\"x\":-169.7471953437456,\"z\":24.993148626851685},{\"x\":-167.138,\"z\":23.794}]\nGoal {\"x\":-167.138,\"z\":23.794}\nOrder FL-1042 · 0 completed · $0.00\nPhases {\"toPickupDrive\":10,\"toPickupWalk\":0,\"parking\":10,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 9.9 / 20.0 s · 49.3%",
+      "mph": "6",
+      "navigation": "Willow Noodle House · 584 m",
+      "route": "↶ 低速调整车头"
+    },
+    {
+      "name": "final-chinatown-edge",
+      "hud": "x 245.37  z 139.01  yaw 205.2\nFPS 60.0  p95 17.4 ms\n844 × 390  DPR 1\nView aspect 2.1641 canvas 2.1641\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 7.2386 m\nAudio 0.00 s  gain 0.550\nSingle player · paused\nContext running · music 0.55 environment 0.2 effects 0.45\nRender scale 1.00\nCar displays driving · mirror 0 · updates 540 panels 180\nDraws 610 · triangles 357249 · texture 83.2 MiB\n\nDistrict chinatown generation 2 · 19 prefabs · 17/19 blocks · standard · swaps 1\nRoute [{\"x\":244.64713072881554,\"z\":132.35963103695093},{\"x\":61.522,\"z\":152.218},{\"x\":30.364,\"z\":155.211},{\"x\":25.079,\"z\":151.397},{\"x\":20.082,\"z\":147.214},{\"x\":15.398,\"z\":142.682},{\"x\":11.052,\"z\":137.826},{\"x\":7.066,\"z\":132.67},{\"x\":3.46,\"z\":127.241},{\"x\":1.328,\"z\":123.188},{\"x\":-0.054,\"z\":118.569},{\"x\":-38.016,\"z\":140.697},{\"x\":-50.27,\"z\":146.34},{\"x\":-119.666,\"z\":105.358},{\"x\":-128.561,\"z\":99.872},{\"x\":-131.592,\"z\":41.478},{\"x\":-136.663,\"z\":-38.012},{\"x\":-108.589,\"z\":-121.39},{\"x\":-38.554,\"z\":-89.75},{\"x\":26.711,\"z\":-59.111},{\"x\":98.834,\"z\":-25.905},{\"x\":73.57,\"z\":21.135},{\"x\":40.46386502590302,\"z\":11.624354863700699},{\"x\":40.26,\"z\":12.334}]\nGoal {\"x\":40.26,\"z\":12.334}\nOrder CT-1043 · 0 completed · $0.00\nPhases {\"toPickupDrive\":3,\"toPickupWalk\":0,\"parking\":2,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 3.1 / 5.5 s · 55.4%",
+      "mph": "0",
+      "navigation": "路缘接触 · 松开油门，挂R退离",
+      "route": "↶ 低速调整车头"
+    },
+    {
+      "name": "final-chinatown-reverse",
+      "hud": "x 242.94  z 133.85  yaw 205.2\nFPS 60.0  p95 17.4 ms\n844 × 390  DPR 1\nView aspect 2.1641 canvas 2.1641\nSeat drift 0.0000 m (peak 0.0000 m)\nSeat yaw 0.0000 deg (peak 0.0000 deg)\nTouch throttle 0 brake 0 horizontal 0.00\nWalk eye 5.2483 m\nAudio 0.00 s  gain 0.550\nSingle player · paused\nContext running · music 0.55 environment 0.2 effects 0.45\nRender scale 1.00\nCar displays driving · mirror 1 · updates 770 panels 256\nDraws 438 · triangles 310745 · texture 47.1 MiB\n\nDistrict chinatown generation 2 · 19 prefabs · 17/19 blocks · standard · swaps 1\nRoute [{\"x\":242.8020198799885,\"z\":132.55971767644112},{\"x\":61.522,\"z\":152.218},{\"x\":30.364,\"z\":155.211},{\"x\":25.079,\"z\":151.397},{\"x\":20.082,\"z\":147.214},{\"x\":15.398,\"z\":142.682},{\"x\":11.052,\"z\":137.826},{\"x\":7.066,\"z\":132.67},{\"x\":3.46,\"z\":127.241},{\"x\":1.328,\"z\":123.188},{\"x\":-0.054,\"z\":118.569},{\"x\":-38.016,\"z\":140.697},{\"x\":-50.27,\"z\":146.34},{\"x\":-119.666,\"z\":105.358},{\"x\":-128.561,\"z\":99.872},{\"x\":-131.592,\"z\":41.478},{\"x\":-136.663,\"z\":-38.012},{\"x\":-108.589,\"z\":-121.39},{\"x\":-38.554,\"z\":-89.75},{\"x\":26.711,\"z\":-59.111},{\"x\":98.834,\"z\":-25.905},{\"x\":73.57,\"z\":21.135},{\"x\":40.46386502590302,\"z\":11.624354863700699},{\"x\":40.26,\"z\":12.334}]\nGoal {\"x\":40.26,\"z\":12.334}\nOrder CT-1043 · 0 completed · $0.00\nPhases {\"toPickupDrive\":6,\"toPickupWalk\":0,\"parking\":10,\"wait\":0,\"handoff\":0,\"toCar\":0,\"toDropoffDrive\":0,\"toDropoffWalk\":0}\nDriving 6.0 / 15.6 s · 38.7%",
+      "mph": "6",
+      "navigation": "Pearl Alley Noodles · 955 m",
+      "route": "↶ 低速调整车头"
+    }
+  ]
+}
