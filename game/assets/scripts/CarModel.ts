@@ -319,7 +319,7 @@ export class CarModel {
   private drawNavigation(telemetry: CarTelemetry): void {
     const {context:c,texture,canvas}=this.navigation;
     const route=planRoute(telemetry,telemetry.target,this.district);
-    drawDistrictMap(c,512,302,this.district,{player:telemetry,target:telemetry.target,route:route.points});
+    drawDistrictMap(c,512,302,this.district,{player:telemetry,target:telemetry.target,route:route.points,navigation:true});
     c.fillStyle='#18363b';c.fillRect(0,302,512,50);
     c.fillStyle=route.reachable?'#f5e8cd':'#e6ac91';c.font='21px DM-Sans, NYDistrictSans, sans-serif';
     c.fillText(route.reachable?telemetry.address.toUpperCase():'No legal car route',22,334,468);
