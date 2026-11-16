@@ -156,7 +156,8 @@ export function isAccessible(district: DistrictDefinition,point: CityPoint,mode:
   const bounds=district.bounds;
   if (point.x<bounds.minX || point.x>bounds.maxX || point.z<bounds.minZ || point.z>bounds.maxZ) return false;
   const lane=mode==='car' ? district.surfaces?.find(surface=>surface.kind==='car') : undefined;
-  if (lane) return surfaceClearance(lane,point)>=radius-.0001;
+  if (lane) return radius===0?lane.polygons.some(polygon=>insidePolygon(point,polygon.outer)
+    && !polygon.holes.some(hole=>insidePolygon(point,hole))):surfaceClearance(lane,point)>=radius-.0001;
   const containsRoom=(shop:DistrictPlace)=>{
     if(!shop.width || !shop.depth)return false;
     const extent=shop.width/2+shop.depth+3+Math.abs(radius)*2;
@@ -191,10 +192,35 @@ function surfaceClearance(surface:StreetSurface,point:CityPoint):number {
   return Math.sqrt(nearest)*(inside?1:-1);
 }
 
-/** Three overlapping circles cover the sedan's 4.4m body at its proposed heading. */
+export function vehicleFootprint(point:CityPoint,yaw:number):CityPoint[] {
+  const cosine=Math.cos(yaw),sine=Math.sin(yaw);
+  return [[-1.02,-2.22],[1.02,-2.22],[1.02,2.22],[-1.02,2.22]].map(([x,z])=>
+    ({x:point.x+x*cosine+z*sine,z:point.z-x*sine+z*cosine}));
+}
+
+/** An oriented 4.44m by 2.04m body must fit the same polygons used to draw the lanes. */
 export function vehicleAccessible(district:DistrictDefinition,point:CityPoint,yaw:number):boolean {
-  return [-1.17,0,1.17].every(offset=>isAccessible(district,
+  const lane=district.surfaces?.find(surface=>surface.kind==='car');
+  if(!lane)return [-1.17,0,1.17].every(offset=>isAccessible(district,
     {x:point.x-Math.sin(yaw)*offset,z:point.z-Math.cos(yaw)*offset},'car',1.02));
+  const corners=vehicleFootprint(point,yaw);
+  if(!corners.every(corner=>isAccessible(district,corner,'car')))return false;
+  const cosine=Math.cos(yaw),sine=Math.sin(yaw);
+  const extentX=Math.abs(cosine)*1.02+Math.abs(sine)*2.22,extentZ=Math.abs(sine)*1.02+Math.abs(cosine)*2.22;
+  for(const polygon of lane.polygons)for(const ring of [polygon.outer,...polygon.holes])for(let index=0;index<ring.length;index++) {
+    const a=ring[index],b=ring[(index+1)%ring.length];
+    if(Math.max(a.x,b.x)<point.x-extentX || Math.min(a.x,b.x)>point.x+extentX
+      || Math.max(a.z,b.z)<point.z-extentZ || Math.min(a.z,b.z)>point.z+extentZ)continue;
+    const ax=(a.x-point.x)*cosine-(a.z-point.z)*sine,az=(a.x-point.x)*sine+(a.z-point.z)*cosine;
+    const bx=(b.x-point.x)*cosine-(b.z-point.z)*sine,bz=(b.x-point.x)*sine+(b.z-point.z)*cosine;
+    let enter=0,leave=1;
+    for(const [start,delta,half]of[[ax,bx-ax,1.02],[az,bz-az,2.22]]) {
+      if(Math.abs(delta)<1e-9){if(Math.abs(start)>half){enter=2;break;}}
+      else {const first=(-half-start)/delta,second=(half-start)/delta;enter=Math.max(enter,Math.min(first,second));leave=Math.min(leave,Math.max(first,second));}
+    }
+    if(enter<=leave)return false;
+  }
+  return true;
 }
 
 export function probeRoad(district:DistrictDefinition|undefined,point:CityPoint,radius=1.02) {

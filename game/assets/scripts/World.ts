@@ -6,7 +6,7 @@ import { CarModel, CarTelemetry } from './CarModel';
 import type { OrderData, BagLabel, OrderStage } from './OrderState';
 import { Person } from './Person';
 import type { DistrictDefinition, DistrictPlace, DistrictRestaurant, CityPoint } from './DistrictDefinition';
-import { isAccessible, vehicleAccessible, probeRoad, roomPoint, projectPoint, insidePolygon } from './DistrictNavigation';
+import { isAccessible, vehicleAccessible, vehicleFootprint, probeRoad, roomPoint, projectPoint, insidePolygon } from './DistrictNavigation';
 import { roadSegments, placePose, updateDistrictVisibility, backdropBuildings, STREET_BRANDS, frontageVariant } from './DistrictPresentation';
 import type { SceneView } from './DistrictPresentation';
 
@@ -149,9 +149,10 @@ export class World {
   };
   roadProbe(point:CityPoint & {yaw:number}) {
     if(!this.district)return probeRoad(undefined,point);
-    const sample=[-1.17,0,1.17].map(offset=>({x:point.x-Math.sin(point.yaw)*offset,z:point.z-Math.cos(point.yaw)*offset}))
-      .find(sample=>!isAccessible(this.district,sample,'car',1.02))??point;
-    return probeRoad(this.district,sample);
+    const probe=vehicleFootprint(point,point.yaw).map(corner=>probeRoad(this.district,corner,0))
+      .sort((a,b)=>a.clearance-b.clearance)[0];
+    if(probe.reason==='clear' && !vehicleAccessible(this.district,point,point.yaw))probe.reason='body-boundary';
+    return probe;
   }
   groundHeight(x:number,z:number):number {return this.district.restaurants.some(place=>{const p=roomPoint(place.entry,place.yaw,{x,z});return Math.abs(p.x)<place.width/2 && p.z>0 && p.z<place.depth;})?.08:0;}
   handoff():void {this.handoffTime=1.2;}
