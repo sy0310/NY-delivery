@@ -789,7 +789,8 @@ export class DeliveryDemo extends Component {
       drawDistrictMap(canvas.getContext('2d')!,canvas.width,canvas.height,this.district,
         {player:playerHeading,target:this.inCar?parking:target,route:route.points,navigation:true});
     }
-    text('navigation-distance',this.vehicle.touchingEdge && this.inCar ? '路缘接触 · 松开油门，挂R退离'
+    text('navigation-distance',!route.reachable ? '路线未连接 · 请沿入口通道返回街道'
+      : this.vehicle.touchingEdge && this.inCar ? '路缘接触 · 松开油门，挂R退离'
       : (stage==='carrying'?'返回汽车':stage==='stowed'||stage==='delivering'?data.address:data.restaurant)+' · '+routeDistance+' m');
     if (this.mapOpen) {
       const canvas=this.hud.querySelector<HTMLCanvasElement>('#map-canvas')!;

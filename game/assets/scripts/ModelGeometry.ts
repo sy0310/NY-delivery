@@ -46,7 +46,8 @@ export class ModelGeometry {
     let shared=this.panels.get(cacheKey);
     if(!shared) {
       const u=cell%4/4,v=Math.floor(cell/4)/4;
-      const geometry=primitives.quad();geometry.uvs=[u,v,u+.25,v,u,v+.25,u+.25,v+.25];
+      const geometry=primitives.quad();
+      geometry.uvs=geometry.uvs!.map((coordinate,index)=>(index%2?v:u)+coordinate*.25);
       shared={material,mesh:utils.createMesh(geometry)};this.panels.set(cacheKey,shared);
     }
     const node=this.mesh(key,shared.mesh,shared.material,parent);node.setScale(width,height,1);
