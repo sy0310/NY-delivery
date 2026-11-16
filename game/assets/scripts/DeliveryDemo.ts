@@ -292,7 +292,7 @@ export class DeliveryDemo extends Component {
     this.world.car.setRotationFromEuler(0, this.vehicle.yaw * DEG, 0);
     this.world.update(dt, {
       speed: this.vehicle.speed,
-      steering: this.inCar ? -horizontal : 0,
+      steering: this.inCar ? this.vehicle.steering : 0,
       distance: this.vehicle.distance,
       x: this.vehicle.x,
       z: this.vehicle.z,
