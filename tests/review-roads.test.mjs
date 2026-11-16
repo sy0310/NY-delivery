@@ -58,3 +58,9 @@ test('the sedan nose is rejected before it enters a blocked surface and pedestri
     assert.equal(navigation.isAccessible(map,point,'car',1.02),false);
   }
 });
+test('an oblique road edge rejects the sedan corner even when its centre and three body circles fit',()=>{
+  const district={id:'corner',bounds:{minX:-10,maxX:10,minZ:-10,maxZ:10},roads:[],buildings:[],
+    surfaces:[{kind:'car',polygons:[{outer:[{x:-10,z:-10},{x:10,z:-10},{x:10,z:-6.9},{x:-6.9,z:10},{x:-10,z:10}],holes:[]}],triangles:[]}]};
+  assert.equal(navigation.vehicleAccessible(district,{x:0,z:0},0),false);
+  assert.equal(navigation.vehicleAccessible(district,{x:-1,z:-1},0),true);
+});
