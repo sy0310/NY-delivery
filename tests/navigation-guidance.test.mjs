@@ -24,3 +24,7 @@ test('a short road-entry connector cannot produce a false turn and arrival stays
   assert.deepEqual(maps.navigationStep(player,[{x:0,z:0},{x:0,z:-80}]),{symbol:'↑',instruction:'直行',distance:81});
   assert.deepEqual(maps.navigationStep({x:0,z:0,yaw:0},[{x:0,z:-4}]),{symbol:'P',instruction:'靠边停车',distance:4});
 });
+test('a car facing away from the legal route receives heading recovery before a junction cue',()=>{
+  assert.deepEqual(maps.navigationStep({x:0,z:0,yaw:Math.PI},[{x:0,z:-40},{x:30,z:-40}]),
+    {symbol:'↶',instruction:'调整车头',distance:0});
+});
