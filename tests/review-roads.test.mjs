@@ -50,8 +50,8 @@ test('the sedan nose is rejected before it enters a blocked surface and pedestri
   assert.ok(navigation.isAccessible(district,{x:0,z:-2},'car',1.25));
   assert.equal(navigation.vehicleAccessible(district,{x:0,z:-2},0),false);
   for(const map of [FLUSHING_DISTRICT,CHINATOWN_DISTRICT]) {
-    const road=map.roads.find(road=>!road.car && road.direction==='NV');
-    const a=road.points[0],b=road.points[1],point={x:(a.x+b.x)/2,z:(a.z+b.z)/2};
+    const point=map.id==='flushing'?{x:186.169,z:-100.031}:{x:12.746,z:57.731};
+    assert.ok(navigation.isAccessible(map,point,'foot',.35));
     assert.equal(navigation.isAccessible(map,point,'car',1.02),false);
   }
 });

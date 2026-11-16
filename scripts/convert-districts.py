@@ -279,6 +279,8 @@ def convert_region(region, face_ids, origin_id, prefix):
 
 
 def export(district, class_name):
+    from street_surfaces import attach_road_surfaces
+    attach_road_surfaces(district)
     add_transit(RAW,district)
     output = ROOT / 'game/assets/resources/districts' / district['id']
     output.mkdir(parents=True, exist_ok=True)

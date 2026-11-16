@@ -1,4 +1,4 @@
-import type { CityPoint, DistrictBuilding, DistrictDefinition, DistrictRoad, DistrictPlace, TravelMode } from './DistrictDefinition';
+import type { CityPoint, DistrictBuilding, DistrictDefinition, DistrictRoad, DistrictPlace, StreetSurface, TravelMode } from './DistrictDefinition';
 
 export interface DistrictRoute {
   reachable: boolean; points: CityPoint[]; distance: number; roads: string[];
@@ -155,6 +155,8 @@ function nearbyBuildings(district: DistrictDefinition,point: CityPoint,radius: n
 export function isAccessible(district: DistrictDefinition,point: CityPoint,mode: TravelMode,radius=0): boolean {
   const bounds=district.bounds;
   if (point.x<bounds.minX || point.x>bounds.maxX || point.z<bounds.minZ || point.z>bounds.maxZ) return false;
+  const lane=mode==='car' ? district.surfaces?.find(surface=>surface.kind==='car') : undefined;
+  if (lane) return surfaceClearance(lane,point)>=radius-.0001;
   const containsRoom=(shop:DistrictPlace)=>{
     if(!shop.width || !shop.depth)return false;
     const extent=shop.width/2+shop.depth+3+Math.abs(radius)*2;
@@ -175,6 +177,41 @@ export function isAccessible(district: DistrictDefinition,point: CityPoint,mode:
     if (blocked && !(mode==='foot' && room?.buildingId===building.id)) return false;
   }
   return true;
+}
+
+function surfaceClearance(surface:StreetSurface,point:CityPoint):number {
+  let nearest=Infinity;
+  let inside=false;
+  for(const polygon of surface.polygons) {
+    inside ||= insidePolygon(point,polygon.outer) && !polygon.holes.some(hole=>insidePolygon(point,hole));
+    for(const ring of [polygon.outer,...polygon.holes]) for(let index=0;index<ring.length;index++) {
+      nearest=Math.min(nearest,segmentDistanceSquared(point,ring[index],ring[(index+1)%ring.length]));
+    }
+  }
+  return Math.sqrt(nearest)*(inside?1:-1);
+}
+
+/** Three overlapping circles cover the sedan's 4.4m body at its proposed heading. */
+export function vehicleAccessible(district:DistrictDefinition,point:CityPoint,yaw:number):boolean {
+  return [-1.17,0,1.17].every(offset=>isAccessible(district,
+    {x:point.x-Math.sin(yaw)*offset,z:point.z-Math.cos(yaw)*offset},'car',1.02));
+}
+
+export function probeRoad(district:DistrictDefinition,point:CityPoint,radius=1.02) {
+  let nearest:{road:DistrictRoad;distance:number}|undefined;
+  for(const road of district.roads) for(let index=1;index<road.points.length;index++) {
+    const distance=Math.sqrt(segmentDistanceSquared(point,road.points[index-1],road.points[index]));
+    if (!nearest || distance<nearest.distance) nearest={road,distance};
+  }
+  const road=nearest?.road;
+  const surface=district.surfaces?.find(surface=>surface.kind==='car');
+  const clearance=surface?surfaceClearance(surface,point)-radius:(road?.width??0)/2-(nearest?.distance??Infinity)-radius;
+  const bounds=district.bounds;
+  const outside=point.x<bounds.minX || point.x>bounds.maxX || point.z<bounds.minZ || point.z>bounds.maxZ;
+  const building=nearbyBuildings(district,point,radius).some(building=>insidePolygon(point,building.footprint)
+    || building.footprint.some((a,index)=>segmentDistanceSquared(point,a,building.footprint[(index+1)%building.footprint.length])<radius*radius));
+  return {roadId:road?.id??'none',name:road?.name??'',access:road?.car?'car':road?.direction==='NV'?'pedestrian':'bus',
+    clearance,reason:outside?'bounds':building?'building':clearance<0?road?.car?'road-edge':'restricted':'clear'};
 }
 
 function clearSegment(district: DistrictDefinition,a: CityPoint,b: CityPoint,mode: TravelMode): boolean {

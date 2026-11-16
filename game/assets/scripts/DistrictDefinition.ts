@@ -4,6 +4,12 @@ export interface DistrictRoad {
   id: string; name: string; from: string; to: string; points: CityPoint[];
   width: number; direction: 'FT' | 'TF' | 'TW' | 'NV'; car: boolean; foot: boolean;
   levelFrom?: number; levelTo?: number; restriction?: string;
+  sourceWidth?: number;
+}
+export interface StreetSurface {
+  kind: 'car' | 'bus' | 'walk' | 'sidewalk';
+  polygons: {outer:CityPoint[];holes:CityPoint[][]}[];
+  triangles: number[];
 }
 export interface DistrictBuilding {
   id: string; footprint: CityPoint[]; height: number; fallback?: boolean; sourceHeight?: number;
@@ -28,5 +34,6 @@ export interface DistrictDefinition {
   parkingAreas: CityPoint[][]; spawn: CityPoint & {yaw: number};
   landmarks: {id: string; name: string; kind: string; position: CityPoint; yaw: number}[];
   sources: {url: string; retrieved: string; sha256: string; license: string}[];
+  surfaces?: StreetSurface[];
   blocks?: {id: string; kind: string; asset: string; bounds: {minX: number;minZ: number;maxX: number;maxZ: number}; buildings: string[]}[];
 }

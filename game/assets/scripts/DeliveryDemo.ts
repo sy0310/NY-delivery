@@ -4,7 +4,7 @@ import {
 } from 'cc';
 import { EDITOR } from 'cc/env';
 import { OrderState } from './OrderState';
-import { VehicleController } from './VehicleController';
+import { VehicleController, MAX_ROAD_WHEEL_ANGLE } from './VehicleController';
 import { WalkingController } from './WalkingController';
 import { TouchControls } from './TouchControls';
 import { World } from './World';
@@ -96,9 +96,13 @@ export class DeliveryDemo extends Component {
   private resourceSamples: object[] = [];
   private runSummary = '';
   private mapOpen = false;
+  private buildVersion='editor';
   private lastExit = {x:.6,z:23};
 
   async start(): Promise<void> {
+    void fetch('build-info.json').then(response=>response.ok?response.json():null).then(info=>{
+      if(typeof info?.commit==='string')this.buildVersion=info.commit.slice(0,7);
+    }).catch(()=>{});
     await Promise.all(['DM-Sans', 'InstrumentSerif','NYDistrictSans'].map(name => new Promise<void>(resolve => {
       resources.load('fonts/' + name, Font, async (error, font) => {
         if (!error) {
@@ -790,7 +794,10 @@ export class DeliveryDemo extends Component {
       this.peakSeatDrift = Math.max(this.peakSeatDrift, seatDrift);
       this.peakSeatYawDrift = Math.max(this.peakSeatYawDrift, seatYawDrift);
     }
+    const road=this.world.roadProbe(this.vehicle.lastBlocked??this.vehicle);
     text('diagnostics', [
+      `Build ${this.buildVersion} · Creator 3.8.8`,
+      `Wheel ${(this.vehicle.steering*MAX_ROAD_WHEEL_ANGLE).toFixed(1)} deg · road ${road.roadId} ${road.access} · curb ${road.clearance.toFixed(2)} m · ${road.reason}`,
       `x ${player.x.toFixed(2)}  z ${player.z.toFixed(2)}  yaw ${(player.yaw * DEG).toFixed(1)}`,
       `FPS ${(1 / average).toFixed(1)}  p95 ${((sorted[Math.floor(sorted.length * .95)] || 0) * 1000).toFixed(1)} ms`,
       `${innerWidth} × ${innerHeight}  DPR ${devicePixelRatio}`,

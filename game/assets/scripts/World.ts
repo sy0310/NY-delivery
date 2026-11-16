@@ -6,7 +6,7 @@ import { CarModel, CarTelemetry } from './CarModel';
 import type { OrderData, BagLabel, OrderStage } from './OrderState';
 import { Person } from './Person';
 import type { DistrictDefinition, DistrictPlace, DistrictRestaurant, CityPoint } from './DistrictDefinition';
-import { isAccessible, roomPoint, projectPoint, insidePolygon } from './DistrictNavigation';
+import { isAccessible, vehicleAccessible, probeRoad, roomPoint, projectPoint, insidePolygon } from './DistrictNavigation';
 import { roadSegments, placePose, updateDistrictVisibility } from './DistrictPresentation';
 import type { SceneView } from './DistrictPresentation';
 
@@ -134,7 +134,8 @@ export class World {
     c.font='22px DM-Sans';c.fillText(order.id,128,48);c.font='bold 48px DM-Sans';c.fillText(order.code,128,117);
     c.font='18px DM-Sans';c.fillText(`${order.bagCount??1} BAG · SEALED`,128,160);tag.texture.uploadData(tag.canvas);
   }
-  canMove=(x:number,z:number,radius:number):boolean=>{
+  canMove=(x:number,z:number,radius:number,yaw?:number):boolean=>{
+    if(radius>1 && yaw!==undefined) return !this.loading && vehicleAccessible(this.district,{x,z},yaw);
     if(this.loading || !isAccessible(this.district,{x,z},radius>1?'car':'foot',radius)) return false;
     if(radius>1) return true;
     return this.district.restaurants.every(place=>{
@@ -142,6 +143,11 @@ export class World {
       return Math.abs(point.x)>(place.width-1.6)/2+radius || Math.abs(point.z-5.6)>.45+radius;
     });
   };
+  roadProbe(point:CityPoint & {yaw:number}) {
+    const sample=[-1.17,0,1.17].map(offset=>({x:point.x-Math.sin(point.yaw)*offset,z:point.z-Math.cos(point.yaw)*offset}))
+      .find(sample=>!isAccessible(this.district,sample,'car',1.02))??point;
+    return probeRoad(this.district,sample);
+  }
   groundHeight(x:number,z:number):number {return this.district.restaurants.some(place=>{const p=roomPoint(place.entry,place.yaw,{x,z});return Math.abs(p.x)<place.width/2 && p.z>0 && p.z<place.depth;})?.08:0;}
   handoff():void {this.handoffTime=1.2;}
   update(dt:number,telemetry:CarTelemetry,view:SceneView):void {
@@ -182,13 +188,26 @@ export class World {
   }
   private buildStreets(g:ModelGeometry,district:DistrictDefinition):void {
     const b=district.bounds;
-    g.box('Continuous city ground',(b.minX+b.maxX)/2,-.25,(b.minZ+b.maxZ)/2,b.maxX-b.minX+1000,.4,b.maxZ-b.minZ+1000,'#a6aaa0');
+    g.box('Continuous city ground',(b.minX+b.maxX)/2,-.25,(b.minZ+b.maxZ)/2,b.maxX-b.minX+1000,.4,b.maxZ-b.minZ+1000,'#48575b');
+    const colors={car:'#414c50',bus:'#80524c',walk:'#a08b70',sidewalk:'#aaa895'};
+    for(const surface of district.surfaces??[]) {
+      if(surface.triangles.length) g.groundSurface(surface.kind+' unified clipped surface',surface.triangles,surface.kind==='sidewalk'?.12:.02,colors[surface.kind]);
+      if(surface.kind==='car') for(const polygon of surface.polygons) for(const ring of [polygon.outer,...polygon.holes]) {
+        for(const segment of roadSegments([...ring,ring[0]])) {
+          const curb=g.box('Road edge curb',segment.center.x,.065,segment.center.z,.07,.09,segment.length+.015,'#92998e');
+          curb.setRotationFromEuler(0,segment.yaw,0);
+        }
+      }
+    }
     for(const road of district.roads) {
       for(const segment of roadSegments(road.points)) {
-        const pavement=g.box(road.name+' sidewalk',segment.center.x,-.025,segment.center.z,road.width+6,.15,segment.length+3,'#bcb8a6');pavement.setRotationFromEuler(0,segment.yaw,0);
-        const lane=g.box(road.name,segment.center.x,.005,segment.center.z,road.width,.13,segment.length+1,road.car?'#414c50':road.direction==='NV'?'#bca98e':'#80524c');lane.setRotationFromEuler(0,segment.yaw,0);
-        if(road.car) {
-          const stripe=g.box('Centre marking',segment.center.x,.075,segment.center.z,.1,.015,Math.max(1,segment.length-18),'#d7cfa7');stripe.setRotationFromEuler(0,segment.yaw,0);
+        if(!district.surfaces) {
+          const lane=g.box(road.name,segment.center.x,0,segment.center.z,road.width,.04,segment.length,colors[road.car?'car':'walk']);
+          lane.setRotationFromEuler(0,segment.yaw,0);
+        }
+        if(road.car && segment.length>18) {
+          const stripe=g.box('Centre marking',segment.center.x,.027,segment.center.z,.1,.008,segment.length-18,'#d7cfa7');
+          stripe.setRotationFromEuler(0,segment.yaw,0);
         }
       }
       const segment=roadSegments(road.points)[0];
@@ -199,13 +218,37 @@ export class World {
         name.setPosition(pole.x,3,pole.z);name.setRotationFromEuler(0,segment.yaw+90,0);
         g.cylinder('Street sign pole',pole.x,1.5,pole.z,.055,3,'#69766c');
       }
-      if(!road.car && road.direction!=='NV') {
-        const bus=this.sign(g,'BUS ONLY · 6 AM–7 PM',4,.7,'#81524b');bus.setPosition(segment.center.x,.085,segment.center.z);bus.setRotationFromEuler(-90,segment.yaw,0);
+      if(!road.car) {
+        const label=road.direction==='NV'?'PEDESTRIAN STREET':'BUS ONLY · 6 AM–7 PM';
+        const restriction=this.sign(g,label,3.4,.6,road.direction==='NV'?'#3b655e':'#81524b');
+        const points=[road.points[0],road.points[road.points.length-1]];
+        for(const [index,entry] of points.entries()) {
+          const inward=index===0?road.points[1]:road.points[road.points.length-2];
+          const length=Math.hypot(inward.x-entry.x,inward.z-entry.z)||1;
+          const position={x:entry.x+(inward.x-entry.x)/length*7,z:entry.z+(inward.z-entry.z)/length*7};
+          if(isAccessible(district,position,'foot',.2) && !isAccessible(district,position,'car',.2)) {
+            g.cylinder('Restricted access bollard',position.x,.45,position.z,.10,.9,'#d3c8a3');
+            g.cylinder('Bollard reflective band',position.x,.66,position.z,.105,.1,'#d6a65c');
+          }
+        }
+        const middle=road.points.length>2?road.points[Math.floor(road.points.length/2)]:segment.center;
+        const at=placePose({entry:middle,yaw:segment.yaw},road.width/2+.8,0);
+        restriction.setPosition(at.x,2.2,at.z);
+        g.cylinder('Restricted access sign post',at.x,1.1,at.z,.045,2.2,'#5a6b66');
       }
     }
     for(const place of [...district.restaurants,...district.deliveries]) {
-      const p=place.parking;const sign=this.sign(g,'DELIVERY · GAME BAY',2.4,.5,'#3c6159');sign.setPosition(p.x,1.8,p.z);
-      for(const side of [-1,1]) g.box('Temporary game pickup bay',p.x+side*1.3,.09,p.z,.08,.02,5.5,'#dfc78d');
+      const p=place.parking;
+      const nearest=district.roads.filter(road=>road.car).flatMap(road=>road.points.slice(1).map((end,index)=>
+        ({...roadSegments([road.points[index],end])[0],distance:projectPoint(p,road.points[index],end).distance})))
+        .sort((a,b)=>a.distance-b.distance)[0];
+      const sign=this.sign(g,'DELIVERY · GAME BAY',2.4,.5,'#3c6159');sign.setPosition(p.x,1.8,p.z);
+      g.cylinder('Delivery bay sign post',p.x,.9,p.z,.04,1.8,'#5a6b66');
+      for(const side of [-1,1]) {
+        const at=placePose({entry:p,yaw:nearest.yaw},side*1.3,0);
+        const marking=g.box('Temporary game pickup bay',at.x,.03,at.z,.08,.015,5.5,'#dfc78d');
+        marking.setRotationFromEuler(0,nearest.yaw,0);
+      }
     }
   }
   private placeRoot(place:DistrictPlace,g:ModelGeometry):Node {

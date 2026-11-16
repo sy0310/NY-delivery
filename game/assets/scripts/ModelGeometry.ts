@@ -95,6 +95,15 @@ export class ModelGeometry {
     return node;
   }
 
+  groundSurface(name:string,triangles:number[],height:number,color:string):Node {
+    const positions:number[]=[],normals:number[]=[],indices:number[]=[];
+    for(let index=0;index<triangles.length;index+=2) {
+      positions.push(triangles[index],height,triangles[index+1]);
+      normals.push(0,1,0);indices.push(index/2);
+    }
+    return this.mesh(name,utils.createMesh({positions,normals,indices}),this.material(color));
+  }
+
   /** Rounded edge normals preserve highlights on close-up interior parts. */
   roundedBox(name: string, x: number, y: number, z: number, width: number, height: number,
     depth: number, radius: number, color: string | Material, parent: Node = this.root): Node {
