@@ -22,12 +22,27 @@ Chinatown转换选取11个闭合中心线面，包含交通岛等小面。八个
 
 ```bash
 # 使用本机 .local/map-source 已保存的裁片快照离线重建
-python3 scripts/convert-districts.py
+.local/road-tools/bin/python scripts/convert-districts.py
 # 从记录的官方接口重新取快照后重建，上游变化会改变校验值
-python3 scripts/convert-districts.py --fetch
+.local/road-tools/bin/python scripts/convert-districts.py --fetch
 ```
 
 大型原始快照保留在本机。脚本、必要生成配置、glTF与.meta入库。新机器可用--fetch重建当前上游裁片，精确重现本次输入需使用来源记录校验相符的快照。游戏运行期间只读取本地生成资产。
+
+## 可见路面与车行边界
+
+离线路面生成使用Python 3.10+、Shapely 2.1.2。本机在.local/road-tools虚拟环境验证，普通游戏运行、Creator导入与发布构建直接使用已生成数据。
+
+```bash
+python3.14 -m venv .local/road-tools
+.local/road-tools/bin/pip install "shapely==2.1.2"
+.local/road-tools/bin/python scripts/convert-districts.py
+.local/road-tools/bin/python tests/street-surfaces.test.py
+```
+
+scripts/street_surfaces.py按car、bus、walk、sidewalk顺序裁切为互斥平面，排除建筑与区域外部，先量化至0.0001m再进行约束Delaunay剖分。DistrictDefinition.surfaces保存多边形边界、孔洞及三角形，World渲染与车身边界判断共用同一份数据。
+
+局部调整保留sourceWidth。法拉盛nyc-84124/84125各加1.4m，唐人街nyc-1782/140948各加1.4m、nyc-99642加1.2m。道路拓扑、单行方向与步行限制继续来自同一源中心线。停车标记按最近线段方向放置。
 
 ## 地理筛选和简化
 
