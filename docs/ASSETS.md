@@ -45,7 +45,7 @@ NYC来源依据[元数据](https://github.com/CityOfNewYork/nyc-geo-metadata)与
 
 ## 运行证据
 
-docs/media 保存 Cocos 发布构建及编辑器预览的实机截图。上一轮完整170秒有声送单视频为 docs/media/review-20261115/ordinary-delivery.mp4，只使用下表两首原创曲目与项目合成声音，随该目录保存拍摄条件、代码SHA和文件校验值。原始录屏保留在本机 .local/media，声音轨检查结果见 VALIDATION.md。本轮两区视频位于docs/media/maps-20261115，使用实际游戏采集画面并后期混入上述两首CC0曲目，采集方式与校验保存于媒体索引。
+docs/media 保存 Cocos 发布构建及编辑器预览的实机截图。上一轮完整170秒有声送单视频为 docs/media/review-20261115/ordinary-delivery.mp4，只使用下表两首原创曲目与项目合成声音，随该目录保存拍摄条件、代码SHA和文件校验值。原始录屏保留在本机 .local/media，声音轨检查结果见 VALIDATION.md。本轮两区视频位于docs/media/maps-20261115，使用ScreenCaptureKit连续录制实际游戏窗口和应用音轨，包含上述两首原创CC0曲目与游戏合成声音，采集方式与校验保存于媒体索引。
 
 ## Review 默认音乐权利记录
 

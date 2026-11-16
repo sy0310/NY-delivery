@@ -44,18 +44,23 @@ Doyers 为实际下车步行通路，汽车走 Pell 与周边单行路。四次�
 | latest-chinatown-map.png、latest-*-result.png | 360d278，两区各一单完整补录过程 |
 | latest-touch-landscape.png、latest-touch-portrait.png、portrait-*-layout.json | 360d278，桌面844×390与390×844，面板边界检查通过 |
 | quality-low.png、quality-standard.png、quality-*-latest.json | 23a9fa8，完全相同出生机位、画幅和视角，后视镜两档均可见，原始帧导出截断已注明 |
+| native-*-result.png、native-ready.png、native-run-diagnostics.txt | 71c33fd，解锁后同实例两单连续原声录制 |
 | whole-run.json、whole-run-frames.json.gz、startup.json | c0294c2，六单与四次换区的完整统计、所有原始帧及独立启动180帧 |
 
 活跃送单1809.597秒、108290帧，平均59.84FPS，p95 18.6ms、p99 22.7ms，超过50ms共46帧，超过100ms为0。暂停、空闲、启动和后台单列。资源及内存取得范围见VALIDATION。
 
-### 两区完整有声视频
+### 解锁后两区连续原声视频
 
-- [法拉盛完整订单](flushing-delivery.mp4)，FL-1042，829米、167秒，视频170.13秒。
-- [唐人街完整订单](chinatown-delivery.mp4)，CT-1043，1511米、363秒，视频366.90秒。
+- [法拉盛完整订单](flushing-delivery.mp4)，源码71c33fd，FL-1042，813米、167.6秒，视频172.83秒。
+- [唐人街完整订单](chinatown-delivery.mp4)，源码71c33fd，CT-1043，1518米、376.6秒，视频381.83秒。
 
-源码360d278，实际Cocos Web Desktop / M2 Pro / Brave / 1512×777 / DPR2 / 标准画质。视频覆盖接单、合法路网驾驶、步行入店、核码、装餐、送达与结算。原始画面由CUA按约7.35帧/秒中位采样，真实时间戳保留批次间停留，最长采集空档26.693秒以最近画面延续。最终缩放至1280×658，30FPS编码含重复帧，流程时长保持真实。
+实际Cocos Web Desktop / M2 Pro / Brave / 1512×777 / DPR2 / 标准画质。两单在同一运行实例完成，累计$20。ScreenCaptureKit连续录制游戏窗口及应用声音，麦克风关闭。截取完整订单的首尾，裁去浏览器工具栏，编码为1280×656、30FPS、H.264 / AAC、48kHz立体声。实际时间顺序与捕获的游戏音轨一并保留。
 
-Mac锁屏导致系统视频或音轨录制失败，因此交付视频后期混入项目原创 Evening on Orchard、River Lights，CC0 1.0，可分发和公开宣传使用。视频中的环境和提示声未实际录得。实时音频恢复的独立阶段A记录继续保留。完整视频元数据、音量及SHA-256见video-metadata.json，采样时间索引为capture-index.json.gz。原始画面、转换中间文件与失败录屏保留于本机.local/media。
+原始录制597.53秒、17017帧，采集帧间隔中位0.035秒、最大0.138333秒，时间戳与两单截取区间保存于native-frame-times.json.gz。原始文件留在本机.local/media/maps-native-complete.mp4。开始接单、驾驶、进店、核码、取餐、返车、送达与结算均在画面中核对。结果截图为native-flushing-result.png和native-chinatown-result.png，最后F3文本为native-run-diagnostics.txt。
+
+录屏音乐模式使用项目原创 Evening on Orchard、River Lights，CC0 1.0。实际音乐和游戏合成声音随应用音轨捕获。法拉盛音轨均值-30.3dB、峰值-14.0dB，唐人街均值-30.4dB、峰值-13.8dB。两段均未检出持续一秒以上的-65dB静音。文件校验、编码和来源见video-metadata.json。
+
+7bed882保存了锁屏时的分帧采集版本及后配音乐说明。其原始采样索引capture-index.json.gz继续作为历史记录保留，当前视频对应上述解锁后的连续实录。独立六单性能统计仍使用whole-run.json与完整原始帧。
 
 本轮实体手机连接、双指、锁屏恢复、手机文件选择、外部音乐App同时播放与手机15分钟性能全部未测。当前同一Wi-Fi入口为电脑192.168.0.193:7476，服务保持运行，地址随电脑网络变化。
 

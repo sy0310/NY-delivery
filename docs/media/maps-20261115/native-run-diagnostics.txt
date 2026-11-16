@@ -1,0 +1,20 @@
+x 191.57  z 148.12  yaw 218.2
+FPS 59.8  p95 24.0 ms
+1512 × 777  DPR 2
+View aspect 1.9459 canvas 1.9459
+Seat drift 4.1661 m (peak 0.0000 m)
+Seat yaw 21.8488 deg (peak 0.0000 deg)
+Touch throttle 0 brake 0 horizontal 0.00
+Walk eye 0.0000 m
+Audio 80.22 s  gain 0.550
+Single player · playing
+Context running · music 0.55 environment 0.2 effects 0.45
+Render scale 1.00
+Draws 351 · triangles 247267 · texture 47.1 MiB
+
+District chinatown generation 2 · 19 prefabs · 19/19 blocks · standard · swaps 1
+Route [{"x":188.55305848391023,"z":144.4013970696672},{"x":61.522,"z":152.218},{"x":44.858,"z":83.888},{"x":17.132,"z":64.659},{"x":-7.26,"z":44.55},{"x":-7.0286142141998065,"z":31.053006613721145},{"x":-16.009,"z":30.97}]
+Goal {"x":-16.009,"z":30.97}
+Order CT-1043 · 2 completed · $20.00
+Phases {"toPickupDrive":142,"toPickupWalk":37,"parking":63,"wait":6,"handoff":7,"toCar":36,"toDropoffDrive":75,"toDropoffWalk":9}
+Driving 217.6 / 376.6 s · 57.8%

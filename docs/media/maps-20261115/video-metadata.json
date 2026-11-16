@@ -1,8 +1,8 @@
 {
   "flushing": {
-    "sourceCommit": "360d278a291db559edffdabc2141beae72f7be4f",
+    "sourceCommit": "71c33fd4041f81cb9e9cf1542e3efd1d7b10a75d",
     "file": "flushing-delivery.mp4",
-    "sha256": "25508592ef76d8f3abe142f8f63bca1aefc89c5eb91b8c5ba272135a442f6393",
+    "sha256": "9fbdf80f3f575806a5322a6b043b9b3c4ce7e1d6785e43c6d304e2276bcf86ab",
     "probe": {
       "programs": [],
       "stream_groups": [],
@@ -10,27 +10,39 @@
         {
           "codec_name": "h264",
           "width": 1280,
-          "height": 658
+          "height": 656,
+          "duration": "172.833333",
+          "nb_frames": "5185"
         },
         {
           "codec_name": "aac",
-          "sample_rate": "22050"
+          "sample_rate": "48000",
+          "channels": 2,
+          "duration": "172.803000",
+          "nb_frames": "8102"
         }
       ],
       "format": {
-        "duration": "170.133333",
-        "size": "12352913"
+        "duration": "172.833333",
+        "size": "15315406"
       }
     },
-    "audioMeanDb": -30.4,
+    "audioMeanDb": -30.3,
     "audioPeakDb": -14.0,
-    "capture": "Actual Cocos browser screenshots, median interval 0.136s, real timestamps preserved with held frames between input batches, exported at 30fps",
-    "audio": "Evening on Orchard and River Lights, original CC0 tracks added in post. System live-audio recording failed while the Mac was locked."
+    "silenceCheck": "No interval longer than one second below -65 dB",
+    "capture": "macOS ScreenCaptureKit continuous game-window video and application audio, microphone disabled",
+    "editing": "Start/end trim, browser-toolbar crop, 1280x656 H.264/AAC encode at 30 fps, original timeline and captured game audio retained",
+    "music": "Evening on Orchard and River Lights, project-original CC0 1.0, selected through recording music mode",
+    "sourceRange": {
+      "startSeconds": 4.341533899307251,
+      "durationSeconds": 172.80299997329712,
+      "sourceCommit": "71c33fd4041f81cb9e9cf1542e3efd1d7b10a75d"
+    }
   },
   "chinatown": {
-    "sourceCommit": "360d278a291db559edffdabc2141beae72f7be4f",
+    "sourceCommit": "71c33fd4041f81cb9e9cf1542e3efd1d7b10a75d",
     "file": "chinatown-delivery.mp4",
-    "sha256": "9ceeac44cb379aea499c4ea41065c4520499385268c07efbb3fd290db665fc99",
+    "sha256": "f454c64a9b60a85683ea58938b7b4b8b300e0f6655b98b3cce74f329136f5047",
     "probe": {
       "programs": [],
       "stream_groups": [],
@@ -38,21 +50,53 @@
         {
           "codec_name": "h264",
           "width": 1280,
-          "height": 658
+          "height": 656,
+          "duration": "381.833333",
+          "nb_frames": "11455"
         },
         {
           "codec_name": "aac",
-          "sample_rate": "22050"
+          "sample_rate": "48000",
+          "channels": 2,
+          "duration": "381.819000",
+          "nb_frames": "17899"
         }
       ],
       "format": {
-        "duration": "366.900000",
-        "size": "25426385"
+        "duration": "381.833333",
+        "size": "34196309"
       }
     },
     "audioMeanDb": -30.4,
-    "audioPeakDb": -14.0,
-    "capture": "Actual Cocos browser screenshots, median interval 0.136s, real timestamps preserved with held frames between input batches, exported at 30fps",
-    "audio": "Evening on Orchard and River Lights, original CC0 tracks added in post. System live-audio recording failed while the Mac was locked."
+    "audioPeakDb": -13.8,
+    "silenceCheck": "No interval longer than one second below -65 dB",
+    "capture": "macOS ScreenCaptureKit continuous game-window video and application audio, microphone disabled",
+    "editing": "Start/end trim, browser-toolbar crop, 1280x656 H.264/AAC encode at 30 fps, original timeline and captured game audio retained",
+    "music": "Evening on Orchard and River Lights, project-original CC0 1.0, selected through recording music mode",
+    "sourceRange": {
+      "startSeconds": 190.5775339603424,
+      "durationSeconds": 381.81900000572205,
+      "sourceCommit": "71c33fd4041f81cb9e9cf1542e3efd1d7b10a75d"
+    }
+  },
+  "nativeRecording": {
+    "file": "maps-native-complete.mp4",
+    "localDirectory": ".local/media",
+    "sha256": "a8908255bb0c5bdd1e801d2cd0c585763d95f9ae4ef1f5c407394226afff9650",
+    "durationSeconds": 597.530416,
+    "videoFrames": 17017,
+    "maximumFrameGapSeconds": 0.13833299999998871,
+    "medianFrameGapSeconds": 0.03499999999999659,
+    "frameTimestampIndex": "native-frame-times.json.gz"
+  },
+  "previousCapture": {
+    "commit": "7bed88260103bb6bebfdf7396cdeeb79e49790a9",
+    "sourceCommit": "360d278a291db559edffdabc2141beae72f7be4f",
+    "method": "CUA screenshots with post-added CC0 soundtrack while Mac was locked",
+    "timestampIndex": "capture-index.json.gz",
+    "videoSha256": {
+      "flushing": "25508592ef76d8f3abe142f8f63bca1aefc89c5eb91b8c5ba272135a442f6393",
+      "chinatown": "9ceeac44cb379aea499c4ea41065c4520499385268c07efbb3fd290db665fc99"
+    }
   }
 }
