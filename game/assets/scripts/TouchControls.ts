@@ -150,6 +150,7 @@ export class TouchControls {
     this.root.querySelector('.stick-label')!.textContent = inCar ? '‹  转向  ›' : '移动';
     this.button('touch-action').textContent = action.replace('E · ', '');
     this.button('touch-action').disabled = !enabled;
+    this.button('touch-action').hidden = !enabled;
   }
   dispose(): void { this.abort.abort(); this.root.remove(); }
 }
