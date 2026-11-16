@@ -120,6 +120,7 @@ export class World {
     this.sedan.setQuality(quality);
   }
   get resourceState():string {return `${this.district?.id} generation ${this.generation} · ${this.prefabs.length} prefabs · ${this.chunks.filter(chunk=>chunk.node.active).length}/${this.chunks.length} blocks · ${this.quality}`;}
+  get carDisplays() {return this.sedan.displays;}
   get bagLabel():BagLabel {return {orderId:this.order.id,code:this.order.code,count:this.order.bagCount??1};}
   get bagPose():{x:number;z:number;yaw:number} {
     const place=this.district.restaurants.find(place=>place.id===this.order.restaurantId)!;
@@ -144,7 +145,7 @@ export class World {
   groundHeight(x:number,z:number):number {return this.district.restaurants.some(place=>{const p=roomPoint(place.entry,place.yaw,{x,z});return Math.abs(p.x)<place.width/2 && p.z>0 && p.z<place.depth;})?.08:0;}
   handoff():void {this.handoffTime=1.2;}
   update(dt:number,telemetry:CarTelemetry,view:SceneView):void {
-    this.sedan.update(dt,telemetry);
+    this.sedan.update(dt,telemetry,view);
     updateDistrictVisibility(this.chunks,this.details,view.position,this.quality);
   }
   updateActors(dt:number,stage:OrderStage,joined:boolean,remaining:number,player:CityPoint):void {

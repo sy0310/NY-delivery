@@ -1,7 +1,8 @@
 import { Node, Vec3, MeshRenderer, utils, primitives, Camera, RenderTexture, Color, SphereLight } from 'cc';
 import type { Material } from 'cc';
 import { WHEELBASE, MAX_ROAD_WHEEL_ANGLE } from './VehicleController';
-import { QUALITY_PRESETS } from './QualityPreset';
+import { QUALITY_PRESETS, VEHICLE_LAYER, CarDisplaySchedule } from './QualityPreset';
+import type { SceneView } from './DistrictPresentation';
 import { ModelGeometry, PaintedPanel } from './ModelGeometry';
 import { planRoute } from './CityLayout';
 import { LEGACY_DISTRICT } from './LegacyDistrict';
@@ -31,9 +32,8 @@ export class CarModel {
   private rearCamera!: Camera;
   private rearTexture!: RenderTexture;
   private rearMaterial!: Material;
-  private refresh = 0;
-  private rearTick=0;
-  private rearInterval=1/30;
+  private mirrorFps=30;
+  readonly displays = new CarDisplaySchedule();
   private wheelSpin = 0;
   private steeringAngle = 0;
   private wheels: { node: Node; front: boolean }[] = [];
@@ -53,11 +53,12 @@ export class CarModel {
     geometry.batchStatic(this.steering);
     geometry.batchStatic(this.interior);
     geometry.batchStatic(this.node);
+    for (const renderer of this.node.getComponentsInChildren(MeshRenderer)) renderer.node.layer = VEHICLE_LAYER;
   }
 
   setQuality(quality:'low'|'standard'):void {
     const preset=QUALITY_PRESETS[quality];
-    this.rearInterval=1/preset.mirrorFps;
+    this.mirrorFps=preset.mirrorFps;
     this.rearTexture.resize(preset.mirrorWidth,preset.mirrorHeight);
     this.rearMaterial.setProperty('mainTexture',this.rearTexture);
   }
@@ -247,27 +248,27 @@ export class CarModel {
     camera.near = .1;
     camera.far = 450;
     camera.clearColor = new Color(185, 210, 224);
+    camera.visibility &= ~VEHICLE_LAYER;
     this.rearCamera = camera;
     this.rearTexture = texture;
   }
 
-  update(dt: number, telemetry: CarTelemetry): void {
+  update(dt: number, telemetry: CarTelemetry, view:SceneView): void {
     // Creator's native preview redirects scene cameras when its panel opens or resizes.
     const camera = this.rearCamera.camera;
     if (camera && camera.window !== this.rearTexture.window) {
       camera.changeTargetWindow(this.rearTexture.window);
     }
-    this.steeringAngle += (telemetry.steering * 90 - this.steeringAngle) * Math.min(1, dt * 12);
+    const motionDt = view.paused ? 0 : dt;
+    this.steeringAngle += (telemetry.steering * 90 - this.steeringAngle) * Math.min(1, motionDt * 12);
     this.steering.setRotationFromEuler(0, this.steeringAngle, 0);
-    this.wheelSpin = (this.wheelSpin - telemetry.speed * dt / .345 * 180 / Math.PI) % 360;
+    this.wheelSpin = (this.wheelSpin - telemetry.speed * motionDt / .345 * 180 / Math.PI) % 360;
     for (const wheel of this.wheels) {
       wheel.node.setRotationFromEuler(this.wheelSpin, wheel.front ? this.steeringAngle / 90 * MAX_ROAD_WHEEL_ANGLE : 0, 0);
     }
-    this.rearTick+=dt;this.rearCamera.enabled=this.rearTick>=this.rearInterval;
-    if(this.rearCamera.enabled)this.rearTick=0;
-    this.refresh += dt;
-    if (this.refresh < .12) return;
-    this.refresh = 0;
+    this.displays.update(dt,view,telemetry,this.mirrorFps);
+    this.rearCamera.enabled=this.displays.mirror;
+    if (!this.displays.panels) return;
     this.drawInstruments(telemetry);
     this.drawNavigation(telemetry);
   }

@@ -21,6 +21,7 @@ import { createDistrictOrder, canSwitchDistrict } from './DistrictOrders';
 import { drawDistrictMap } from './DistrictMap';
 import { OrderTiming } from './OrderTiming';
 import { PerformanceRun } from './PerformanceRun';
+import { VEHICLE_LAYER } from './QualityPreset';
 
 const { ccclass, property } = _decorator;
 const DEG = 180 / Math.PI;
@@ -126,6 +127,7 @@ export class DeliveryDemo extends Component {
     camera.fov = 70;
     camera.near = .05;
     camera.far = 1600;
+    camera.visibility |= VEHICLE_LAYER;
     camera.clearColor = new Color(188, 209, 222, 255);
     this.music = new MusicPlayer();
     profiler.hideStats();
@@ -306,11 +308,13 @@ export class DeliveryDemo extends Component {
     if (this.refresh > .1) { this.renderHUD(); this.refresh = 0; }
   }
 
-  private readResources():{drawCalls:number;triangles:number;textureBytes:number;bufferBytes:number;jsHeapBytes:number|null} {
+  private readResources():{drawCalls:number;triangles:number;textureBytes:number;bufferBytes:number;jsHeapBytes:number|null;mirrorMode:string;mirrorEnabled:boolean;mirrorUpdates:number;panelUpdates:number} {
     const device=director.root!.device;
     const memory=(performance as Performance & {memory?:{usedJSHeapSize:number}}).memory;
     return {drawCalls:device.numDrawCalls,triangles:device.numTris,textureBytes:device.memoryStatus.textureSize,
-      bufferBytes:device.memoryStatus.bufferSize,jsHeapBytes:memory?.usedJSHeapSize??null};
+      bufferBytes:device.memoryStatus.bufferSize,jsHeapBytes:memory?.usedJSHeapSize??null,
+      mirrorMode:this.world.carDisplays.mode,mirrorEnabled:this.world.carDisplays.mirror,
+      mirrorUpdates:this.world.carDisplays.mirrorUpdates,panelUpdates:this.world.carDisplays.panelUpdates};
   }
 
   private samplePerformance(dt: number): void {
@@ -803,6 +807,7 @@ export class DeliveryDemo extends Component {
       `Single player · ${this.music.audio.paused || this.music.audio.error ? 'paused' : 'playing'}`,
       `Context ${this.music.context?.state ?? 'uninitialized'} · music ${this.music.levels.music} environment ${this.music.levels.environment} effects ${this.music.levels.effects}`,
       `Render scale ${director.root!.pipeline.shadingScale.toFixed(2)}`,
+      `Car displays ${this.world.carDisplays.mode} · mirror ${Number(this.world.carDisplays.mirror)} · updates ${this.world.carDisplays.mirrorUpdates} panels ${this.world.carDisplays.panelUpdates}`,
       `Draws ${director.root!.device.numDrawCalls} · triangles ${director.root!.device.numTris} · texture ${(director.root!.device.memoryStatus.textureSize/1048576).toFixed(1)} MiB`,
       this.runSummary,
       `District ${this.world.resourceState} · swaps ${this.swaps}`,
