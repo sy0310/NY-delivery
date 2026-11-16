@@ -25,6 +25,7 @@ test('atlas panels retain Creator quad vertex-to-UV correspondence for every cel
  const panels=new Panel();
  for(let cell=0;cell<16;cell++){
   const panel=panels.atlasPanel('cell-'+cell,2,1,{},cell,{});
-  assert.deepEqual(panel.geometry.uvs,[cell%4/4,Math.floor(cell/4)/4,cell%4/4,(Math.floor(cell/4)+1)/4,(cell%4+1)/4,(Math.floor(cell/4)+1)/4,(cell%4+1)/4,Math.floor(cell/4)/4]);
+  const bottom=(3-Math.floor(cell/4))/4;
+  assert.deepEqual(panel.geometry.uvs,[cell%4/4,bottom,cell%4/4,bottom+.25,(cell%4+1)/4,bottom+.25,(cell%4+1)/4,bottom]);
  }
 });
