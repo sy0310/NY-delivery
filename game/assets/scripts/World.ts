@@ -7,7 +7,8 @@ import type { OrderData, BagLabel, OrderStage } from './OrderState';
 import { Person } from './Person';
 import type { DistrictDefinition, DistrictPlace, DistrictRestaurant, CityPoint } from './DistrictDefinition';
 import { isAccessible, roomPoint, projectPoint, insidePolygon } from './DistrictNavigation';
-import { roadSegments, placePose, distanceToBounds } from './DistrictPresentation';
+import { roadSegments, placePose, updateDistrictVisibility } from './DistrictPresentation';
+import type { SceneView } from './DistrictPresentation';
 
 /** District meshes are replaceable. The car, bag and audio owner survive work-area changes. */
 export class World {
@@ -142,10 +143,9 @@ export class World {
   };
   groundHeight(x:number,z:number):number {return this.district.restaurants.some(place=>{const p=roomPoint(place.entry,place.yaw,{x,z});return Math.abs(p.x)<place.width/2 && p.z>0 && p.z<place.depth;})?.08:0;}
   handoff():void {this.handoffTime=1.2;}
-  update(dt:number,telemetry:CarTelemetry):void {
+  update(dt:number,telemetry:CarTelemetry,view:SceneView):void {
     this.sedan.update(dt,telemetry);
-    for(const chunk of this.chunks) chunk.node.active=distanceToBounds(telemetry,chunk.bounds)<QUALITY_PRESETS[this.quality].blockDistance;
-    for(const detail of this.details) detail.node.active=Math.hypot(telemetry.x-detail.position.x,telemetry.z-detail.position.z)<QUALITY_PRESETS[this.quality].detailDistance;
+    updateDistrictVisibility(this.chunks,this.details,view.position,this.quality);
   }
   updateActors(dt:number,stage:OrderStage,joined:boolean,remaining:number,player:CityPoint):void {
     this.actorTime+=dt;this.handoffTime=Math.max(0,this.handoffTime-dt);

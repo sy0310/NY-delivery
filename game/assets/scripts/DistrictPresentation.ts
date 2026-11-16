@@ -1,5 +1,23 @@
 import type { CityPoint, DistrictPlace } from './DistrictDefinition';
 import { localPoint } from './DistrictNavigation';
+import { QUALITY_PRESETS } from './QualityPreset';
+
+export interface SceneView {
+  position: CityPoint;
+  inCar: boolean;
+  paused: boolean;
+}
+
+export function updateDistrictVisibility(
+  chunks: {node:{active:boolean};bounds:{minX:number;maxX:number;minZ:number;maxZ:number}}[],
+  details: {node:{active:boolean};position:CityPoint}[],
+  observer: CityPoint,
+  quality: 'low'|'standard',
+): void {
+  const preset = QUALITY_PRESETS[quality];
+  for (const chunk of chunks) chunk.node.active = distanceToBounds(observer,chunk.bounds) < preset.blockDistance;
+  for (const detail of details) detail.node.active = Math.hypot(observer.x-detail.position.x,observer.z-detail.position.z) < preset.detailDistance;
+}
 export function roadSegments(points: CityPoint[]): {center:CityPoint;length:number;yaw:number}[] {
   return points.slice(1).map((end,index)=>{
     const start=points[index], dx=end.x-start.x, dz=end.z-start.z;

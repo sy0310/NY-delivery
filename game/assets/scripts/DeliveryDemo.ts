@@ -298,7 +298,7 @@ export class DeliveryDemo extends Component {
       destination: ['stowed', 'delivering', 'delivered'].includes(this.order.stage),
       target: this.order.stage === 'accepted' || this.order.stage === 'idle' ? this.order.data.pickupParking! : this.order.data.dropoffParking!,
       address: this.order.stage === 'accepted' || this.order.stage === 'idle' ? this.order.data.restaurant : this.order.data.address,
-    });
+    }, {position:this.inCar ? this.vehicle : this.walker,inCar:this.inCar,paused:this.paused});
     this.updateView();
     this.updateBag();
     this.music.update(this.inCar, Math.hypot(this.walker.x - this.vehicle.x, this.walker.z - this.vehicle.z), this.vehicle.speed);
