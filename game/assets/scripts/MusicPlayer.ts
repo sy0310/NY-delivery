@@ -16,6 +16,7 @@ export class MusicPlayer {
   private loaded = '';
   private starting = false;
   private revision = 0;
+  private contextTask: Promise<boolean> = Promise.resolve(false);
   private listeners: AbortController | null = null;
   private fileSequence = 0;
   private replaceOnChoose = false;
@@ -38,11 +39,12 @@ export class MusicPlayer {
       contextState:this.context?.state ?? null});
   }
   get needsResume(): boolean {
-    return this.policy.recovery || this.policy.channels && Boolean(this.playlist.current && !this.playlist.current.failed
+    return this.policy.recovery || this.policy.bgm && Boolean(this.playlist.current && !this.playlist.current.failed
       && this.playlist.wantsPlayback && this.audio.paused && !this.starting);
   }
   get state(): string {
     if (this.playlist.source === 'external') return '外部播放器 · 游戏音乐已关闭';
+    if (!this.policy.channels) return '全部静音';
     if (!this.playlist.current) return '歌单为空';
     if (this.playlist.current.failed) return '播放失败';
     if (this.starting && this.playlist.wantsPlayback) return '正在启动';
@@ -83,21 +85,22 @@ export class MusicPlayer {
   private gesture = (): void => {
     if (this.context || !this.policy.channels) return;
     this.unlock();
-    void this.context!.resume().catch(() => { this.message = '请点按恢复声音'; });
+    void this.reconcileContext(true).catch(() => { if(this.policy.channels) this.message = '请点按恢复声音'; });
   };
 
   async resumeSound(): Promise<void> {
     if (!this.policy.channels) return;
     this.unlock();
     try {
-      await this.context!.resume();
+      if (!await this.reconcileContext(true)) return;
       if (this.policy.bgm) await this.playCurrent(this.revision, true);
       this.message = this.context!.state === 'running' ? '游戏声音已恢复' : '请点按恢复声音';
-    } catch { this.message = '声音恢复失败，请再次点按'; }
+    } catch { if(this.policy.channels) this.message = '声音恢复失败，请再次点按'; }
   }
 
   muteAll(): void {
     this.userVolume = this.ambientVolume = this.effectVolume = 0;
+    this.audio.pause();
     clearTimeout(this.duckTimer);
     this.duckTimer = undefined;
     if (this.context && this.gain) {
@@ -111,8 +114,20 @@ export class MusicPlayer {
     this.message = '全部游戏声音已关闭，可在外部 App 中自行播放';
   }
 
-  private reconcileContext(): void {
-    if (this.context && !this.policy.channels && this.context.state === 'running') void this.context.suspend();
+  private reconcileContext(allowResume=false): Promise<boolean> {
+    // Serialize native transitions, then re-read the latest channel policy after each await.
+    const operation = this.contextTask.then(async () => {
+      const context = this.context;
+      if (!context || this.lifecycle.signal.aborted) return false;
+      if (this.policy.channels && allowResume && context.state !== 'running') await context.resume();
+      if (!this.policy.channels) {
+        this.audio.pause();
+        if (context.state === 'running') await context.suspend();
+      }
+      return this.policy.channels && context.state === 'running';
+    });
+    this.contextTask = operation.catch(() => false);
+    return operation;
   }
 
   setDemo(url: string, id = 'evening', name = 'Evening on Orchard'): void {
@@ -125,6 +140,7 @@ export class MusicPlayer {
     this.context = new AudioContext();
     this.context.addEventListener('statechange', () => {
       if (this.policy.recovery) this.message = '声音被系统中断，请点按恢复声音';
+      if (!this.policy.channels) void this.reconcileContext();
     }, {signal:this.lifecycle.signal});
     this.capture = this.context.createMediaStreamDestination();
     this.gain = this.bus(this.userVolume);
@@ -170,17 +186,16 @@ export class MusicPlayer {
     this.starting = true;
     try {
       if (this.policy.channels) this.unlock();
-      if (this.context && this.context.state !== 'running') {
-        if (!allowResume) { this.message = '请点按恢复声音'; return; }
-        await this.context.resume();
+      if (!await this.reconcileContext(allowResume)) {
+        if(this.policy.channels && revision===this.revision) this.message = '请点按恢复声音';
+        return;
       }
-      if (revision !== this.revision || !this.playlist.wantsPlayback) return;
+      if (revision !== this.revision || !this.policy.bgm || this.lifecycle.signal.aborted) return;
       await this.audio.play();
-      if (revision !== this.revision) return;
-      if (!this.playlist.wantsPlayback) this.audio.pause();
-      else this.message = this.playlist.current?.name ?? '正在播放';
+      if (!this.policy.bgm) this.audio.pause();
+      else if (revision === this.revision) this.message = this.playlist.current?.name ?? '正在播放';
     } catch {
-      if (revision === this.revision) this.message = '播放尚未开始，请点击播放重试或切换曲目';
+      if (revision === this.revision && this.policy.channels) this.message = '播放尚未开始，请点击播放重试或切换曲目';
     } finally {
       if (revision === this.revision) this.starting = false;
     }
