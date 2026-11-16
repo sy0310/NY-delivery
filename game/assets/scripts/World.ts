@@ -148,6 +148,7 @@ export class World {
     });
   };
   roadProbe(point:CityPoint & {yaw:number}) {
+    if(!this.district)return probeRoad(undefined,point);
     const sample=[-1.17,0,1.17].map(offset=>({x:point.x-Math.sin(point.yaw)*offset,z:point.z-Math.cos(point.yaw)*offset}))
       .find(sample=>!isAccessible(this.district,sample,'car',1.02))??point;
     return probeRoad(this.district,sample);

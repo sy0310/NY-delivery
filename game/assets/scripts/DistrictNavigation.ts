@@ -197,7 +197,8 @@ export function vehicleAccessible(district:DistrictDefinition,point:CityPoint,ya
     {x:point.x-Math.sin(yaw)*offset,z:point.z-Math.cos(yaw)*offset},'car',1.02));
 }
 
-export function probeRoad(district:DistrictDefinition,point:CityPoint,radius=1.02) {
+export function probeRoad(district:DistrictDefinition|undefined,point:CityPoint,radius=1.02) {
+  if(!district)return {roadId:'loading',name:'',access:'none',clearance:0,reason:'loading'};
   let nearest:{road:DistrictRoad;distance:number}|undefined;
   for(const road of district.roads) for(let index=1;index<road.points.length;index++) {
     const distance=Math.sqrt(segmentDistanceSquared(point,road.points[index-1],road.points[index]));
