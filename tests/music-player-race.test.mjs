@@ -126,3 +126,15 @@ test('overlapping old recovery and a new effects-only request finish in the late
   assert.equal(player.playlist.wantsPlayback,true);
   assert.equal(player.audio.currentTime,31);
 });
+test('external handoff presets preserve the library and never start an internal track',async t=>{
+  const player=fixture(t);
+  player.externalAudio('effects');await flush();player.context.gate.resolve();await flush();
+  assert.equal(player.playlist.source,'external');assert.equal(player.audio.playCalls,0);
+  assert.equal(player.playlist.wantsPlayback,false);assert.equal(player.context.state,'running');
+  player.externalAudio('silent');await flush();
+  assert.deepEqual(player.levels,{music:0,environment:0,effects:0});
+  assert.equal(player.context.state,'suspended');
+  player.source('radio');await flush();
+  assert.equal(player.playlist.current.id,'evening');assert.equal(player.audio.paused,true);
+  assert.equal(player.playlist.wantsPlayback,false);
+});

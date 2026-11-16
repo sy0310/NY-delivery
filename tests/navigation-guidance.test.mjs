@@ -28,3 +28,12 @@ test('a car facing away from the legal route receives heading recovery before a 
   assert.deepEqual(maps.navigationStep({x:0,z:0,yaw:Math.PI},[{x:0,z:-40},{x:30,z:-40}]),
     {symbol:'↶',instruction:'调整车头',distance:0});
 });
+test('a run of short curve segments produces one early and monotonic turn cue',()=>{
+  const route=[{x:0,z:-30},{x:3,z:-40},{x:8,z:-50},{x:16,z:-58}];
+  assert.deepEqual([0,-5,-10].map(z=>maps.navigationStep({x:0,z,yaw:0},route)),[
+    {symbol:'→',instruction:'右转',distance:30},{symbol:'→',instruction:'右转',distance:25},{symbol:'→',instruction:'右转',distance:20},
+  ]);
+});
+test('arrival parking guidance takes precedence over heading recovery near the destination',()=>{
+  assert.deepEqual(maps.navigationStep({x:0,z:0,yaw:Math.PI},[{x:0,z:-9}]),{symbol:'P',instruction:'靠边停车',distance:9});
+});
